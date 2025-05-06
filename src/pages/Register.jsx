@@ -96,26 +96,23 @@ function Register() {
         phone: formData.phoneCountryCode ? `${formData.phoneCountryCode}${formData.phone}` : formData.phone
       });
 
+      // 'success' indica si auth.register en lib/auth.js se completó (signUp + insert)
+      // useAuthService ya maneja el toast de "email enviado" y la navegación a /register-confirmation si success es true
+      // useAuthService también maneja el toast de error si success es false o se lanza una excepción
+      // Por lo tanto, no necesitamos hacer nada más aquí en caso de éxito o error específico,
+      // solo asegurarnos de que isSubmitting se maneje correctamente en el finally.
       if (success) {
-        toast({
-          title: "¡Registro exitoso!",
-          description: "Tu período de prueba gratuito ha comenzado.",
-        });
-        navigate("/register-confirmation", { 
-          state: { 
-            userData: {
-              firstName: formData.firstName,
-              lastName: formData.lastName,
-              email: formData.email,
-              company: formData.company
-            }
-          }
-        });
+         console.log("Registro iniciado, esperando confirmación de email.");
+      } else {
+         console.error("El proceso de registro falló.");
+         // El toast de error ya fue mostrado por useAuthService
       }
     } catch (error) {
+       // Este catch es una salvaguarda, pero useAuthService debería capturar los errores de auth.register
+      console.error("Error inesperado en el componente Register:", error);
       toast({
-        title: "Error en el registro",
-        description: "Hubo un problema al procesar tu registro. Por favor, intenta nuevamente.",
+        title: "Error inesperado",
+        description: "Ocurrió un error inesperado durante el registro.",
         variant: "destructive",
       });
     } finally {
