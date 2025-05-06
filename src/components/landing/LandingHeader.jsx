@@ -23,7 +23,7 @@ function LandingHeader() {
             </Link>
             <Link to="/register">
               <Button className="bg-white text-blue-600 hover:bg-gray-100 shadow-md px-3 sm:px-4">
-                Prueba Gratuita
+                Prueba Gratuita IA
               </Button>
             </Link>
           </div>
