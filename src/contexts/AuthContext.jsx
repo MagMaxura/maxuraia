@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react";
-import { useAuthService } from "@/hooks/useAuthService"; // Importar el hook real
+import { useAuthService } from "../hooks/useAuthService"; // Fixed relative path
 
 const AuthContext = createContext(null);
 

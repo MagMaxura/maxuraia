@@ -1,9 +1,8 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
-import { auth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { useToast } from "../components/ui/use-toast";
+import { auth } from "../lib/auth";
+import { supabase } from "../lib/supabase";
 
 export function useAuthService() {
   const [user, setUser] = useState(null);
@@ -127,7 +126,7 @@ export function useAuthService() {
   }, []); // Array de dependencias vacío para que se ejecute solo al montar/desmontar
 
   const register = async (formData) => {
-console.log("useAuthService.js: register - Función llamada con datos:", formData); // DEBUG LOG
+    console.log("useAuthService.js: register - Función llamada con datos:", formData); // DEBUG LOG
     setLoading(true);
     try {
       const success = await auth.register(formData);

@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "../components/ui/button";
+import { useToast } from "../components/ui/use-toast";
+import { useAuth } from "../contexts/AuthContext";
 import { Mail, Building2, Phone, Globe, Users, Flag } from 'lucide-react';
 
 function Register() {
@@ -36,7 +35,7 @@ function Register() {
   };
 
   const handleSubmit = async (e) => {
-console.log("Register.jsx: handleSubmit - INICIO DE FUNCIÓN"); // DEBUG LOG - MOVIDO AL INICIO
+    console.log("Register.jsx: handleSubmit - INICIO DE FUNCIÓN"); // DEBUG LOG - MOVIDO AL INICIO
     e.preventDefault();
     
     if (isSubmitting) return;
@@ -92,24 +91,17 @@ console.log("Register.jsx: handleSubmit - INICIO DE FUNCIÓN"); // DEBUG LOG - M
     setIsSubmitting(true);
 
     try {
-const success = await register({
-  ...formData,
-  phone: formData.phoneCountryCode ? `${formData.phoneCountryCode}${formData.phone}` : formData.phone
-});
+      const success = await register({
+        ...formData,
+        phone: formData.phoneCountryCode ? `${formData.phoneCountryCode}${formData.phone}` : formData.phone
+      });
 
-      // 'success' indica si auth.register en lib/auth.js se completó (signUp + insert)
-      // useAuthService ya maneja el toast de "email enviado" y la navegación a /register-confirmation si success es true
-      // useAuthService también maneja el toast de error si success es false o se lanza una excepción
-      // Por lo tanto, no necesitamos hacer nada más aquí en caso de éxito o error específico,
-      // solo asegurarnos de que isSubmitting se maneje correctamente en el finally.
       if (success) {
          console.log("Registro iniciado, esperando confirmación de email.");
       } else {
          console.error("El proceso de registro falló.");
-         // El toast de error ya fue mostrado por useAuthService
       }
     } catch (error) {
-       // Este catch es una salvaguarda, pero useAuthService debería capturar los errores de auth.register
       console.error("Error inesperado en el componente Register:", error);
       toast({
         title: "Error inesperado",
@@ -121,7 +113,6 @@ const success = await register({
     }
   };
 
-  // Rest of the component remains the same...
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-600 to-blue-800">
       <motion.div
