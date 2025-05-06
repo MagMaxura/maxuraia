@@ -123,6 +123,7 @@ export function useAuthService() {
   }, [handleAuthChange]); // Rerun effect if handleAuthChange identity changes
 
   const register = async (formData) => {
+console.log("useAuthService.js: register - Función llamada con datos:", formData); // DEBUG LOG
     setLoading(true);
     try {
       const success = await auth.register(formData);

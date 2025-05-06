@@ -50,6 +50,7 @@ export const auth = {
   },
 
   async register(userData) {
+console.log("lib/auth.js: auth.register - Función llamada con datos:", userData); // DEBUG LOG
     // Check if email already exists in reclutadores table
     const { data: existingRecruiter, error: checkError } = await supabase
       .from('reclutadores')

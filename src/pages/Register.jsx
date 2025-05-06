@@ -91,6 +91,7 @@ function Register() {
     setIsSubmitting(true);
 
     try {
+console.log("Register.jsx: handleSubmit - Intentando llamar a register con datos:", formData); // DEBUG LOG
       const success = await register({
         ...formData,
         phone: formData.phoneCountryCode ? `${formData.phoneCountryCode}${formData.phone}` : formData.phone
