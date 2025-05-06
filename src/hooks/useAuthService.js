@@ -77,50 +77,59 @@ export function useAuthService() {
     }
   }, [navigate, toast]);
 
+  // Effect for initial session check and auth state listener
   useEffect(() => {
-    setLoading(true); // Ensure loading is true at the start of the effect
+    console.log("useAuthService: Main auth effect running.");
+    setLoading(true);
     setAuthChecked(false);
-    console.log("Running initial session check...");
 
-    const checkSession = async () => {
+    const checkInitialSession = async () => {
+      console.log("useAuthService: Checking initial session...");
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Error getting initial session:", error);
-          // Proceed to handleAuthChange with null session
+          console.error("useAuthService: Error getting initial session:", error);
+          // Pass null session to handleAuthChange to ensure consistent state update
+          await handleAuthChange('INITIAL_SESSION', null);
+        } else {
+          await handleAuthChange('INITIAL_SESSION', session);
         }
-        // Await the processing of the initial session state
-        await handleAuthChange('INITIAL_SESSION', session);
       } catch (e) {
-        console.error("Critical error during initial session check:", e);
+        console.error("useAuthService: Critical error during initial session check:", e);
         auth.clearAuthUser();
-        setUser(null);
-        setLoading(false); // Ensure loading state is resolved
-        setAuthChecked(true); // Mark check as complete even on error
+        setUser(null); // Ensure user state is cleared
+        // Ensure loading and authChecked are set even on critical error
+        setLoading(false);
+        setAuthChecked(true);
         toast({
-          title: "Error Crítico",
+          title: "Error Crítico de Sesión",
           description: "No se pudo verificar el estado de autenticación inicial.",
           variant: "destructive",
         });
       }
     };
 
-    checkSession();
+    checkInitialSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // Listener handles subsequent changes (SIGNED_IN, SIGNED_OUT, etc.)
+      console.log(`useAuthService: onAuthStateChange event: ${event}`);
+      // The handleAuthChange function is already memoized and will handle state updates
       await handleAuthChange(event, session);
     });
 
     return () => {
       if (authListener && typeof authListener.subscription?.unsubscribe === 'function') {
-        console.log("Unsubscribing from auth listener.");
+        console.log("useAuthService: Unsubscribing from auth listener.");
         authListener.subscription.unsubscribe();
       } else {
-        console.warn("Could not unsubscribe from auth listener.");
+        console.warn("useAuthService: Could not unsubscribe from auth listener.");
       }
     };
-  }, [handleAuthChange]); // Rerun effect if handleAuthChange identity changes
+    // handleAuthChange is memoized with useCallback.
+    // supabase instance is stable.
+    // auth (the object from lib/auth.js) is stable.
+    // setUser, setLoading, setAuthChecked, toast are stable setters from useState/useToast.
+  }, [handleAuthChange]); // Keep handleAuthChange as it's the core logic handler
 
   const register = async (formData) => {
 console.log("useAuthService.js: register - Función llamada con datos:", formData); // DEBUG LOG
