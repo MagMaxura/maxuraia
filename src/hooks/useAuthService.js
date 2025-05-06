@@ -1,53 +1,48 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/use-toast";
 import { auth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 
 export function useAuthService() {
+  console.log("useAuthService: Hook initialization");
+  
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // Start true for initial check
-  const [authChecked, setAuthChecked] = useState(false); // Track if initial check completed
+  const [loading, setLoading] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleAuthChange = useCallback(async (event, session) => {
     console.log("Auth state changed:", event, session);
-    setLoading(true); // Set loading during processing
     const currentUser = session?.user;
 
     if (currentUser) {
       try {
-        // Attempt to load recruiter data associated with the auth user
         const recruiterData = await auth.getRecruiterByEmail(currentUser.email);
         if (recruiterData) {
           const fullUserData = { ...currentUser, ...recruiterData };
-          auth.user = fullUserData; // Update auth lib user cache
+          auth.user = fullUserData;
           localStorage.setItem('auth_user', JSON.stringify(fullUserData));
           setUser(fullUserData);
           console.log("User loaded on auth change:", fullUserData);
-          // If the event is SIGNED_IN and we are not already on dashboard, navigate
-          // Avoid navigation on INITIAL_SESSION if already on a protected route
           if (event === 'SIGNED_IN') {
              navigate("/dashboard", { replace: true });
           }
         } else {
           console.error("Recruiter data not found for authenticated user:", currentUser.email);
-          // User exists in Supabase Auth but not in 'reclutadores'. Log them out.
-          // await auth.logout(); // TEMPORARILY COMMENTED OUT TO BREAK POTENTIAL LOOP
-          setUser(null); // Explicitly set user null here too
+          setUser(null);
           toast({
             title: "Error de cuenta",
             description: "No se encontraron los datos asociados a tu cuenta. Por favor, contacta soporte o regístrate de nuevo.",
             variant: "destructive",
           });
-          // Navigate to login only if not already there (logout might trigger this)
           if (window.location.pathname !== '/login') {
-             navigate("/login", { replace: true }); // Navigate to Login page
+             navigate("/login", { replace: true });
           }
         }
       } catch (error) {
-        console.error("Error fetching recruiter data or logging out on auth change:", error);
+        console.error("Error fetching recruiter data:", error);
         auth.clearAuthUser();
         setUser(null);
         toast({
@@ -56,34 +51,32 @@ export function useAuthService() {
           variant: "destructive",
         });
          if (window.location.pathname !== '/login') {
-             navigate("/login", { replace: true }); // Navigate to Login page on error
+             navigate("/login", { replace: true });
           }
       } finally {
-        // Only set loading false and authChecked true *after* processing
-        setLoading(false);
         setAuthChecked(true);
       }
-    } else { // No session or SIGNED_OUT event
+    } else {
       console.log("No user session found or user logged out.");
       auth.clearAuthUser();
       setUser(null);
-      setLoading(false);
       setAuthChecked(true);
-      // If user was explicitly logged out, navigate to login
       if (event === 'SIGNED_OUT' && window.location.pathname !== '/login') {
-         navigate("/login", { replace: true }); // Navigate to Login page
+         navigate("/login", { replace: true });
       }
     }
   }, [navigate, toast]);
 
-  // Effect for initial session check and auth state listener
   useEffect(() => {
-    console.log("useAuthService: Mount effect for session check and listener setup.");
+    let mounted = true;
+    console.log("useAuthService: Mount effect running");
 
     const checkInitialSession = async () => {
+      if (!mounted) return;
       console.log("useAuthService: Checking initial session...");
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
+        if (!mounted) return;
         if (error) {
           console.error("useAuthService: Error getting initial session:", error);
           await handleAuthChange('INITIAL_SESSION_ERROR', null);
@@ -91,10 +84,10 @@ export function useAuthService() {
           await handleAuthChange('INITIAL_SESSION_LOADED', session);
         }
       } catch (e) {
+        if (!mounted) return;
         console.error("useAuthService: Critical error during initial session check:", e);
         auth.clearAuthUser();
         setUser(null);
-        setLoading(false);
         setAuthChecked(true);
         toast({
           title: "Error Crítico de Sesión",
@@ -107,35 +100,34 @@ export function useAuthService() {
     checkInitialSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
       console.log(`useAuthService: onAuthStateChange event: ${event}, session present: ${!!session}`);
       await handleAuthChange(event, session);
     });
 
     return () => {
-      console.log("useAuthService: Unsubscribing from auth listener (mount effect cleanup).");
-      if (authListener && authListener.subscription && typeof authListener.subscription.unsubscribe === 'function') {
+      mounted = false;
+      console.log("useAuthService: Cleanup - unsubscribing auth listener");
+      if (authListener?.subscription?.unsubscribe) {
         authListener.subscription.unsubscribe();
-      } else {
-        console.warn("useAuthService: Could not unsubscribe from auth listener on cleanup.");
       }
     };
-  }, [handleAuthChange]); // Added handleAuthChange to dependencies since it's used in the effect
+  }, [handleAuthChange, toast]);
 
-  const register = async (formData) => {
-    console.log("useAuthService.js: register function called with data:", formData);
+  const register = useCallback(async (formData) => {
+    console.log("useAuthService: register function called with data:", formData);
     setLoading(true);
     try {
-      console.log("useAuthService.js: Calling auth.register");
+      console.log("useAuthService: Calling auth.register");
       const success = await auth.register(formData);
-      console.log("useAuthService.js: auth.register result:", success);
+      console.log("useAuthService: auth.register result:", success);
       
       if (success) {
-        console.log("useAuthService.js: Registration successful, showing toast");
+        console.log("useAuthService: Registration successful");
         toast({
           title: "¡Registro casi listo!",
           description: "Hemos enviado un email de confirmación a tu correo.",
         });
-        console.log("useAuthService.js: Navigating to confirmation page");
         navigate('/register-confirmation', {
           state: {
             userData: {
@@ -148,11 +140,11 @@ export function useAuthService() {
         });
         return true;
       } else {
-         console.error("useAuthService.js: Registration failed without throwing error");
+         console.error("useAuthService: Registration failed without throwing error");
          throw new Error("El registro falló por una razón desconocida.");
       }
     } catch (error) {
-      console.error("useAuthService.js: Registration error:", error);
+      console.error("useAuthService: Registration error:", error);
       toast({
         title: "Error en el registro",
         description: error.message || "Hubo un problema al procesar tu registro.",
@@ -160,12 +152,12 @@ export function useAuthService() {
       });
       return false;
     } finally {
-      console.log("useAuthService.js: Registration process completed");
+      console.log("useAuthService: Registration process completed");
       setLoading(false);
     }
-  };
+  }, [navigate, toast]);
 
-  const login = async (credentials) => {
+  const login = useCallback(async (credentials) => {
     setLoading(true);
     try {
       const success = await auth.login(credentials);
@@ -199,9 +191,9 @@ export function useAuthService() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setLoading(true);
     try {
       await auth.logout();
@@ -216,11 +208,12 @@ export function useAuthService() {
         variant: "destructive",
       });
        console.error("Logout error:", error);
-       setLoading(false);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const resetPassword = async (email) => {
+  const resetPassword = useCallback(async (email) => {
     setLoading(true);
     try {
       await auth.resetPassword(email);
@@ -239,11 +232,11 @@ export function useAuthService() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   return {
     user,
-    loading: loading || !authChecked,
+    loading,
     authChecked,
     login,
     logout,

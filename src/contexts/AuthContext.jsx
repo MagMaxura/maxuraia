@@ -1,15 +1,23 @@
 import React, { createContext, useContext } from "react";
-import { useAuthService } from "../hooks/useAuthService"; // Fixed relative path
+import { useAuthService } from "../hooks/useAuthService";
 
 const AuthContext = createContext(null);
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    console.error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  console.log("useAuth: register function available:", !!context.register);
+  return context;
+};
 
 export function AuthProvider({ children }) {
-  // Usar el hook de servicio de autenticación real
+  console.log("AuthProvider: Initializing");
   const authService = useAuthService();
+  console.log("AuthProvider: register function available:", !!authService.register);
 
-  // Proveer los valores del servicio a través del contexto
   return (
     <AuthContext.Provider value={authService}>
       {children}

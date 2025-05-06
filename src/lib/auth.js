@@ -41,88 +41,94 @@ export const auth = {
   },
 
   async register(userData) {
-    console.log("auth.js: register - Starting registration process");
-    console.log("auth.js: Checking if email exists in reclutadores table");
-    
-    const { data: existingRecruiter, error: checkError } = await supabase
-      .from('reclutadores')
-      .select('id', { count: 'exact' })
-      .eq('email', userData.email)
-      .maybeSingle();
+    try {
+      console.log("auth.js: register - Starting registration process");
+      console.log("auth.js: Checking if email exists in reclutadores table");
+      
+      const { data: existingRecruiter, error: checkError } = await supabase
+        .from('reclutadores')
+        .select('id', { count: 'exact' })
+        .eq('email', userData.email)
+        .maybeSingle();
 
-    if (checkError) {
-        console.error('auth.js: Error checking existing recruiter email:', checkError);
-        throw new Error(`Error al verificar el email: ${checkError.message}`);
-    }
-
-    if (existingRecruiter) {
-      console.warn("auth.js: Email already exists in reclutadores table:", userData.email);
-      throw new Error('Este email ya pertenece a un reclutador registrado.');
-    }
-
-    console.log("auth.js: Proceeding with Supabase Auth signup");
-    const { data: { user: authUser }, error: authError } = await supabase.auth.signUp({
-      email: userData.email,
-      password: userData.password,
-      options: {
-        data: {
-          first_name: userData.firstName,
-          last_name: userData.lastName,
-        },
-        emailRedirectTo: `${SITE_URL}/login`
+      if (checkError) {
+          console.error('auth.js: Error checking existing recruiter email:', checkError);
+          throw new Error(`Error al verificar el email: ${checkError.message}`);
       }
-    });
 
-    if (authError) {
-      console.error('auth.js: Supabase Auth signUp error:', authError);
-      if (authError.message.includes('User already registered')) {
-         throw new Error('Este email ya está registrado.');
+      if (existingRecruiter) {
+        console.warn("auth.js: Email already exists in reclutadores table:", userData.email);
+        throw new Error('Este email ya pertenece a un reclutador registrado.');
       }
-      throw new Error('Error al crear la cuenta de autenticación.');
-    }
 
-    if (!authUser) {
-      console.error('auth.js: No auth user returned after successful signup');
-      throw new Error('No se pudo crear el usuario de autenticación.');
-    }
+      console.log("auth.js: Proceeding with Supabase Auth signup");
+      const { data: { user: authUser }, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            first_name: userData.firstName,
+            last_name: userData.lastName,
+          },
+          emailRedirectTo: `${SITE_URL}/login`
+        }
+      });
 
-    console.log("auth.js: Auth signup successful, proceeding to insert recruiter data");
-    const recruiterData = {
-      id: authUser.id,
-      email: userData.email,
-      first_name: userData.firstName,
-      last_name: userData.lastName,
-      company: userData.company,
-      phone: userData.phone,
-      phone_country_code: userData.phoneCountryCode,
-      website: userData.website,
-      country_code: userData.country,
-      industry: userData.industry,
-      company_size: userData.companySize,
-      marketing_consent: userData.marketingConsent,
-      trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      created_at: new Date().toISOString()
-    };
-
-    console.log("auth.js: Inserting recruiter data:", recruiterData);
-    const { data: insertedRecruiter, error: recruiterInsertError } = await supabase
-      .from('reclutadores')
-      .insert([recruiterData])
-      .select()
-      .single();
-
-    if (recruiterInsertError) {
-      console.error('auth.js: Error inserting into reclutadores table:', recruiterInsertError);
-      try {
-        console.warn("auth.js: Failed to insert recruiter data. Auth user might need cleanup:", authUser.id);
-      } catch (deleteError) {
-         console.error('auth.js: Failed to delete auth user after recruiter insert failed:', deleteError);
+      if (authError) {
+        console.error('auth.js: Supabase Auth signUp error:', authError);
+        if (authError.message.includes('User already registered')) {
+           throw new Error('Este email ya está registrado.');
+        }
+        throw new Error('Error al crear la cuenta de autenticación.');
       }
-      throw new Error('Error al guardar los datos del reclutador.');
-    }
 
-    console.log("auth.js: Registration completed successfully");
-    return true;
+      if (!authUser) {
+        console.error('auth.js: No auth user returned after successful signup');
+        throw new Error('No se pudo crear el usuario de autenticación.');
+      }
+
+      console.log("auth.js: Auth signup successful, proceeding to insert recruiter data");
+      const recruiterData = {
+        id: authUser.id,
+        email: userData.email,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        company: userData.company,
+        phone: userData.phone,
+        phone_country_code: userData.phoneCountryCode,
+        website: userData.website,
+        country_code: userData.country,
+        industry: userData.industry,
+        company_size: userData.companySize,
+        marketing_consent: userData.marketingConsent,
+        trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        created_at: new Date().toISOString()
+      };
+
+      console.log("auth.js: Inserting recruiter data:", recruiterData);
+      const { data: insertedRecruiter, error: recruiterInsertError } = await supabase
+        .from('reclutadores')
+        .insert([recruiterData])
+        .select()
+        .single();
+
+      if (recruiterInsertError) {
+        console.error('auth.js: Error inserting into reclutadores table:', recruiterInsertError);
+        try {
+          console.warn("auth.js: Failed to insert recruiter data. Auth user might need cleanup:", authUser.id);
+          // Don't try to delete the auth user, as they need to verify their email
+        } catch (deleteError) {
+           console.error('auth.js: Failed to delete auth user after recruiter insert failed:', deleteError);
+        }
+        throw new Error('Error al guardar los datos del reclutador.');
+      }
+
+      console.log("auth.js: Registration completed successfully");
+      return true;
+    } catch (error) {
+      console.error("auth.js: Registration error:", error);
+      throw error; // Re-throw the error to be caught by the caller
+    }
   },
 
   async logout() {

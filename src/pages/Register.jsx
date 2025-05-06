@@ -7,6 +7,8 @@ import { useAuth } from "../contexts/AuthContext";
 import { Mail, Building2, Phone, Globe, Users, Flag } from 'lucide-react';
 
 function Register() {
+  console.log("Register component rendering");
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -28,6 +30,8 @@ function Register() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  console.log("Register: register function available:", !!register);
+
   const validateWebsite = (website) => {
     if (!website) return true;
     const pattern = /^(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\.[a-zA-Z]{2,})?$/;
@@ -35,65 +39,90 @@ function Register() {
   };
 
   const handleSubmit = async (e) => {
-    console.log("Register.jsx: handleSubmit - INICIO DE FUNCIÓN"); // DEBUG LOG
+    console.log("Register.jsx: handleSubmit - INICIO DE FUNCIÓN");
     e.preventDefault();
     
     if (isSubmitting) {
       console.log("Register.jsx: Form submission blocked - already submitting");
       return;
     }
+
+    if (!register) {
+      console.error("Register.jsx: register function is not available");
+      toast({
+        title: "Error del sistema",
+        description: "No se puede procesar el registro en este momento.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    // Log form data for debugging
     console.log("Register.jsx: Form data being validated:", formData);
     
-    if (!formData.firstName || !formData.lastName || !formData.company || !formData.email || !formData.password || !formData.confirmPassword) {
-      console.log("Register.jsx: Validation failed - missing required fields");
+    // Validate required fields
+    const requiredFields = {
+      firstName: "nombre",
+      lastName: "apellido",
+      company: "empresa",
+      email: "email",
+      password: "contraseña",
+      confirmPassword: "confirmación de contraseña"
+    };
+
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key]) => !formData[key])
+      .map(([_, label]) => label);
+
+    if (missingFields.length > 0) {
+      console.log("Register.jsx: Missing required fields:", missingFields);
       toast({
-        title: "Error",
-        description: "Por favor, completa todos los campos obligatorios",
+        title: "Campos requeridos",
+        description: `Por favor, completa los siguientes campos: ${missingFields.join(", ")}`,
         variant: "destructive",
       });
       return;
     }
 
+    // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      console.log("Register.jsx: Validation failed - passwords don't match");
+      console.log("Register.jsx: Passwords don't match");
       toast({
-        title: "Error",
+        title: "Error en la contraseña",
         description: "Las contraseñas no coinciden",
         variant: "destructive",
       });
       return;
     }
 
-    if (formData.website && !validateWebsite(formData.website)) {
-      console.log("Register.jsx: Validation failed - invalid website format");
+    // Validate password length
+    if (formData.password.length < 8) {
+      console.log("Register.jsx: Password too short");
       toast({
-        title: "Error",
+        title: "Contraseña muy corta",
+        description: "La contraseña debe tener al menos 8 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate website format if provided
+    if (formData.website && !validateWebsite(formData.website)) {
+      console.log("Register.jsx: Invalid website format");
+      toast({
+        title: "Formato de sitio web inválido",
         description: "Por favor, ingresa un sitio web válido (ejemplo: www.empresa.com)",
         variant: "destructive",
       });
       return;
     }
 
-    // Validar formato de email
+    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      console.log("Register.jsx: Validation failed - invalid email format");
+      console.log("Register.jsx: Invalid email format");
       toast({
-        title: "Error",
+        title: "Formato de email inválido",
         description: "Por favor, ingresa un email válido",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validar contraseña
-    if (formData.password.length < 8) {
-      console.log("Register.jsx: Validation failed - password too short");
-      toast({
-        title: "Error",
-        description: "La contraseña debe tener al menos 8 caracteres",
         variant: "destructive",
       });
       return;
@@ -103,23 +132,36 @@ function Register() {
     setIsSubmitting(true);
 
     try {
-      console.log("Register.jsx: Calling register function from useAuth");
-      const success = await register({
-        ...formData,
-        phone: formData.phoneCountryCode ? `${formData.phoneCountryCode}${formData.phone}` : formData.phone
-      });
+      // Remove confirmPassword from the data sent to register
+      const { confirmPassword, ...registrationData } = formData;
+      
+      // Format phone number if both country code and number are provided
+      const formattedData = {
+        ...registrationData,
+        phone: registrationData.phoneCountryCode && registrationData.phone 
+          ? `${registrationData.phoneCountryCode}${registrationData.phone}`
+          : registrationData.phone
+      };
+      
+      console.log("Register.jsx: Calling register function with data:", formattedData);
+      const success = await register(formattedData);
 
       console.log("Register.jsx: Registration result:", success);
       if (success) {
-         console.log("Register.jsx: Registration successful, waiting for email confirmation");
+         console.log("Register.jsx: Registration successful");
       } else {
          console.error("Register.jsx: Registration failed without throwing error");
+         toast({
+           title: "Error en el registro",
+           description: "No se pudo completar el registro. Por favor, intenta nuevamente.",
+           variant: "destructive",
+         });
       }
     } catch (error) {
       console.error("Register.jsx: Error during registration:", error);
       toast({
-        title: "Error inesperado",
-        description: "Ocurrió un error inesperado durante el registro.",
+        title: "Error en el registro",
+        description: error.message || "Ocurrió un error inesperado durante el registro.",
         variant: "destructive",
       });
     } finally {

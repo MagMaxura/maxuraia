@@ -65,24 +65,35 @@ module.exports = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: 0 },
         },
-        "pulse": {
-          "0%, 100%": { opacity: 0.5 },
-          "50%": { opacity: 1 },
-        }
+        "slide-in-from-top-full": {
+          "0%": { transform: "translateY(-100%)" },
+          "100%": { transform: "translateY(0)" },
+        },
+        "slide-in-from-bottom-full": {
+          "0%": { transform: "translateY(100%)" },
+          "100%": { transform: "translateY(0)" },
+        },
+        "slide-out-to-right-full": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(100%)" },
+        },
+        "fade-in": {
+          "0%": { opacity: 0 },
+          "100%": { opacity: 1 },
+        },
+        "fade-out": {
+          "0%": { opacity: 1 },
+          "100%": { opacity: 0 },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "pulse": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-      },
-      boxShadow: {
-         'text': '0 2px 4px rgba(0, 0, 0, 0.3)',
-         'lg': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-         'xl': '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-         '2xl': '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-      },
-      animationDelay: {
-         '2000': '2000ms',
+        "slide-in-from-top": "slide-in-from-top-full 0.2s ease-out",
+        "slide-in-from-bottom": "slide-in-from-bottom-full 0.2s ease-out",
+        "slide-out-to-right": "slide-out-to-right-full 0.2s ease-out",
+        "fade-in": "fade-in 0.2s ease-out",
+        "fade-out": "fade-out 0.2s ease-out",
       },
     },
   },

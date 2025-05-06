@@ -1,15 +1,7 @@
-
 import { useState, useEffect } from "react"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
-
-const actionTypes = {
-  ADD_TOAST: "ADD_TOAST",
-  UPDATE_TOAST: "UPDATE_TOAST",
-  DISMISS_TOAST: "DISMISS_TOAST",
-  REMOVE_TOAST: "REMOVE_TOAST",
-}
+const TOAST_REMOVE_DELAY = 5000
 
 let count = 0
 
@@ -37,24 +29,11 @@ export function useToast() {
   })
 
   useEffect(() => {
-    const timeouts = []
-
-    state.toasts.forEach((toast) => {
-      if (toast.duration === Infinity) {
-        return
-      }
-
-      const timeout = setTimeout(() => {
-        toast.dismiss()
-      }, toast.duration || 5000)
-
-      timeouts.push(timeout)
-    })
-
+    handlers.add(addToast)
     return () => {
-      timeouts.forEach((timeout) => clearTimeout(timeout))
+      handlers.delete(addToast)
     }
-  }, [state.toasts])
+  }, [])
 
   const addToast = ({ ...props }) => {
     const id = generateId()
@@ -80,6 +59,13 @@ export function useToast() {
       ].slice(0, TOAST_LIMIT),
     }))
 
+    // Auto-dismiss after delay
+    const timeout = setTimeout(() => {
+      dismiss()
+    }, props.duration || TOAST_REMOVE_DELAY)
+
+    toastTimeouts.set(id, timeout)
+
     return {
       id,
       dismiss,
@@ -88,11 +74,13 @@ export function useToast() {
   }
 
   useEffect(() => {
-    handlers.add(addToast)
+    const timeouts = Array.from(toastTimeouts.values())
+    
     return () => {
-      handlers.delete(addToast)
+      timeouts.forEach(clearTimeout)
+      toastTimeouts.clear()
     }
-  }, [])
+  }, [state.toasts])
 
   return {
     toast: addToast,
