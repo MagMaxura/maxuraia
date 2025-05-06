@@ -82,14 +82,10 @@ export function useAuthService() {
 
     const checkInitialSession = async () => {
       console.log("useAuthService: Checking initial session...");
-      // setLoading(true) y setAuthChecked(false) serán manejados por handleAuthChange
-      // o al inicio de handleAuthChange si es necesario.
-      // Por ahora, handleAuthChange ya establece setLoading(true) al inicio.
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error("useAuthService: Error getting initial session:", error);
-          // Llamar a handleAuthChange con un evento específico o el estándar 'INITIAL_SESSION'
           await handleAuthChange('INITIAL_SESSION_ERROR', null);
         } else {
           await handleAuthChange('INITIAL_SESSION_LOADED', session);
@@ -98,8 +94,8 @@ export function useAuthService() {
         console.error("useAuthService: Critical error during initial session check:", e);
         auth.clearAuthUser();
         setUser(null);
-        setLoading(false); // Asegurar que la carga termine
-        setAuthChecked(true); // Marcar como comprobado, aunque sea con error
+        setLoading(false);
+        setAuthChecked(true);
         toast({
           title: "Error Crítico de Sesión",
           description: "No se pudo verificar el estado de autenticación inicial.",
@@ -108,11 +104,11 @@ export function useAuthService() {
       }
     };
 
-    checkInitialSession(); // Restaurar la llamada a la comprobación inicial
+    checkInitialSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log(`useAuthService: onAuthStateChange event: ${event}, session present: ${!!session}`);
-      await handleAuthChange(event, session); // handleAuthChange es memoizada
+      await handleAuthChange(event, session);
     });
 
     return () => {
@@ -123,19 +119,23 @@ export function useAuthService() {
         console.warn("useAuthService: Could not unsubscribe from auth listener on cleanup.");
       }
     };
-  }, []); // Array de dependencias vacío para que se ejecute solo al montar/desmontar
+  }, [handleAuthChange]); // Added handleAuthChange to dependencies since it's used in the effect
 
   const register = async (formData) => {
-    console.log("useAuthService.js: register - Función llamada con datos:", formData); // DEBUG LOG
+    console.log("useAuthService.js: register function called with data:", formData);
     setLoading(true);
     try {
+      console.log("useAuthService.js: Calling auth.register");
       const success = await auth.register(formData);
+      console.log("useAuthService.js: auth.register result:", success);
+      
       if (success) {
+        console.log("useAuthService.js: Registration successful, showing toast");
         toast({
           title: "¡Registro casi listo!",
           description: "Hemos enviado un email de confirmación a tu correo.",
         });
-        // Navigate to confirmation page, passing user details if needed
+        console.log("useAuthService.js: Navigating to confirmation page");
         navigate('/register-confirmation', {
           state: {
             userData: {
@@ -148,10 +148,11 @@ export function useAuthService() {
         });
         return true;
       } else {
-         // If auth.register returns false without throwing, handle it
+         console.error("useAuthService.js: Registration failed without throwing error");
          throw new Error("El registro falló por una razón desconocida.");
       }
     } catch (error) {
+      console.error("useAuthService.js: Registration error:", error);
       toast({
         title: "Error en el registro",
         description: error.message || "Hubo un problema al procesar tu registro.",
@@ -159,6 +160,7 @@ export function useAuthService() {
       });
       return false;
     } finally {
+      console.log("useAuthService.js: Registration process completed");
       setLoading(false);
     }
   };
@@ -168,15 +170,12 @@ export function useAuthService() {
     try {
       const success = await auth.login(credentials);
       if (success) {
-         // The onAuthStateChange listener will handle user state update and navigation
          toast({
            title: "¡Bienvenido!",
            description: "Has iniciado sesión correctamente.",
          });
-         // No need to navigate here, listener does it.
          return true;
       } else {
-         // Should not happen if auth.login throws errors correctly
          throw new Error("Inicio de sesión fallido.");
       }
     } catch (error) {
@@ -194,8 +193,8 @@ export function useAuthService() {
         description: description,
         variant: "destructive",
       });
-      auth.clearAuthUser(); // Ensure user state is cleared on failed login
-      setUser(null); // Update local state immediately too
+      auth.clearAuthUser();
+      setUser(null);
       return false;
     } finally {
       setLoading(false);
@@ -203,15 +202,13 @@ export function useAuthService() {
   };
 
   const logout = async () => {
-    setLoading(true); // Set loading true before calling auth.logout
+    setLoading(true);
     try {
       await auth.logout();
-      // The onAuthStateChange listener (event SIGNED_OUT) will handle state update and navigation
       toast({
         title: "Sesión cerrada",
         description: "Has cerrado sesión correctamente.",
       });
-      // No need to navigate here, listener does it.
     } catch (error) {
       toast({
         title: "Error",
@@ -219,9 +216,8 @@ export function useAuthService() {
         variant: "destructive",
       });
        console.error("Logout error:", error);
-       setLoading(false); // Ensure loading is false if logout itself fails
+       setLoading(false);
     }
-    // setLoading(false) will be handled by the auth state change listener
   };
 
   const resetPassword = async (email) => {
@@ -245,16 +241,14 @@ export function useAuthService() {
     }
   };
 
-  // Return the state and methods
   return {
     user,
-    // Loading is true if the internal loading flag is true OR the initial check hasn't finished
     loading: loading || !authChecked,
-    authChecked, // Expose this if needed elsewhere
+    authChecked,
     login,
     logout,
     register,
     resetPassword,
-    isAuthenticated: !!user, // Derived state
+    isAuthenticated: !!user,
   };
 }

@@ -35,12 +35,19 @@ function Register() {
   };
 
   const handleSubmit = async (e) => {
-    console.log("Register.jsx: handleSubmit - INICIO DE FUNCIÓN"); // DEBUG LOG - MOVIDO AL INICIO
+    console.log("Register.jsx: handleSubmit - INICIO DE FUNCIÓN"); // DEBUG LOG
     e.preventDefault();
     
-    if (isSubmitting) return;
+    if (isSubmitting) {
+      console.log("Register.jsx: Form submission blocked - already submitting");
+      return;
+    }
+    
+    // Log form data for debugging
+    console.log("Register.jsx: Form data being validated:", formData);
     
     if (!formData.firstName || !formData.lastName || !formData.company || !formData.email || !formData.password || !formData.confirmPassword) {
+      console.log("Register.jsx: Validation failed - missing required fields");
       toast({
         title: "Error",
         description: "Por favor, completa todos los campos obligatorios",
@@ -50,6 +57,7 @@ function Register() {
     }
 
     if (formData.password !== formData.confirmPassword) {
+      console.log("Register.jsx: Validation failed - passwords don't match");
       toast({
         title: "Error",
         description: "Las contraseñas no coinciden",
@@ -59,6 +67,7 @@ function Register() {
     }
 
     if (formData.website && !validateWebsite(formData.website)) {
+      console.log("Register.jsx: Validation failed - invalid website format");
       toast({
         title: "Error",
         description: "Por favor, ingresa un sitio web válido (ejemplo: www.empresa.com)",
@@ -70,6 +79,7 @@ function Register() {
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
+      console.log("Register.jsx: Validation failed - invalid email format");
       toast({
         title: "Error",
         description: "Por favor, ingresa un email válido",
@@ -80,6 +90,7 @@ function Register() {
 
     // Validar contraseña
     if (formData.password.length < 8) {
+      console.log("Register.jsx: Validation failed - password too short");
       toast({
         title: "Error",
         description: "La contraseña debe tener al menos 8 caracteres",
@@ -88,27 +99,31 @@ function Register() {
       return;
     }
 
+    console.log("Register.jsx: All validations passed, proceeding with registration");
     setIsSubmitting(true);
 
     try {
+      console.log("Register.jsx: Calling register function from useAuth");
       const success = await register({
         ...formData,
         phone: formData.phoneCountryCode ? `${formData.phoneCountryCode}${formData.phone}` : formData.phone
       });
 
+      console.log("Register.jsx: Registration result:", success);
       if (success) {
-         console.log("Registro iniciado, esperando confirmación de email.");
+         console.log("Register.jsx: Registration successful, waiting for email confirmation");
       } else {
-         console.error("El proceso de registro falló.");
+         console.error("Register.jsx: Registration failed without throwing error");
       }
     } catch (error) {
-      console.error("Error inesperado en el componente Register:", error);
+      console.error("Register.jsx: Error during registration:", error);
       toast({
         title: "Error inesperado",
         description: "Ocurrió un error inesperado durante el registro.",
         variant: "destructive",
       });
     } finally {
+      console.log("Register.jsx: Registration process completed, resetting submit state");
       setIsSubmitting(false);
     }
   };
