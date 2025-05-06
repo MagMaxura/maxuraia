@@ -36,6 +36,7 @@ function Register() {
   };
 
   const handleSubmit = async (e) => {
+console.log("Register.jsx: handleSubmit - INICIO DE FUNCIÓN"); // DEBUG LOG - MOVIDO AL INICIO
     e.preventDefault();
     
     if (isSubmitting) return;
@@ -91,11 +92,10 @@ function Register() {
     setIsSubmitting(true);
 
     try {
-console.log("Register.jsx: handleSubmit - Intentando llamar a register con datos:", formData); // DEBUG LOG
-      const success = await register({
-        ...formData,
-        phone: formData.phoneCountryCode ? `${formData.phoneCountryCode}${formData.phone}` : formData.phone
-      });
+const success = await register({
+  ...formData,
+  phone: formData.phoneCountryCode ? `${formData.phoneCountryCode}${formData.phone}` : formData.phone
+});
 
       // 'success' indica si auth.register en lib/auth.js se completó (signUp + insert)
       // useAuthService ya maneja el toast de "email enviado" y la navegación a /register-confirmation si success es true
