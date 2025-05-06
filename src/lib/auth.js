@@ -94,9 +94,10 @@ export const auth = {
       first_name: userData.firstName,
       last_name: userData.lastName,
       company: userData.company,
-      phone: userData.phone,
+      phone: userData.phone, // Use the phone number directly from formData
+      phone_country_code: userData.phoneCountryCode, // Add and use the country code from formData
       website: userData.website,
-      country_code: userData.country, // Ensure this matches the form field name
+      country_code: userData.country, // This is for the general country, separate from phone code
       industry: userData.industry,
       company_size: userData.companySize,
       marketing_consent: userData.marketingConsent,
