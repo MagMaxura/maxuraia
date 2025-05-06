@@ -79,30 +79,28 @@ export function useAuthService() {
 
   // Effect for initial session check and auth state listener
   useEffect(() => {
-    console.log("useAuthService: Simplified auth effect running (should be once on mount).");
-    // setLoading(true); // Temporarily disable direct state sets here to isolate loop
-    // setAuthChecked(false);
+    console.log("useAuthService: Mount effect for session check and listener setup.");
 
-    // TEMPORARILY COMMENT OUT INITIAL SESSION CHECK TO ISOLATE LOOP
-    /*
     const checkInitialSession = async () => {
       console.log("useAuthService: Checking initial session...");
-      setLoading(true); // Set loading true when check starts
-      setAuthChecked(false);
+      // setLoading(true) y setAuthChecked(false) serán manejados por handleAuthChange
+      // o al inicio de handleAuthChange si es necesario.
+      // Por ahora, handleAuthChange ya establece setLoading(true) al inicio.
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error("useAuthService: Error getting initial session:", error);
-          await handleAuthChange('INITIAL_SESSION', null);
+          // Llamar a handleAuthChange con un evento específico o el estándar 'INITIAL_SESSION'
+          await handleAuthChange('INITIAL_SESSION_ERROR', null);
         } else {
-          await handleAuthChange('INITIAL_SESSION', session);
+          await handleAuthChange('INITIAL_SESSION_LOADED', session);
         }
       } catch (e) {
         console.error("useAuthService: Critical error during initial session check:", e);
         auth.clearAuthUser();
         setUser(null);
-        setLoading(false);
-        setAuthChecked(true);
+        setLoading(false); // Asegurar que la carga termine
+        setAuthChecked(true); // Marcar como comprobado, aunque sea con error
         toast({
           title: "Error Crítico de Sesión",
           description: "No se pudo verificar el estado de autenticación inicial.",
@@ -110,34 +108,23 @@ export function useAuthService() {
         });
       }
     };
-    checkInitialSession();
-    */
 
-    // We still need to set initial state if not checking session immediately
-    // This will be handled by handleAuthChange if it's called by listener with no session
-    // For now, let's assume initial state is no user, not loading after a brief moment
-    // This is a debug step, not final logic
-    const initialLoadTimeout = setTimeout(() => {
-        if (loading) setLoading(false); // If still loading after a bit, set to false
-        if (!authChecked) setAuthChecked(true); // If not checked, mark as checked
-    }, 500);
-
+    checkInitialSession(); // Restaurar la llamada a la comprobación inicial
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`useAuthService: onAuthStateChange event: ${event}, session:`, session);
-      await handleAuthChange(event, session); // handleAuthChange will manage setLoading/setAuthChecked
+      console.log(`useAuthService: onAuthStateChange event: ${event}, session present: ${!!session}`);
+      await handleAuthChange(event, session); // handleAuthChange es memoizada
     });
 
     return () => {
-      clearTimeout(initialLoadTimeout);
-      if (authListener && typeof authListener.subscription?.unsubscribe === 'function') {
-        console.log("useAuthService: Unsubscribing from auth listener (simplified effect).");
+      console.log("useAuthService: Unsubscribing from auth listener (mount effect cleanup).");
+      if (authListener && authListener.subscription && typeof authListener.subscription.unsubscribe === 'function') {
         authListener.subscription.unsubscribe();
       } else {
-        console.warn("useAuthService: Could not unsubscribe from auth listener (simplified effect).");
+        console.warn("useAuthService: Could not unsubscribe from auth listener on cleanup.");
       }
     };
-  }, []); // RUNS ONCE ON MOUNT AND UNMOUNT
+  }, []); // Array de dependencias vacío para que se ejecute solo al montar/desmontar
 
   const register = async (formData) => {
 console.log("useAuthService.js: register - Función llamada con datos:", formData); // DEBUG LOG
