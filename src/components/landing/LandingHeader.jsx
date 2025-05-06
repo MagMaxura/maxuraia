@@ -15,6 +15,9 @@ function LandingHeader() {
               <span className="text-2xl font-bold text-white">EmploySmart IA</span>
             </Link>
           </div>
+{/* --- DEBUG VERSION INDICATOR --- */}
+            <span className="text-xs text-yellow-300 ml-4">(v:debug-logs)</span>
+            {/* --- END DEBUG --- */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Link to="/login"> {/* Link to Login page */}
               <Button variant="ghost" className="text-white hover:bg-white/20 px-3 sm:px-4">
