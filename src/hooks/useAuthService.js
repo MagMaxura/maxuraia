@@ -79,17 +79,20 @@ export function useAuthService() {
 
   // Effect for initial session check and auth state listener
   useEffect(() => {
-    console.log("useAuthService: Main auth effect running.");
-    setLoading(true);
-    setAuthChecked(false);
+    console.log("useAuthService: Simplified auth effect running (should be once on mount).");
+    // setLoading(true); // Temporarily disable direct state sets here to isolate loop
+    // setAuthChecked(false);
 
+    // TEMPORARILY COMMENT OUT INITIAL SESSION CHECK TO ISOLATE LOOP
+    /*
     const checkInitialSession = async () => {
       console.log("useAuthService: Checking initial session...");
+      setLoading(true); // Set loading true when check starts
+      setAuthChecked(false);
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error("useAuthService: Error getting initial session:", error);
-          // Pass null session to handleAuthChange to ensure consistent state update
           await handleAuthChange('INITIAL_SESSION', null);
         } else {
           await handleAuthChange('INITIAL_SESSION', session);
@@ -97,8 +100,7 @@ export function useAuthService() {
       } catch (e) {
         console.error("useAuthService: Critical error during initial session check:", e);
         auth.clearAuthUser();
-        setUser(null); // Ensure user state is cleared
-        // Ensure loading and authChecked are set even on critical error
+        setUser(null);
         setLoading(false);
         setAuthChecked(true);
         toast({
@@ -108,28 +110,34 @@ export function useAuthService() {
         });
       }
     };
-
     checkInitialSession();
+    */
+
+    // We still need to set initial state if not checking session immediately
+    // This will be handled by handleAuthChange if it's called by listener with no session
+    // For now, let's assume initial state is no user, not loading after a brief moment
+    // This is a debug step, not final logic
+    const initialLoadTimeout = setTimeout(() => {
+        if (loading) setLoading(false); // If still loading after a bit, set to false
+        if (!authChecked) setAuthChecked(true); // If not checked, mark as checked
+    }, 500);
+
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log(`useAuthService: onAuthStateChange event: ${event}`);
-      // The handleAuthChange function is already memoized and will handle state updates
-      await handleAuthChange(event, session);
+      console.log(`useAuthService: onAuthStateChange event: ${event}, session:`, session);
+      await handleAuthChange(event, session); // handleAuthChange will manage setLoading/setAuthChecked
     });
 
     return () => {
+      clearTimeout(initialLoadTimeout);
       if (authListener && typeof authListener.subscription?.unsubscribe === 'function') {
-        console.log("useAuthService: Unsubscribing from auth listener.");
+        console.log("useAuthService: Unsubscribing from auth listener (simplified effect).");
         authListener.subscription.unsubscribe();
       } else {
-        console.warn("useAuthService: Could not unsubscribe from auth listener.");
+        console.warn("useAuthService: Could not unsubscribe from auth listener (simplified effect).");
       }
     };
-    // handleAuthChange is memoized with useCallback.
-    // supabase instance is stable.
-    // auth (the object from lib/auth.js) is stable.
-    // setUser, setLoading, setAuthChecked, toast are stable setters from useState/useToast.
-  }, [handleAuthChange]); // Keep handleAuthChange as it's the core logic handler
+  }, []); // RUNS ONCE ON MOUNT AND UNMOUNT
 
   const register = async (formData) => {
 console.log("useAuthService.js: register - Función llamada con datos:", formData); // DEBUG LOG
