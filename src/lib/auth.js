@@ -51,14 +51,23 @@ export const auth = {
 
   async register(userData) {
     // Check if email already exists in reclutadores table
-    const { data: existingRecruiter } = await supabase
+    const { data: existingRecruiter, error: checkError } = await supabase
       .from('reclutadores')
-      .select('id')
+      .select('id', { count: 'exact' }) // Use count for efficiency if just checking existence
       .eq('email', userData.email)
-      .maybeSingle();
+      .maybeSingle(); // maybeSingle is fine, but check for error first
+
+    // Explicitly check for errors during the select query
+    if (checkError) {
+        console.error('Error checking existing recruiter email:', checkError);
+        // Provide a more specific error message if possible, otherwise a generic one
+        throw new Error(`Error al verificar el email: ${checkError.message}`);
+    }
 
     if (existingRecruiter) {
-      throw new Error('Este email ya está registrado en la tabla de reclutadores.');
+      // Consider if this check is still needed if Supabase Auth handles unique emails
+      console.warn("Attempted registration with email already in reclutadores table:", userData.email);
+      throw new Error('Este email ya pertenece a un reclutador registrado.');
     }
 
     // Proceed with Supabase Auth signup
