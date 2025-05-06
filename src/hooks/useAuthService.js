@@ -35,7 +35,7 @@ export function useAuthService() {
         } else {
           console.error("Recruiter data not found for authenticated user:", currentUser.email);
           // User exists in Supabase Auth but not in 'reclutadores'. Log them out.
-          await auth.logout(); // This will trigger another auth change (SIGNED_OUT)
+          // await auth.logout(); // TEMPORARILY COMMENTED OUT TO BREAK POTENTIAL LOOP
           setUser(null); // Explicitly set user null here too
           toast({
             title: "Error de cuenta",
