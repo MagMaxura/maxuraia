@@ -1,19 +1,52 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { Button } from "../components/ui/button";
+import { useToast } from "../components/ui/use-toast";
+import { supabase } from "../lib/supabase";
 
 function ResetPassword() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        setHasSession(!!session);
+      } catch (error) {
+        console.error('Error checking session:', error);
+        toast({
+          title: "Error",
+          description: "No se pudo verificar tu sesión. Por favor, solicita un nuevo enlace de restablecimiento.",
+          variant: "destructive",
+        });
+        navigate('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+  }, [navigate, toast]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!hasSession) {
+      toast({
+        title: "Error",
+        description: "No hay una sesión activa. Por favor, solicita un nuevo enlace de restablecimiento.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
 
     if (newPassword !== confirmPassword) {
       toast({
@@ -24,27 +57,69 @@ function ResetPassword() {
       return;
     }
 
+    if (newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "La contraseña debe tener al menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('stronger password')) {
+          throw new Error('La contraseña es demasiado débil. Usa una combinación de letras, números y símbolos.');
+        }
+        throw error;
+      }
 
       toast({
         title: "¡Éxito!",
         description: "Tu contraseña ha sido actualizada correctamente",
       });
       
+      // Sign out after password change for security
+      await supabase.auth.signOut();
       navigate("/login");
     } catch (error) {
+      console.error('Password update error:', error);
       toast({
         title: "Error",
-        description: "No se pudo actualizar la contraseña. Por favor, intenta nuevamente.",
+        description: error.message || "No se pudo actualizar la contraseña. Por favor, intenta nuevamente.",
         variant: "destructive",
       });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-600 to-blue-800">
+        <div className="text-white text-xl">Cargando...</div>
+      </div>
+    );
+  }
+
+  if (!hasSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-600 to-blue-800">
+        <div className="text-center text-white">
+          <h2 className="text-2xl font-bold mb-4">Sesión no válida</h2>
+          <p className="mb-4">El enlace de restablecimiento de contraseña ha expirado o no es válido.</p>
+          <Button
+            onClick={() => navigate('/login')}
+            className="bg-white text-blue-600 hover:bg-white/90"
+          >
+            Volver al inicio de sesión
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-blue-600 to-blue-800">

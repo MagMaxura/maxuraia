@@ -7,37 +7,54 @@ export const auth = {
   user: null,
 
   async login(credentials) {
-    const recruiterExists = await getRecruiterByEmail(credentials.email);
-    if (!recruiterExists) {
-      throw new Error('Email no registrado');
-    }
-
-    const { data: { user: authUser }, error: signInError } = await supabase.auth.signInWithPassword({
-      email: credentials.email,
-      password: credentials.password,
-    });
-
-    if (signInError) {
-      console.error('Auth signIn error:', signInError);
-      if (signInError.message.includes('Invalid login credentials')) {
-         throw new Error('Credenciales inválidas');
+    try {
+      const recruiterExists = await getRecruiterByEmail(credentials.email);
+      if (!recruiterExists) {
+        throw new Error('Email no registrado');
       }
-      throw new Error('Error al iniciar sesión');
+
+      const { data: { user: authUser }, error: signInError } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password,
+      });
+
+      if (signInError) {
+        console.error('Auth signIn error:', signInError);
+        if (signInError.message.includes('Invalid login credentials')) {
+           throw new Error('Credenciales inválidas');
+        }
+        throw new Error('Error al iniciar sesión');
+      }
+
+      if (!authUser) {
+        throw new Error('Usuario no encontrado después del inicio de sesión exitoso');
+      }
+
+      const fullUserData = {
+        ...authUser,
+        ...recruiterExists, 
+      };
+
+      this.user = fullUserData;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(fullUserData));
+
+      // Get the current session to ensure it's properly set
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Error getting session after login:', sessionError);
+        throw new Error('Error al obtener la sesión');
+      }
+
+      if (!session) {
+        console.error('No session found after login');
+        throw new Error('Error al establecer la sesión');
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-
-    if (!authUser) {
-      throw new Error('Usuario no encontrado después del inicio de sesión exitoso');
-    }
-
-    const fullUserData = {
-      ...authUser,
-      ...recruiterExists, 
-    };
-
-    this.user = fullUserData;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(fullUserData));
-    
-    return true;
   },
 
   async register(userData) {
@@ -70,7 +87,7 @@ export const auth = {
             first_name: userData.firstName,
             last_name: userData.lastName,
           },
-          emailRedirectTo: `${SITE_URL}/login`
+          emailRedirectTo: `${SITE_URL}/auth/callback`
         }
       });
 
@@ -143,7 +160,7 @@ export const auth = {
 
   async resetPassword(email) {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${SITE_URL}/reset-password`,
+      redirectTo: `${SITE_URL}/auth/callback?type=recovery`,
     });
     
     if (error) {
