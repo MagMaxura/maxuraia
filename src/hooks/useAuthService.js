@@ -46,17 +46,18 @@ export function useAuthService() {
         // Podríamos mostrar un toast aquí si obtener el perfil es crítico en este punto
         // toast({ title: "Advertencia", description: "No se pudo cargar completamente el perfil.", variant: "warning" });
       } finally {
-         if (mounted) setAuthChecked(true); // Asegurarse de que mounted sigue siendo true
+         // if (mounted) setAuthChecked(true); // Eliminar check 'mounted'
+         setAuthChecked(true); // Establecer authChecked directamente
       }
     } else {
       // No hay sesión de Supabase
       console.log("useAuthService: No user session found or user logged out.");
       auth.clearAuthUser(); // Limpiar la instancia singleton
       // localStorage.removeItem('auth_user'); // Limpiar localStorage si se usa
-      if (mounted) {
+      // if (mounted) { // Eliminar check 'mounted'
          setUser(null);
          setAuthChecked(true);
-      }
+      // }
       // Ya no manejamos la navegación de SIGNED_OUT aquí
       // if (event === 'SIGNED_OUT' && window.location.pathname !== '/login') {
       //    navigate("/login", { replace: true });
