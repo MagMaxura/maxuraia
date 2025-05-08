@@ -23,13 +23,31 @@ export function AuthProvider({ children }) {
 
   // Combinar el servicio base con las funciones específicas del perfil, memorizando el valor
   const value = useMemo(() => ({
-    ...authService, // Incluye user, login, logout, register, loading, authChecked, isAuthenticated etc. del hook
-    // Añadir funciones estáticas directamente desde auth.js
+    // Valores y funciones del hook useAuthService
+    user: authService.user,
+    loading: authService.loading,
+    authChecked: authService.authChecked,
+    isAuthenticated: authService.isAuthenticated,
+    login: authService.login,
+    logout: authService.logout,
+    register: authService.register, // signUp inicial
+    resetPassword: authService.resetPassword,
+    // Funciones añadidas directamente desde auth.js
     saveRecruiterProfile: authFunctions.saveRecruiterProfile,
     getRecruiterProfile: authFunctions.getRecruiterProfile,
     getRecruiterByEmail: authFunctions.getRecruiterByEmail
-    // Asegúrate de que las funciones en auth.js no dependan de 'this' si las llamas así directamente
-  }), [authService]); // El valor del contexto solo cambiará si el objeto authService cambia
+  }), [
+       authService.user,
+       authService.loading,
+       authService.authChecked,
+       authService.isAuthenticated,
+       authService.login,
+       authService.logout,
+       authService.register,
+       authService.resetPassword
+       // Las funciones importadas de auth.js (saveRecruiterProfile, etc.) no necesitan ser dependencias
+       // porque son estáticas (asumiendo que no usan 'this' internamente)
+     ]); // Depender de los valores individuales estabiliza el contexto
 
   return (
     <AuthContext.Provider value={value}>
