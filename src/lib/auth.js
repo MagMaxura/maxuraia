@@ -104,6 +104,18 @@ export const auth = {
         throw new Error('No se pudo crear el usuario de autenticación.');
       }
 
+      // NUEVO LOG PARA DIAGNÓSTICO
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('auth.js: Error getting session immediately after signup:', sessionError);
+      } else if (sessionData.session) {
+        console.log('auth.js: Session active immediately after signup. User ID:', sessionData.session.user.id);
+        console.log('auth.js: Token:', sessionData.session.access_token ? 'Exists' : 'DOES NOT EXIST');
+      } else {
+        console.warn('auth.js: No active session found immediately after signup.');
+      }
+      // FIN NUEVO LOG
+
       console.log("auth.js: Auth signup successful, proceeding to insert recruiter data");
       const recruiterData = {
         id: authUser.id,
