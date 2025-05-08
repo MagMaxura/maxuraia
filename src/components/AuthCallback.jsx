@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useToast } from './ui/use-toast';
 import { useAuth } from '../contexts/AuthContext'; // Importar useAuth
+import { Button } from './ui/button'; // Importar Button
 
 export default function AuthCallback() {
   const [searchParams] = useSearchParams();
