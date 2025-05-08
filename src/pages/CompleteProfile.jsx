@@ -282,10 +282,17 @@ function CompleteProfile() {
                 onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
                 disabled={isSubmitting}
               >
-                 <option value="" className="bg-blue-800">Selecciona una industria</option>
-                 {/* Añadir opciones */}
-              </select>
-            </div>
+               <option value="" className="bg-blue-800">Selecciona una industria</option>
+               <option value="tecnologia" className="bg-blue-800">Tecnología</option>
+               <option value="finanzas" className="bg-blue-800">Finanzas</option>
+               <option value="salud" className="bg-blue-800">Salud</option>
+               <option value="educacion" className="bg-blue-800">Educación</option>
+               <option value="manufactura" className="bg-blue-800">Manufactura</option>
+               <option value="retail" className="bg-blue-800">Retail</option>
+               <option value="servicios" className="bg-blue-800">Servicios</option>
+               <option value="otros" className="bg-blue-800">Otros</option>
+            </select>
+          </div>
 
             {/* Tamaño de la empresa */}
             <div>
@@ -299,7 +306,11 @@ function CompleteProfile() {
                   disabled={isSubmitting}
                 >
                   <option value="" className="bg-blue-800">Selecciona el tamaño</option>
-                  {/* Añadir opciones */}
+                  <option value="1-10" className="bg-blue-800">1-10 empleados</option>
+                  <option value="11-50" className="bg-blue-800">11-50 empleados</option>
+                  <option value="51-200" className="bg-blue-800">51-200 empleados</option>
+                  <option value="201-500" className="bg-blue-800">201-500 empleados</option>
+                  <option value="501+" className="bg-blue-800">501+ empleados</option>
                 </select>
               </div>
             </div>

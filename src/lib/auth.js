@@ -186,18 +186,18 @@ export const auth = {
     const { data: updatedRecruiter, error: recruiterUpdateError } = await supabase
       .from('reclutadores')
       .update(dataToUpdate)
-      .eq('id', userId) // Asegurarse de actualizar solo el registro del usuario correcto
-      .select()
-      .single();
+      .eq('id', userId); // Eliminar .select().single()
 
+    // Solo necesitamos verificar si hubo un error en la operación UPDATE
     if (recruiterUpdateError) {
       console.error('auth.js: Error updating recruiter profile in reclutadores table:', recruiterUpdateError);
       // Podríamos verificar errores específicos, como violación de RLS (si la política UPDATE falla)
       throw new Error('Error al actualizar los datos del perfil del reclutador.');
     }
 
-    console.log("auth.js: Recruiter profile data updated successfully:", updatedRecruiter);
-    return updatedRecruiter;
+    console.log("auth.js: Recruiter profile data updated successfully for user:", userId);
+    // Ya no devolvemos los datos actualizados, solo indicamos éxito implícito (sin error)
+    return true; // O devolver void
   },
 
   async logout() {
