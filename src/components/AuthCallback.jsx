@@ -73,6 +73,7 @@ export default function AuthCallback() {
         try {
           console.log("AuthCallback: Checking for existing profile for user ID:", userId);
           const existingProfile = await getRecruiterProfile(userId);
+          console.log("AuthCallback: Result of getRecruiterProfile:", existingProfile); // Log del resultado
 
           if (existingProfile) {
             // El usuario ya tiene perfil, redirigir al dashboard
@@ -93,9 +94,14 @@ export default function AuthCallback() {
                 email: currentSession.user.email, // Tomar email de la sesión
                 // Otros campos se insertarán como NULL o sus defaults de DB
               };
+              console.log("AuthCallback: Calling saveRecruiterProfile with:", basicProfileData); // Log antes de llamar
               await saveRecruiterProfile(basicProfileData); // saveRecruiterProfile hace INSERT
               
-              console.log("AuthCallback: Basic profile created successfully. Redirecting to complete profile.");
+              // Verificar si realmente se creó (opcional, pero bueno para depurar)
+              const newlyCreatedProfile = await getRecruiterProfile(userId);
+              console.log("AuthCallback: Profile check after attempting insert:", newlyCreatedProfile);
+
+              console.log("AuthCallback: Basic profile creation attempt finished. Redirecting to complete profile.");
               toast({
                 title: "¡Email verificado!",
                 description: "Ahora completa tu perfil para continuar.",

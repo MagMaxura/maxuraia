@@ -154,14 +154,16 @@ export const auth = {
     // Si 'email' ya está en auth.users y no quieres duplicarlo o es manejado por la FK, considera su manejo.
     // Por ahora, lo incluimos asumiendo que la tabla reclutadores tiene una columna email.
 
-    console.log("auth.js: Inserting recruiter profile data:", recruiterDataToInsert);
+    console.log("auth.js: Inserting recruiter profile data (saveRecruiterProfile):", recruiterDataToInsert);
     const { data: insertedRecruiter, error: recruiterInsertError } = await supabase
       .from('reclutadores')
       .insert([recruiterDataToInsert])
-      .select()
-      .single();
+      .select() // Mantenemos select() aquí para confirmar la inserción si es posible
+      .single(); // Mantenemos single() aquí para confirmar la inserción si es posible
 
     if (recruiterInsertError) {
+      // Log detallado del error de INSERT
+      console.error('auth.js: Error during INSERT in saveRecruiterProfile:', JSON.stringify(recruiterInsertError, null, 2));
       console.error('auth.js: Error inserting recruiter profile into reclutadores table:', recruiterInsertError);
       throw new Error('Error al guardar los datos del perfil del reclutador.');
     }
