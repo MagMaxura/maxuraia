@@ -69,72 +69,51 @@ export default function AuthCallback() {
         console.log("AuthCallback: Session established for user ID:", userId);
         setMessage("Verificando perfil...");
 
-        // 2. Verificar si el usuario ya tiene un perfil en 'reclutadores'
+        // 2. Intentar crear el perfil básico directamente.
+        //    saveRecruiterProfile ya maneja errores si la inserción falla (ej: RLS).
+        //    Si el perfil ya existe (por una ejecución anterior o concurrencia),
+        //    la inserción fallará debido a la restricción de clave primaria (id único),
+        //    lo cual está bien, podemos manejar ese error específico o simplemente proceder.
         try {
-          console.log("AuthCallback: Checking for existing profile for user ID:", userId);
-          const existingProfile = await getRecruiterProfile(userId);
-          console.log("AuthCallback: Result of getRecruiterProfile:", existingProfile); // Log del resultado
+          console.log("AuthCallback: Attempting to ensure basic profile exists for user ID:", userId);
+          setMessage("Finalizando configuración...");
+          
+          const basicProfileData = {
+            id: userId,
+            email: currentSession.user.email,
+          };
+          
+          console.log("AuthCallback: Calling saveRecruiterProfile with:", basicProfileData);
+          await saveRecruiterProfile(basicProfileData);
+          
+          console.log("AuthCallback: saveRecruiterProfile call completed (either inserted or failed gracefully if exists).");
+          
+          // Si llegamos aquí, la inserción fue exitosa o falló porque ya existía (lo cual es aceptable).
+          // Ahora redirigimos a completar el perfil.
+          toast({
+            title: "¡Email verificado!",
+            description: "Ahora completa tu perfil para continuar.",
+            variant: "default",
+          });
+          navigate('/complete-profile');
 
-          if (existingProfile) {
-            // El usuario ya tiene perfil, redirigir al dashboard
-            console.log("AuthCallback: User already has a profile. Redirecting to dashboard.");
-            toast({
-              title: "¡Bienvenido de nuevo!",
-              description: "Tu cuenta ya está configurada.",
-              variant: "default",
-            });
-            navigate('/dashboard');
-          } else {
-            // El usuario NO tiene perfil. Intentar crear uno básico.
-            console.log("AuthCallback: User does not have a profile. Attempting to create basic profile...");
-            setMessage("Creando perfil inicial...");
-            try {
-              const basicProfileData = {
-                id: userId,
-                email: currentSession.user.email, // Tomar email de la sesión
-                // Otros campos se insertarán como NULL o sus defaults de DB
-              };
-              console.log("AuthCallback: Calling saveRecruiterProfile with:", basicProfileData); // Log antes de llamar
-              await saveRecruiterProfile(basicProfileData); // saveRecruiterProfile hace INSERT
-              
-              // Verificar si realmente se creó (opcional, pero bueno para depurar)
-              const newlyCreatedProfile = await getRecruiterProfile(userId);
-              console.log("AuthCallback: Profile check after attempting insert:", newlyCreatedProfile);
-
-              console.log("AuthCallback: Basic profile creation attempt finished. Redirecting to complete profile.");
-              toast({
-                title: "¡Email verificado!",
-                description: "Ahora completa tu perfil para continuar.",
-                variant: "default",
-              });
-              navigate('/complete-profile');
-
-            } catch (insertError) {
-               console.error('AuthCallback: Error creating basic profile:', insertError);
-               // Si falla la inserción (ej: RLS de INSERT incorrecta), mostrar error y redirigir a login
-               setError("Error al inicializar tu perfil. Por favor, contacta a soporte.");
-               toast({
-                 title: "Error de Configuración",
-                 description: "No se pudo crear tu perfil inicial.",
-                 variant: "destructive",
-               });
-               // Considerar desloguear al usuario aquí si la creación del perfil es obligatoria
-               // await supabase.auth.signOut();
-               navigate('/login');
-            }
-          }
-        } catch (profileCheckError) {
-          // Error al intentar verificar si el perfil existe (ej: RLS de SELECT incorrecta)
-          console.error('AuthCallback: Error checking for existing profile:', profileCheckError);
-          setError("Error al verificar tu perfil. Por favor, intenta iniciar sesión.");
-           toast({
-             title: "Error de Verificación",
-             description: "No se pudo verificar tu perfil existente.",
-             variant: "destructive",
-           });
+        } catch (profileError) {
+          // Manejar errores durante la inserción (saveRecruiterProfile)
+          // Podríamos verificar si el error es por clave duplicada (código 23505 en Postgres)
+          // y si es así, ignorarlo y redirigir a /complete-profile de todas formas.
+          // Por ahora, cualquier error aquí se considera bloqueante.
+          console.error('AuthCallback: Error during saveRecruiterProfile:', profileError);
+          setError(`Error al configurar tu perfil: ${profileError.message}`);
+          toast({
+            title: "Error de Configuración",
+            description: "No se pudo guardar la información inicial de tu perfil.",
+            variant: "destructive",
+          });
+          // Considerar desloguear
+          // await supabase.auth.signOut();
           navigate('/login');
         }
-        
+
       } catch (err) {
         console.error('AuthCallback: Error during callback processing:', err);
         setError(err.message || "Ocurrió un error desconocido durante la autenticación.");

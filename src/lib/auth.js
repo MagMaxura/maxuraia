@@ -40,7 +40,8 @@ export const auth = {
 
       // 2. Verificar si el perfil existe en 'reclutadores'
       console.log("auth.js: Checking for recruiter profile for user ID:", authUser.id);
-      const profile = await this.getRecruiterProfile(authUser.id); // Usar la función que ya creamos
+      // Llamar explícitamente a auth.getRecruiterProfile en lugar de this.getRecruiterProfile
+      const profile = await auth.getRecruiterProfile(authUser.id);
 
       const profileExists = !!profile;
       console.log("auth.js: Profile exists:", profileExists);
@@ -250,11 +251,13 @@ export const auth = {
   },
 
   async getRecruiterProfile(userId) {
+    console.log("[DEBUG] Entering getRecruiterProfile for userId:", userId); // Log al entrar
     if (!userId) {
       console.error("auth.js: getRecruiterProfile - userId is required.");
       return null;
     }
     try {
+      console.log("[DEBUG] Attempting SELECT query in getRecruiterProfile..."); // Log antes de la consulta
       const { data, error } = await supabase
         .from('reclutadores')
         .select('id') // Solo necesitamos saber si existe
