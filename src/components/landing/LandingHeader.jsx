@@ -16,7 +16,7 @@ function LandingHeader() {
             </Link>
           </div>
 {/* --- DEBUG VERSION INDICATOR --- */}
-            <span className="text-xs text-yellow-300 ml-4">(v:debug-logs)</span>
+            <span className="text-xs text-yellow-300 ml-4"> V1"</span>
             {/* --- END DEBUG --- */}
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Link to="/login"> {/* Link to Login page */}
