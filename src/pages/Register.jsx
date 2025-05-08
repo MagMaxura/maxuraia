@@ -16,7 +16,7 @@ function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    phoneCountryCode: "",
+    phoneCountryCode: "+54",
     phone: "",
     website: "",
     country: "",
@@ -34,7 +34,9 @@ function Register() {
 
   const validateWebsite = (website) => {
     if (!website) return true;
-    const pattern = /^(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(\.[a-zA-Z]{2,})?$/;
+    // Permite http://, https://, www. o solo el dominio.
+    // También permite una ruta opcional al final.
+    const pattern = /^(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/.*)?$/;
     return pattern.test(website.toLowerCase());
   };
 
