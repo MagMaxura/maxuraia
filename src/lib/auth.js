@@ -116,48 +116,62 @@ export const auth = {
       }
       // FIN NUEVO LOG
 
-      console.log("auth.js: Auth signup successful, proceeding to insert recruiter data");
-      const recruiterData = {
-        id: authUser.id,
-        email: userData.email,
-        first_name: userData.firstName,
-        last_name: userData.lastName,
-        company: userData.company,
-        phone: userData.phone,
-        phone_country_code: userData.phoneCountryCode,
-        website: userData.website,
-        country_code: userData.country,
-        industry: userData.industry,
-        company_size: userData.companySize,
-        marketing_consent: userData.marketingConsent,
-        trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        created_at: new Date().toISOString()
-      };
+      // El usuario ha sido creado en auth.users.
+      // La inserción en la tabla 'reclutadores' se hará después de la confirmación del email.
+      console.log("auth.js: Supabase Auth signUp successful. User created with ID:", authUser.id);
+      console.log("auth.js: User needs to confirm email before profile data is saved.");
+      
+      // Devolvemos el usuario de autenticación para que el frontend pueda decidir cómo proceder
+      // (por ejemplo, almacenar datos del perfil temporalmente y mostrar mensaje de confirmación).
+      return { user: authUser, needsEmailConfirmation: true };
 
-      console.log("auth.js: Inserting recruiter data:", recruiterData);
-      const { data: insertedRecruiter, error: recruiterInsertError } = await supabase
-        .from('reclutadores')
-        .insert([recruiterData])
-        .select()
-        .single();
-
-      if (recruiterInsertError) {
-        console.error('auth.js: Error inserting into reclutadores table:', recruiterInsertError);
-        try {
-          console.warn("auth.js: Failed to insert recruiter data. Auth user might need cleanup:", authUser.id);
-          // Don't try to delete the auth user, as they need to verify their email
-        } catch (deleteError) {
-           console.error('auth.js: Failed to delete auth user after recruiter insert failed:', deleteError);
-        }
-        throw new Error('Error al guardar los datos del reclutador.');
-      }
-
-      console.log("auth.js: Registration completed successfully");
-      return true;
     } catch (error) {
-      console.error("auth.js: Registration error:", error);
+      console.error("auth.js: Registration error (during signUp):", error);
       throw error; // Re-throw the error to be caught by the caller
     }
+  },
+
+  async saveRecruiterProfile(profileData) {
+    console.log("auth.js: saveRecruiterProfile - Attempting to save recruiter profile data");
+    
+    // Asegurarse de que el usuario esté autenticado
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      console.error('auth.js: No active session found. Cannot save recruiter profile.', sessionError);
+      throw new Error('Usuario no autenticado. No se puede guardar el perfil.');
+    }
+
+    if (profileData.id !== session.user.id) {
+      console.error('auth.js: Profile ID does not match authenticated user ID. Aborting save.');
+      throw new Error('Conflicto de ID de usuario. No se puede guardar el perfil.');
+    }
+    
+    const recruiterDataToInsert = {
+      ...profileData, // Asume que profileData ya tiene el formato correcto para la tabla reclutadores
+      trial_ends_at: profileData.trial_ends_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      created_at: profileData.created_at || new Date().toISOString()
+    };
+
+    // Eliminar campos que no deberían estar en la tabla reclutadores si vienen de un formulario más grande
+    delete recruiterDataToInsert.password;
+    delete recruiterDataToInsert.confirmPassword;
+    // Si 'email' ya está en auth.users y no quieres duplicarlo o es manejado por la FK, considera su manejo.
+    // Por ahora, lo incluimos asumiendo que la tabla reclutadores tiene una columna email.
+
+    console.log("auth.js: Inserting recruiter profile data:", recruiterDataToInsert);
+    const { data: insertedRecruiter, error: recruiterInsertError } = await supabase
+      .from('reclutadores')
+      .insert([recruiterDataToInsert])
+      .select()
+      .single();
+
+    if (recruiterInsertError) {
+      console.error('auth.js: Error inserting recruiter profile into reclutadores table:', recruiterInsertError);
+      throw new Error('Error al guardar los datos del perfil del reclutador.');
+    }
+
+    console.log("auth.js: Recruiter profile data saved successfully:", insertedRecruiter);
+    return insertedRecruiter;
   },
 
   async logout() {

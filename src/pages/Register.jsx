@@ -146,21 +146,58 @@ function Register() {
       };
       
       console.log("Register.jsx: Calling register function with data:", formattedData);
-      const success = await register(formattedData);
+      const result = await register(formattedData); // register ahora devuelve { user, needsEmailConfirmation }
 
-      console.log("Register.jsx: Registration result:", success);
-      if (success) {
-         console.log("Register.jsx: Registration successful");
+      console.log("Register.jsx: Registration (signUp) result:", result);
+      if (result && result.user && result.needsEmailConfirmation) {
+        console.log("Register.jsx: SignUp successful, user needs to confirm email.");
+        
+        // Almacenar datos del perfil (sin contraseñas) en localStorage
+        const { password, confirmPassword, ...profileDataToStore } = formattedData;
+        profileDataToStore.id = result.user.id; // Asegurarse de que el ID del usuario esté en los datos del perfil
+        localStorage.setItem('pendingUserProfile', JSON.stringify(profileDataToStore));
+
+        toast({
+          title: "¡Casi listo!",
+          description: "Hemos enviado un correo de confirmación a tu email. Por favor, revísalo para activar tu cuenta.",
+          variant: "default", // Usar 'default' o 'success' si tienes uno
+          duration: 10000, // Mostrar por más tiempo
+        });
+        // Opcionalmente, redirigir a una página de "revisa tu email" o simplemente limpiar el formulario.
+        // Por ahora, limpiamos el formulario y el usuario debe ir a su email.
+        setFormData({
+          firstName: "", lastName: "", company: "", email: "",
+          password: "", confirmPassword: "", phoneCountryCode: "+54",
+          phone: "", website: "", country: "", industry: "",
+          companySize: "", marketingConsent: false
+        });
+
+      } else if (result && result.user && !result.needsEmailConfirmation) {
+        // Este caso no debería ocurrir si la confirmación de email está habilitada
+        // pero lo manejamos por si acaso o si la confirmación está deshabilitada.
+        console.log("Register.jsx: SignUp successful, no email confirmation needed (o ya confirmada).");
+        // Aquí podrías intentar guardar el perfil directamente si fuera el caso,
+        // pero el flujo principal es con confirmación.
+        // Por ahora, tratamos como el caso anterior.
+        localStorage.setItem('pendingUserProfile', JSON.stringify({ ...formattedData, id: result.user.id }));
+        toast({
+          title: "Registro Exitoso",
+          description: "Tu cuenta ha sido creada.",
+          variant: "default",
+        });
+        // Idealmente, aquí se llamaría a saveRecruiterProfile y luego se redirigiría.
+        // Pero para el flujo de confirmación, esto se hará en el callback.
+
       } else {
-         console.error("Register.jsx: Registration failed without throwing error");
+         console.error("Register.jsx: SignUp failed or unexpected result:", result);
          toast({
            title: "Error en el registro",
-           description: "No se pudo completar el registro. Por favor, intenta nuevamente.",
+           description: "No se pudo iniciar el proceso de registro. Por favor, intenta nuevamente.",
            variant: "destructive",
          });
       }
     } catch (error) {
-      console.error("Register.jsx: Error during registration:", error);
+      console.error("Register.jsx: Error during signUp process:", error);
       toast({
         title: "Error en el registro",
         description: error.message || "Ocurrió un error inesperado durante el registro.",
