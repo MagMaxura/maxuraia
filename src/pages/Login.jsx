@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Importar useNavigate
 import { Brain } from 'lucide-react'; // Import Brain icon
 
 function Login() {
@@ -13,6 +13,7 @@ function Login() {
   const [resetEmail, setResetEmail] = useState("");
   const { login, resetPassword, loading } = useAuth(); // Get loading state
   const { toast } = useToast();
+  const navigate = useNavigate(); // Inicializar useNavigate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,8 +26,28 @@ function Login() {
       return;
     }
     
-    await login(credentials);
-    // Navigation is handled within useAuthService on successful login
+    const result = await login(credentials);
+
+    if (result.success) {
+      toast({
+        title: "Inicio de sesión exitoso",
+        description: "Bienvenido de nuevo.",
+        variant: "default", // o success
+      });
+      // Redirigir según si el perfil existe
+      if (result.profileExists) {
+        navigate('/dashboard');
+      } else {
+        navigate('/complete-profile');
+      }
+    } else {
+      // Mostrar el error específico devuelto por la función login
+      toast({
+        title: "Error de inicio de sesión",
+        description: result.error || "Ocurrió un error inesperado.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleResetPassword = async (e) => {

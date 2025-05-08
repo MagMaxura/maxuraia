@@ -7,53 +7,64 @@ export const auth = {
   user: null,
 
   async login(credentials) {
+    console.log("auth.js: login - Attempting login for:", credentials.email);
+    let authUser = null;
     try {
-      const recruiterExists = await getRecruiterByEmail(credentials.email);
-      if (!recruiterExists) {
-        throw new Error('Email no registrado');
-      }
-
-      const { data: { user: authUser }, error: signInError } = await supabase.auth.signInWithPassword({
+      // 1. Intentar iniciar sesión
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: credentials.email,
         password: credentials.password,
       });
 
       if (signInError) {
-        console.error('Auth signIn error:', signInError);
+        console.error('auth.js: Supabase signIn error:', signInError);
+        // Verificar errores específicos
         if (signInError.message.includes('Invalid login credentials')) {
-           throw new Error('Credenciales inválidas');
+          throw new Error('Credenciales inválidas');
         }
-        throw new Error('Error al iniciar sesión');
+        if (signInError.message.includes('Email not confirmed')) {
+          // Podríamos necesitar verificar el código de error exacto de Supabase si este mensaje cambia
+          throw new Error('Usuario aún no validado. Revisa tu correo para confirmar.');
+        }
+        // Otro error durante el signIn
+        throw new Error(`Error de autenticación: ${signInError.message}`);
       }
 
-      if (!authUser) {
-        throw new Error('Usuario no encontrado después del inicio de sesión exitoso');
-      }
-
-      const fullUserData = {
-        ...authUser,
-        ...recruiterExists, 
-      };
-
-      this.user = fullUserData;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(fullUserData));
-
-      // Get the current session to ensure it's properly set
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) {
-        console.error('Error getting session after login:', sessionError);
-        throw new Error('Error al obtener la sesión');
-      }
-
-      if (!session) {
-        console.error('No session found after login');
-        throw new Error('Error al establecer la sesión');
+      if (!signInData || !signInData.user) {
+        console.error('auth.js: No user data returned after successful signIn');
+        throw new Error('Error inesperado durante el inicio de sesión.');
       }
       
-      return true;
+      authUser = signInData.user;
+      console.log("auth.js: Login successful for user ID:", authUser.id);
+
+      // 2. Verificar si el perfil existe en 'reclutadores'
+      console.log("auth.js: Checking for recruiter profile for user ID:", authUser.id);
+      const profile = await this.getRecruiterProfile(authUser.id); // Usar la función que ya creamos
+
+      const profileExists = !!profile;
+      console.log("auth.js: Profile exists:", profileExists);
+
+      // 3. (Opcional pero recomendado) Combinar datos y guardar en localStorage si es necesario
+      //    Si tu app depende de datos del perfil inmediatamente después del login,
+      //    puedes obtenerlos aquí. Por ahora, solo necesitamos saber si existe.
+      //    El hook useAuthService ya maneja el estado del usuario de autenticación.
+      // const fullUserData = profile ? { ...authUser, ...profile } : authUser;
+      // localStorage.setItem(STORAGE_KEY, JSON.stringify(fullUserData)); // Considera si esto es necesario aquí o lo maneja el hook
+
+      // 4. Devolver estado de login y perfil
+      return { success: true, profileExists: profileExists, user: authUser };
+
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      console.error('auth.js: Login process error:', error);
+      // Asegurarse de que el usuario esté deslogueado si el proceso falla a mitad de camino
+      if (authUser) { // Si el signIn funcionó pero el chequeo de perfil falló
+         // Podrías decidir si mantenerlo logueado o no. Por seguridad, desloguear podría ser mejor.
+         // await this.logout(); // Descomentar si quieres desloguear en caso de error post-signIn
+      }
+      // Devolver el error para que el componente lo maneje
+      // Asegurarse de que el mensaje de error sea útil (ya lo es si viene del throw)
+      return { success: false, error: error.message || "Error desconocido en el inicio de sesión." };
     }
   },
 
