@@ -134,70 +134,60 @@ function Register() {
     setIsSubmitting(true);
 
     try {
-      // Remove confirmPassword from the data sent to register
-      const { confirmPassword, ...registrationData } = formData;
+      // Preparamos los datos para el signUp y para almacenar en localStorage
+      const { password, confirmPassword, ...profileDataForStorage } = formData;
       
-      // Format phone number if both country code and number are provided
-      const formattedData = {
-        ...registrationData,
-        phone: registrationData.phoneCountryCode && registrationData.phone 
-          ? `${registrationData.phoneCountryCode}${registrationData.phone}`
-          : registrationData.phone
+      const dataForSignUp = {
+        ...profileDataForStorage, // Contiene todos los campos excepto password y confirmPassword
+        password: formData.password, // Añadimos la contraseña para el signUp
+        // Formateamos el teléfono aquí si es necesario, o lo hacemos en auth.js si es más limpio
+        phone: formData.phoneCountryCode && formData.phone
+          ? `${formData.phoneCountryCode}${formData.phone}`
+          : formData.phone
       };
+      // Eliminamos confirmPassword de los datos que se envían a auth.register
+      // (ya lo hicimos al crear profileDataForStorage, pero por si acaso)
+      // delete dataForSignUp.confirmPassword; // No es necesario, ya no está.
+
+      console.log("Register.jsx: Calling register function with data for signUp:", dataForSignUp);
+      const registrationAttempt = await register(dataForSignUp);
+
+      console.log("Register.jsx: Registration (signUp) attempt result:", registrationAttempt);
       
-      console.log("Register.jsx: Calling register function with data:", formattedData);
-      const result = await register(formattedData); // register ahora devuelve { user, needsEmailConfirmation }
-
-      console.log("Register.jsx: Registration (signUp) result:", result);
-      if (result && result.user && result.needsEmailConfirmation) {
-        console.log("Register.jsx: SignUp successful, user needs to confirm email.");
-        
-        // Almacenar datos del perfil (sin contraseñas) en localStorage
-        const { password, confirmPassword, ...profileDataToStore } = formattedData;
-        profileDataToStore.id = result.user.id; // Asegurarse de que el ID del usuario esté en los datos del perfil
-        localStorage.setItem('pendingUserProfile', JSON.stringify(profileDataToStore));
-
-        toast({
-          title: "¡Casi listo!",
-          description: "Hemos enviado un correo de confirmación a tu email. Por favor, revísalo para activar tu cuenta.",
-          variant: "default", // Usar 'default' o 'success' si tienes uno
-          duration: 10000, // Mostrar por más tiempo
-        });
-        // Opcionalmente, redirigir a una página de "revisa tu email" o simplemente limpiar el formulario.
-        // Por ahora, limpiamos el formulario y el usuario debe ir a su email.
-        setFormData({
-          firstName: "", lastName: "", company: "", email: "",
-          password: "", confirmPassword: "", phoneCountryCode: "+54",
-          phone: "", website: "", country: "", industry: "",
-          companySize: "", marketingConsent: false
-        });
-
-      } else if (result && result.user && !result.needsEmailConfirmation) {
-        // Este caso no debería ocurrir si la confirmación de email está habilitada
-        // pero lo manejamos por si acaso o si la confirmación está deshabilitada.
-        console.log("Register.jsx: SignUp successful, no email confirmation needed (o ya confirmada).");
-        // Aquí podrías intentar guardar el perfil directamente si fuera el caso,
-        // pero el flujo principal es con confirmación.
-        // Por ahora, tratamos como el caso anterior.
-        localStorage.setItem('pendingUserProfile', JSON.stringify({ ...formattedData, id: result.user.id }));
-        toast({
-          title: "Registro Exitoso",
-          description: "Tu cuenta ha sido creada.",
-          variant: "default",
-        });
-        // Idealmente, aquí se llamaría a saveRecruiterProfile y luego se redirigiría.
-        // Pero para el flujo de confirmación, esto se hará en el callback.
-
+      console.log("Register.jsx: SignUp successful, user needs to confirm email.");
+      
+      if (registrationAttempt && registrationAttempt.user) {
+        // Añadimos el ID del usuario a los datos que se guardarán en localStorage
+        profileDataForStorage.id = registrationAttempt.user.id;
       } else {
-         console.error("Register.jsx: SignUp failed or unexpected result:", result);
-         toast({
-           title: "Error en el registro",
-           description: "No se pudo iniciar el proceso de registro. Por favor, intenta nuevamente.",
-           variant: "destructive",
-         });
+        console.error("Register.jsx: User object not found in registration attempt result after successful signUp.");
+        toast({
+          title: "Error Inesperado",
+          description: "No se pudo obtener el ID de usuario después del registro. Por favor, intenta nuevamente.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
       }
+      
+      localStorage.setItem('pendingUserProfile', JSON.stringify(profileDataForStorage));
+
+      toast({
+        title: "¡Casi listo!",
+        description: "Hemos enviado un correo de confirmación a tu email. Por favor, revísalo para activar tu cuenta.",
+        variant: "default",
+        duration: 10000,
+      });
+      
+      setFormData({
+        firstName: "", lastName: "", company: "", email: "",
+        password: "", confirmPassword: "", phoneCountryCode: "+54",
+        phone: "", website: "", country: "", industry: "",
+        companySize: "", marketingConsent: false
+      });
+
     } catch (error) {
-      console.error("Register.jsx: Error during signUp process:", error);
+      console.error("Register.jsx: Error during signUp process:", error.message, error);
       toast({
         title: "Error en el registro",
         description: error.message || "Ocurrió un error inesperado durante el registro.",
