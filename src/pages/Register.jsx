@@ -121,6 +121,7 @@ function Register() {
         setFormData({ email: "", password: "", confirmPassword: "" }); // Limpiar formulario
         
         // Redirigir al usuario a la página de login después de mostrar el mensaje
+        console.log("Register.jsx: Attempting to navigate to /login"); // Log de depuración
         navigate('/login');
       } else {
         // Esto no debería suceder si register no lanzó un error, pero es una salvaguarda

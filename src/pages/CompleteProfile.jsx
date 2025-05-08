@@ -81,23 +81,27 @@ function CompleteProfile() {
     console.log("CompleteProfile: Submitting profile data...");
 
     try {
-      const profileData = {
-        ...formData,
-        id: authUser.id, // Asegurarse de incluir el ID del usuario autenticado
-        email: authUser.email, // Incluir el email del usuario autenticado
-        // Formatear teléfono
-        phone: formData.phoneCountryCode && formData.phone 
-          ? `${formData.phoneCountryCode}${formData.phone}` 
-          : formData.phone,
+      // Crear objeto con nombres de columna correctos (snake_case)
+      const dataForUpdate = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        company: formData.company,
+        phone: formData.phoneCountryCode && formData.phone
+                 ? `${formData.phoneCountryCode}${formData.phone}`
+                 : formData.phone,
+        website: formData.website,
+        country_code: formData.country, // Asumiendo que 'country' en el estado es el código
+        industry: formData.industry,
+        company_size: formData.companySize, // Mapeo clave
+        marketing_consent: formData.marketingConsent,
+        // No incluimos id, email, created_at, trial_ends_at aquí,
+        // ya que no deberían ser actualizados por este formulario
+        // o son manejados por la función updateRecruiterProfile.
       };
-      
-      // No necesitamos phoneCountryCode como columna separada si lo concatenamos
-      delete profileData.phoneCountryCode; 
 
-      console.log("CompleteProfile: Calling updateRecruiterProfile with:", profileData);
-      // Llamar a updateRecruiterProfile en lugar de saveRecruiterProfile
-      // Pasamos el ID del usuario y los datos a actualizar
-      await updateRecruiterProfile(authUser.id, profileData);
+      console.log("CompleteProfile: Calling updateRecruiterProfile with:", dataForUpdate);
+      // Llamar a updateRecruiterProfile con los datos mapeados
+      await updateRecruiterProfile(authUser.id, dataForUpdate);
 
       toast({
         title: "¡Perfil completado!",
