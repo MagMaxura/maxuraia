@@ -170,6 +170,36 @@ export const auth = {
     return insertedRecruiter;
   },
 
+  async updateRecruiterProfile(userId, profileData) {
+    console.log("auth.js: updateRecruiterProfile - Attempting to update profile for user:", userId);
+    
+    // No necesitamos verificar la sesión aquí, ya que se asume que CompleteProfile es una ruta protegida
+    // y la llamada vendrá de un usuario autenticado. La RLS se encargará de la seguridad.
+
+    // Preparamos los datos para actualizar. Excluimos 'id' y 'email' si no queremos que se actualicen.
+    // También excluimos campos que no existen en la tabla reclutadores.
+    const { id, email, created_at, trial_ends_at, ...dataToUpdate } = profileData;
+    // Asegúrate de que todos los campos en dataToUpdate existan como columnas en tu tabla reclutadores.
+    // Podrías añadir validación aquí si es necesario.
+
+    console.log("auth.js: Updating recruiter profile data:", dataToUpdate);
+    const { data: updatedRecruiter, error: recruiterUpdateError } = await supabase
+      .from('reclutadores')
+      .update(dataToUpdate)
+      .eq('id', userId) // Asegurarse de actualizar solo el registro del usuario correcto
+      .select()
+      .single();
+
+    if (recruiterUpdateError) {
+      console.error('auth.js: Error updating recruiter profile in reclutadores table:', recruiterUpdateError);
+      // Podríamos verificar errores específicos, como violación de RLS (si la política UPDATE falla)
+      throw new Error('Error al actualizar los datos del perfil del reclutador.');
+    }
+
+    console.log("auth.js: Recruiter profile data updated successfully:", updatedRecruiter);
+    return updatedRecruiter;
+  },
+
   async logout() {
     const { error } = await supabase.auth.signOut();
     if (error) {

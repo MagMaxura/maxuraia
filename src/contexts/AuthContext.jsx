@@ -35,9 +35,10 @@ export function AuthProvider({ children }) {
     // Funciones añadidas directamente desde auth.js
     saveRecruiterProfile: authFunctions.saveRecruiterProfile,
     getRecruiterProfile: authFunctions.getRecruiterProfile,
-    getRecruiterByEmail: authFunctions.getRecruiterByEmail
+    getRecruiterByEmail: authFunctions.getRecruiterByEmail,
+    updateRecruiterProfile: authFunctions.updateRecruiterProfile // Añadir la nueva función
   }), [
-       authService.user,
+    authService.user,
        authService.loading,
        authService.authChecked,
        authService.isAuthenticated,

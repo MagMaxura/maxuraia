@@ -8,7 +8,8 @@ import { Mail, User, Building2, Phone, Globe, Users, Flag } from 'lucide-react';
 
 function CompleteProfile() {
   console.log("CompleteProfile component rendering");
-  const { user: authUser, saveRecruiterProfile, loading } = useAuth();
+  // Obtener la función updateRecruiterProfile del contexto
+  const { user: authUser, updateRecruiterProfile, loading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -93,8 +94,10 @@ function CompleteProfile() {
       // No necesitamos phoneCountryCode como columna separada si lo concatenamos
       delete profileData.phoneCountryCode; 
 
-      console.log("CompleteProfile: Calling saveRecruiterProfile with:", profileData);
-      await saveRecruiterProfile(profileData);
+      console.log("CompleteProfile: Calling updateRecruiterProfile with:", profileData);
+      // Llamar a updateRecruiterProfile en lugar de saveRecruiterProfile
+      // Pasamos el ID del usuario y los datos a actualizar
+      await updateRecruiterProfile(authUser.id, profileData);
 
       toast({
         title: "¡Perfil completado!",
