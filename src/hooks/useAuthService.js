@@ -63,7 +63,7 @@ export function useAuthService() {
       //    navigate("/login", { replace: true });
       // }
     }
-  }, [toast]); // Eliminar navigate de las dependencias ya que no se usa aquí
+  }, []); // <--- Eliminar la dependencia [toast] para hacer el callback estable
 
   useEffect(() => {
     // let mounted = true; // Eliminar 'mounted'
@@ -112,7 +112,7 @@ export function useAuthService() {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [handleAuthChange, toast]); // handleAuthChange ahora tiene menos dependencias
+  }, [handleAuthChange]); // <--- Eliminar la dependencia [toast]
 
   // --- Simplificar/Eliminar funciones redundantes ---
   // La lógica de register ahora está en Register.jsx y src/lib/auth.js

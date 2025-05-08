@@ -119,6 +119,9 @@ function Register() {
         });
         
         setFormData({ email: "", password: "", confirmPassword: "" }); // Limpiar formulario
+        
+        // Redirigir al usuario a la página de login después de mostrar el mensaje
+        navigate('/login');
       } else {
         // Esto no debería suceder si register no lanzó un error, pero es una salvaguarda
         console.error("Register.jsx: SignUp attempt did not return expected user object or needsEmailConfirmation was false.");
