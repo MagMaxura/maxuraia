@@ -65,15 +65,15 @@ export function useAuthService() {
   }, [toast]); // Eliminar navigate de las dependencias ya que no se usa aquí
 
   useEffect(() => {
-    let mounted = true;
+    // let mounted = true; // Eliminar 'mounted'
     console.log("useAuthService: Mount effect running");
 
     const checkInitialSession = async () => {
-      if (!mounted) return;
+      // if (!mounted) return; // Eliminar check
       console.log("useAuthService: Checking initial session...");
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (!mounted) return;
+        // if (!mounted) return; // Eliminar check
         if (error) {
           console.error("useAuthService: Error getting initial session:", error);
           await handleAuthChange('INITIAL_SESSION_ERROR', null);
@@ -81,10 +81,10 @@ export function useAuthService() {
           await handleAuthChange('INITIAL_SESSION_LOADED', session);
         }
       } catch (e) {
-        if (!mounted) return;
+        // if (!mounted) return; // Eliminar check
         console.error("useAuthService: Critical error during initial session check:", e);
         auth.clearAuthUser();
-        setUser(null);
+        setUser(null); // Asegurarse de que setUser y setAuthChecked estén disponibles aquí
         setAuthChecked(true);
         toast({
           title: "Error Crítico de Sesión",
@@ -97,13 +97,15 @@ export function useAuthService() {
     checkInitialSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
+      // if (!mounted) return; // Eliminar check
+      // La función de cleanup del useEffect se encargará de desuscribir
       console.log(`useAuthService: onAuthStateChange event: ${event}, session present: ${!!session}`);
       await handleAuthChange(event, session);
     });
 
+    // La función de cleanup se ejecuta cuando el componente se desmonta
     return () => {
-      mounted = false;
+      // mounted = false; // Eliminar 'mounted'
       console.log("useAuthService: Cleanup - unsubscribing auth listener");
       if (authListener?.subscription?.unsubscribe) {
         authListener.subscription.unsubscribe();

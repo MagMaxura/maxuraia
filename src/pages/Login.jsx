@@ -11,42 +11,37 @@ function Login() {
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [isResetting, setIsResetting] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [loginError, setLoginError] = useState(""); // Estado para el mensaje de error
   const { login, resetPassword, loading } = useAuth(); // Get loading state
   const { toast } = useToast();
   const navigate = useNavigate(); // Inicializar useNavigate
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoginError(""); // Limpiar errores anteriores
     if (!credentials.email || !credentials.password) {
-      toast({
-        title: "Error",
-        description: "Por favor, completa todos los campos",
-        variant: "destructive",
-      });
+      setLoginError("Por favor, completa todos los campos.");
+      // Opcional: mantener el toast si se prefiere
+      // toast({ title: "Error", description: "Por favor, completa todos los campos", variant: "destructive" });
       return;
     }
     
     const result = await login(credentials);
 
     if (result.success) {
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: "Bienvenido de nuevo.",
-        variant: "default", // o success
-      });
-      // Redirigir según si el perfil existe
+      // El toast de éxito puede ser opcional si la redirección es inmediata
+      // toast({ title: "Inicio de sesión exitoso", description: "Bienvenido de nuevo.", variant: "default" });
       if (result.profileExists) {
         navigate('/dashboard');
       } else {
         navigate('/complete-profile');
       }
     } else {
-      // Mostrar el error específico devuelto por la función login
-      toast({
-        title: "Error de inicio de sesión",
-        description: result.error || "Ocurrió un error inesperado.",
-        variant: "destructive",
-      });
+      // Mostrar el error específico en el estado y opcionalmente en un toast
+      const errorMessage = result.error || "Ocurrió un error inesperado.";
+      setLoginError(errorMessage);
+      // Opcional: mantener el toast
+      // toast({ title: "Error de inicio de sesión", description: errorMessage, variant: "destructive" });
     }
   };
 
@@ -142,9 +137,16 @@ function Login() {
               >
                 {loading ? 'Iniciando...' : 'Iniciar Sesión'}
               </Button>
+              
+              {/* Mostrar mensaje de error */}
+              {loginError && (
+                <p className="text-sm text-red-400 bg-red-900/30 p-3 rounded-md border border-red-400/50 mt-4">
+                  {loginError}
+                </p>
+              )}
             </form>
 
-            <div className="text-center space-y-4">
+            <div className="text-center space-y-4 pt-4"> {/* Añadir padding top */}
               <button
                 onClick={() => setIsResetting(true)}
                 className="text-white/80 hover:text-white text-sm transition-colors duration-200"
