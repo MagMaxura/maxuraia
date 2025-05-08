@@ -14,19 +14,22 @@ export const useAuth = () => {
 };
 
 import { auth as authFunctions } from "../lib/auth"; // Importar directamente las funciones de auth.js
+import { useMemo } from 'react'; // Importar useMemo
 
 export function AuthProvider({ children }) {
   console.log("AuthProvider: Initializing");
   const authService = useAuthService(); // Hook para login, logout, register (signUp), user state, loading etc.
   console.log("AuthProvider: register function available:", !!authService.register);
 
-  // Combinar el servicio base con las funciones específicas del perfil
-  const value = {
-    ...authService, // Incluye user, login, logout, register, loading, etc. del hook
-    saveRecruiterProfile: authFunctions.saveRecruiterProfile, // Añadir función para guardar perfil
-    getRecruiterProfile: authFunctions.getRecruiterProfile,   // Añadir función para obtener perfil por ID
-    getRecruiterByEmail: authFunctions.getRecruiterByEmail // Asegurarse que esta también esté si se necesita
-  };
+  // Combinar el servicio base con las funciones específicas del perfil, memorizando el valor
+  const value = useMemo(() => ({
+    ...authService, // Incluye user, login, logout, register, loading, authChecked, isAuthenticated etc. del hook
+    // Añadir funciones estáticas directamente desde auth.js
+    saveRecruiterProfile: authFunctions.saveRecruiterProfile,
+    getRecruiterProfile: authFunctions.getRecruiterProfile,
+    getRecruiterByEmail: authFunctions.getRecruiterByEmail
+    // Asegúrate de que las funciones en auth.js no dependan de 'this' si las llamas así directamente
+  }), [authService]); // El valor del contexto solo cambiará si el objeto authService cambia
 
   return (
     <AuthContext.Provider value={value}>

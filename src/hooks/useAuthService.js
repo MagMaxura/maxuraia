@@ -19,53 +19,50 @@ export function useAuthService() {
 
     if (currentUser) {
       try {
-        const recruiterData = await auth.getRecruiterByEmail(currentUser.email);
-        if (recruiterData) {
-          const fullUserData = { ...currentUser, ...recruiterData };
-          auth.user = fullUserData;
-          localStorage.setItem('auth_user', JSON.stringify(fullUserData));
-          setUser(fullUserData);
-          console.log("User loaded on auth change:", fullUserData);
-          if (event === 'SIGNED_IN') {
-             navigate("/dashboard", { replace: true });
-          }
-        } else {
-          console.error("Recruiter data not found for authenticated user:", currentUser.email);
-          setUser(null);
-          toast({
-            title: "Error de cuenta",
-            description: "No se encontraron los datos asociados a tu cuenta. Por favor, contacta soporte o regístrate de nuevo.",
-            variant: "destructive",
-          });
-          if (window.location.pathname !== '/login') {
-             navigate("/login", { replace: true });
-          }
-        }
+        // Usar getRecruiterProfile por ID en lugar de email
+        const profileData = await auth.getRecruiterProfile(currentUser.id);
+        
+        // Guardar solo el usuario de autenticación por ahora.
+        // Los componentes pueden obtener el perfil completo si lo necesitan.
+        // Esto simplifica el estado aquí y evita posibles bucles si profileData cambia.
+        auth.user = currentUser; // Actualizar la instancia singleton si se usa en otro lugar
+        // Considera si realmente necesitas guardar en localStorage aquí o si la sesión de Supabase es suficiente
+        // localStorage.setItem('auth_user', JSON.stringify(currentUser));
+        setUser(currentUser);
+        console.log("useAuthService: User session set:", currentUser);
+
+        // Ya no manejamos la navegación aquí, se hace en Login.jsx y AuthCallback.jsx
+        // if (event === 'SIGNED_IN') {
+        //    // La navegación depende de si el perfil existe, manejado en Login/Callback
+        // }
+
       } catch (error) {
-        console.error("Error fetching recruiter data:", error);
-        auth.clearAuthUser();
-        setUser(null);
-        toast({
-          title: "Error",
-          description: "Ocurrió un error al verificar tu sesión.",
-          variant: "destructive",
-        });
-         if (window.location.pathname !== '/login') {
-             navigate("/login", { replace: true });
-          }
+        // Error al intentar obtener el perfil (puede ser un error de red o RLS si la política SELECT falla)
+        console.error("useAuthService: Error fetching recruiter profile during auth change:", error);
+        // Aún así, establecemos el usuario de autenticación si la sesión existe
+        auth.user = currentUser;
+        // localStorage.setItem('auth_user', JSON.stringify(currentUser));
+        setUser(currentUser);
+        // Podríamos mostrar un toast aquí si obtener el perfil es crítico en este punto
+        // toast({ title: "Advertencia", description: "No se pudo cargar completamente el perfil.", variant: "warning" });
       } finally {
-        setAuthChecked(true);
+         if (mounted) setAuthChecked(true); // Asegurarse de que mounted sigue siendo true
       }
     } else {
-      console.log("No user session found or user logged out.");
-      auth.clearAuthUser();
-      setUser(null);
-      setAuthChecked(true);
-      if (event === 'SIGNED_OUT' && window.location.pathname !== '/login') {
-         navigate("/login", { replace: true });
+      // No hay sesión de Supabase
+      console.log("useAuthService: No user session found or user logged out.");
+      auth.clearAuthUser(); // Limpiar la instancia singleton
+      // localStorage.removeItem('auth_user'); // Limpiar localStorage si se usa
+      if (mounted) {
+         setUser(null);
+         setAuthChecked(true);
       }
+      // Ya no manejamos la navegación de SIGNED_OUT aquí
+      // if (event === 'SIGNED_OUT' && window.location.pathname !== '/login') {
+      //    navigate("/login", { replace: true });
+      // }
     }
-  }, [navigate, toast]);
+  }, [toast]); // Eliminar navigate de las dependencias ya que no se usa aquí
 
   useEffect(() => {
     let mounted = true;
@@ -112,86 +109,50 @@ export function useAuthService() {
         authListener.subscription.unsubscribe();
       }
     };
-  }, [handleAuthChange, toast]);
+  }, [handleAuthChange, toast]); // handleAuthChange ahora tiene menos dependencias
+
+  // --- Simplificar/Eliminar funciones redundantes ---
+  // La lógica de register ahora está en Register.jsx y src/lib/auth.js
+  // La lógica de login ahora está en Login.jsx y src/lib/auth.js
+  // Dejamos las funciones aquí por si otros componentes las usan,
+  // pero asegurándonos de que llaman a las funciones correctas de src/lib/auth.js
+  // y que no manejan navegación o toasts que ya se manejan en los componentes.
 
   const register = useCallback(async (formData) => {
-    console.log("useAuthService: register function called with data:", formData);
+    // Esta función ahora solo llama a auth.register y devuelve el resultado
+    // El componente Register.jsx maneja el toast y la lógica post-registro.
+    console.log("useAuthService: register called");
     setLoading(true);
     try {
-      console.log("useAuthService: Calling auth.register");
-      const success = await auth.register(formData);
-      console.log("useAuthService: auth.register result:", success);
-      
-      if (success) {
-        console.log("useAuthService: Registration successful");
-        toast({
-          title: "¡Registro casi listo!",
-          description: "Hemos enviado un email de confirmación a tu correo.",
-        });
-        navigate('/register-confirmation', {
-          state: {
-            userData: {
-              firstName: formData.firstName,
-              lastName: formData.lastName,
-              email: formData.email,
-              company: formData.company
-            }
-          }
-        });
-        return true;
-      } else {
-         console.error("useAuthService: Registration failed without throwing error");
-         throw new Error("El registro falló por una razón desconocida.");
-      }
+      // Llama a la función register de src/lib/auth.js que devuelve { user, needsEmailConfirmation }
+      const result = await auth.register(formData);
+      return result; // Devolver el resultado para que Register.jsx lo maneje
     } catch (error) {
       console.error("useAuthService: Registration error:", error);
-      toast({
-        title: "Error en el registro",
-        description: error.message || "Hubo un problema al procesar tu registro.",
-        variant: "destructive",
-      });
-      return false;
+      // Re-lanzar el error para que Register.jsx lo capture y muestre el toast
+      throw error;
     } finally {
-      console.log("useAuthService: Registration process completed");
       setLoading(false);
     }
-  }, [navigate, toast]);
+  }, []); // No necesita dependencias si solo llama a auth.register
 
   const login = useCallback(async (credentials) => {
+    // Esta función ahora solo llama a auth.login y devuelve el resultado
+    // El componente Login.jsx maneja el toast y la navegación.
+    console.log("useAuthService: login called");
     setLoading(true);
     try {
-      const success = await auth.login(credentials);
-      if (success) {
-         toast({
-           title: "¡Bienvenido!",
-           description: "Has iniciado sesión correctamente.",
-         });
-         return true;
-      } else {
-         throw new Error("Inicio de sesión fallido.");
-      }
+      // Llama a la función login de src/lib/auth.js que devuelve { success, profileExists, error }
+      const result = await auth.login(credentials);
+      return result; // Devolver el resultado para que Login.jsx lo maneje
     } catch (error) {
-      let description = "Ocurrió un error inesperado.";
-      if (error.message === 'Email no registrado') {
-        description = 'El email proporcionado no se encuentra registrado.';
-      } else if (error.message === 'Credenciales inválidas') {
-        description = 'El email o la contraseña son incorrectos.';
-      } else {
-         console.error("Login error caught in service:", error);
-      }
-      
-      toast({
-        title: "Error de autenticación",
-        description: description,
-        variant: "destructive",
-      });
-      auth.clearAuthUser();
-      setUser(null);
-      return false;
+      // Esto no debería ocurrir si auth.login maneja sus propios errores y devuelve un objeto
+      console.error("useAuthService: Unexpected error during login call:", error);
+      return { success: false, error: error.message || "Error inesperado." };
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []); // No necesita dependencias si solo llama a auth.login
 
   const logout = useCallback(async () => {
     setLoading(true);
