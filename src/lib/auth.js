@@ -71,25 +71,10 @@ export const auth = {
   async register(userData) {
     try {
       console.log("auth.js: register - Starting registration process");
-      console.log("auth.js: Checking if email exists in reclutadores table");
+      // Eliminamos la verificación manual de email existente en 'reclutadores'.
+      // supabase.auth.signUp() ya maneja la unicidad del email en 'auth.users'.
       
-      const { data: existingRecruiter, error: checkError } = await supabase
-        .from('reclutadores')
-        .select('id', { count: 'exact' })
-        .eq('email', userData.email)
-        .maybeSingle();
-
-      if (checkError) {
-          console.error('auth.js: Error checking existing recruiter email:', checkError);
-          throw new Error(`Error al verificar el email: ${checkError.message}`);
-      }
-
-      if (existingRecruiter) {
-        console.warn("auth.js: Email already exists in reclutadores table:", userData.email);
-        throw new Error('Este email ya pertenece a un reclutador registrado.');
-      }
-
-      console.log("auth.js: Proceeding with Supabase Auth signup");
+      console.log("auth.js: Proceeding with Supabase Auth signup for email:", userData.email);
       const { data: { user: authUser }, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
