@@ -7,6 +7,7 @@ import RegisterConfirmation from "./pages/RegisterConfirmation";
 import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
+import CompleteProfile from "./pages/CompleteProfile"; // Importar la nueva página
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallback from "./components/AuthCallback";
@@ -23,6 +24,14 @@ function App() {
             <Route path="/register-confirmation" element={<RegisterConfirmation />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route
+              path="/complete-profile"
+              element={
+                <ProtectedRoute>
+                  <CompleteProfile />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/dashboard/*"
               element={

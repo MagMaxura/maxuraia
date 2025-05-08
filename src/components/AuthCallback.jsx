@@ -9,7 +9,8 @@ export default function AuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { saveRecruiterProfile } = useAuth(); // Obtener saveRecruiterProfile de useAuth
+  // Obtener las funciones necesarias de useAuth
+  const { saveRecruiterProfile, getRecruiterProfile, user: authUser } = useAuth();
   const [error, setError] = useState(null);
   const [message, setMessage] = useState("Procesando autenticación...");
 
@@ -52,54 +53,53 @@ export default function AuthCallback() {
         }
 
         // For email verification flow (not a password recovery)
-        // Attempt to save pending user profile
-        const pendingProfileString = localStorage.getItem('pendingUserProfile');
-        if (pendingProfileString) {
-          setMessage("Guardando información del perfil...");
-          try {
-            const pendingProfile = JSON.parse(pendingProfileString);
-            console.log("AuthCallback: Found pending profile, attempting to save:", pendingProfile);
-            
-            // Ensure the user from the new session matches the pending profile ID
-            const { data: { session: currentSession } } = await supabase.auth.getSession();
-            if (currentSession && currentSession.user.id === pendingProfile.id) {
-              await saveRecruiterProfile(pendingProfile); // Esta función está en useAuth
-              localStorage.removeItem('pendingUserProfile');
-              toast({
-                title: "¡Cuenta activada y perfil guardado!",
-                description: "Tu registro se ha completado exitosamente.",
-                variant: "default", // o 'success'
-              });
-              navigate('/dashboard'); // O a donde quieras redirigir después del registro completo
-            } else {
-              console.error("AuthCallback: Session user ID does not match pending profile ID.");
-              localStorage.removeItem('pendingUserProfile'); // Limpiar para evitar problemas
-              throw new Error("Error de consistencia de datos durante el registro.");
-            }
-          } catch (profileError) {
-            console.error('AuthCallback: Error saving pending profile:', profileError);
-            toast({
-              title: "Error al guardar perfil",
-              description: profileError.message || "No se pudo guardar la información de tu perfil. Por favor, contacta a soporte.",
-              variant: "destructive",
-            });
-            // Decide a dónde redirigir en caso de error al guardar perfil,
-            // el usuario está autenticado pero su perfil no se guardó.
-            // Podría ser a una página para reintentar o a /login.
-            navigate('/login');
-          }
-        } else {
-          // No pending profile, just a normal login or email verification without profile step
-          toast({
-            title: "¡Email verificado!",
-            description: "Tu cuenta ha sido verificada correctamente.",
-            variant: "default",
-          });
-          navigate('/dashboard'); // O a donde quieras redirigir después de un login/verificación normal
+        
+        // 1. Obtener la sesión actual para asegurarnos de que el usuario está autenticado
+        const { data: { session: currentSession }, error: getSessionError } = await supabase.auth.getSession();
+
+        if (getSessionError || !currentSession) {
+          console.error('AuthCallback: Error getting session after code exchange or no session found.', getSessionError);
+          setError("No se pudo obtener la sesión de usuario después de la verificación.");
+          navigate('/login');
+          return;
         }
+
+        const userId = currentSession.user.id;
+        console.log("AuthCallback: Session established for user ID:", userId);
+        setMessage("Verificando perfil...");
+
+        // 2. Verificar si el usuario ya tiene un perfil en 'reclutadores'
+        try {
+          const existingProfile = await getRecruiterProfile(userId);
+
+          if (existingProfile) {
+            // El usuario ya tiene perfil, redirigir al dashboard
+            console.log("AuthCallback: User already has a profile. Redirecting to dashboard.");
+            toast({
+              title: "¡Bienvenido de nuevo!",
+              description: "Tu cuenta ya está configurada.",
+              variant: "default",
+            });
+            navigate('/dashboard');
+          } else {
+            // El usuario no tiene perfil, redirigir a completar perfil
+            console.log("AuthCallback: User does not have a profile. Redirecting to complete profile.");
+            toast({
+              title: "¡Email verificado!",
+              description: "Ahora completa tu perfil para continuar.",
+              variant: "default",
+            });
+            navigate('/complete-profile');
+          }
+        } catch (profileCheckError) {
+          console.error('AuthCallback: Error checking for existing profile:', profileCheckError);
+          setError("Error al verificar tu perfil. Por favor, intenta iniciar sesión.");
+          navigate('/login');
+        }
+        
       } catch (err) {
-        console.error('Error in auth callback:', err);
-        setError(err.message || "Ocurrió un error desconocido.");
+        console.error('AuthCallback: Error during callback processing:', err);
+        setError(err.message || "Ocurrió un error desconocido durante la autenticación.");
         toast({
           title: "Error",
           description: "Ocurrió un error durante el proceso de autenticación.",

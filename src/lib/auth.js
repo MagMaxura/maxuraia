@@ -221,5 +221,29 @@ export const auth = {
      console.log("Cleared auth user state and storage.");
   },
 
-  getRecruiterByEmail: getRecruiterByEmail 
+  async getRecruiterProfile(userId) {
+    if (!userId) {
+      console.error("auth.js: getRecruiterProfile - userId is required.");
+      return null;
+    }
+    try {
+      const { data, error } = await supabase
+        .from('reclutadores')
+        .select('id') // Solo necesitamos saber si existe
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('auth.js: Error fetching recruiter profile by ID:', error);
+        throw error; // O manejar el error de otra forma
+      }
+      console.log("auth.js: getRecruiterProfile - Profile check result for", userId, ":", data);
+      return data; // Devuelve el objeto {id: ...} si existe, o null si no existe
+    } catch (error) {
+      console.error('auth.js: Exception in getRecruiterProfile:', error);
+      return null; // O re-lanzar el error
+    }
+  },
+
+  getRecruiterByEmail: getRecruiterByEmail
 };
