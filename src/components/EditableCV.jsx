@@ -1,7 +1,6 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import { Save, Plus, X } from "lucide-react";
 
 function EditableCV({ analysis, onSave }) {
