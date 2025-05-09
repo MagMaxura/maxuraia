@@ -69,27 +69,30 @@ export default function AuthCallback() {
         console.log("AuthCallback: Session established for user ID:", userId);
         setMessage("Verificando perfil...");
 
-        // 2. Intentar crear el perfil básico directamente.
-        //    saveRecruiterProfile ya maneja errores si la inserción falla (ej: RLS).
-        //    Si el perfil ya existe (por una ejecución anterior o concurrencia),
-        //    la inserción fallará debido a la restricción de clave primaria (id único),
-        //    lo cual está bien, podemos manejar ese error específico o simplemente proceder.
+        // 2. Verificar si el perfil existe. Si no, crearlo.
         try {
-          console.log("AuthCallback: Attempting to ensure basic profile exists for user ID:", userId);
-          setMessage("Finalizando configuración...");
-          
-          const basicProfileData = {
-            id: userId,
-            email: currentSession.user.email,
-          };
-          
-          console.log("AuthCallback: Calling saveRecruiterProfile with:", basicProfileData);
-          await saveRecruiterProfile(basicProfileData);
-          
-          console.log("AuthCallback: saveRecruiterProfile call completed (either inserted or failed gracefully if exists).");
-          
-          // Si llegamos aquí, la inserción fue exitosa o falló porque ya existía (lo cual es aceptable).
-          // Ahora redirigimos a completar el perfil.
+          console.log("AuthCallback: Checking for existing profile for user ID:", userId);
+          const existingProfile = await getRecruiterProfile(userId);
+          console.log("AuthCallback: Result of getRecruiterProfile:", existingProfile);
+
+          if (!existingProfile) {
+            // Perfil NO existe, intentar crearlo
+            console.log("AuthCallback: Profile does not exist. Attempting to create basic profile...");
+            setMessage("Creando perfil inicial...");
+            const basicProfileData = {
+              id: userId,
+              email: currentSession.user.email,
+            };
+            console.log("AuthCallback: Calling saveRecruiterProfile with:", basicProfileData);
+            await saveRecruiterProfile(basicProfileData); // INSERT
+            console.log("AuthCallback: Basic profile created successfully.");
+            // Continuar para redirigir a /complete-profile
+          } else {
+             console.log("AuthCallback: Profile already exists.");
+             // El perfil ya existe, continuar para redirigir a /complete-profile (o /dashboard si quisiéramos)
+          }
+
+          // Si llegamos aquí, el perfil existe (ya sea preexistente o recién creado)
           toast({
             title: "¡Email verificado!",
             description: "Ahora completa tu perfil para continuar.",
@@ -98,22 +101,19 @@ export default function AuthCallback() {
           navigate('/complete-profile');
 
         } catch (profileError) {
-          // Manejar errores durante la inserción (saveRecruiterProfile)
-          // Podríamos verificar si el error es por clave duplicada (código 23505 en Postgres)
-          // y si es así, ignorarlo y redirigir a /complete-profile de todas formas.
-          // Por ahora, cualquier error aquí se considera bloqueante.
-          console.error('AuthCallback: Error during saveRecruiterProfile:', profileError);
+          // Error durante getRecruiterProfile o saveRecruiterProfile
+          console.error('AuthCallback: Error checking or creating profile:', profileError);
           setError(`Error al configurar tu perfil: ${profileError.message}`);
-          toast({
-            title: "Error de Configuración",
-            description: "No se pudo guardar la información inicial de tu perfil.",
-            variant: "destructive",
-          });
+           toast({
+             title: "Error de Configuración",
+             description: "No se pudo verificar o crear tu perfil inicial.",
+             variant: "destructive",
+           });
           // Considerar desloguear
           // await supabase.auth.signOut();
           navigate('/login');
         }
-
+        
       } catch (err) {
         console.error('AuthCallback: Error during callback processing:', err);
         setError(err.message || "Ocurrió un error desconocido durante la autenticación.");
