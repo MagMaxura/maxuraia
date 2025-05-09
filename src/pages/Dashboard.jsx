@@ -34,20 +34,22 @@ function Dashboard() {
     try {
       const file = files[0]; // Procesamos un archivo a la vez
       const text = await extractTextFromFile(file);
-      const analysis = analyzeCV(text); // Asumiendo que analyzeCV devuelve un objeto o string
+      const resolvedAnalysis = await analyzeCV(text); // Usar await aquí
+      console.log("Dashboard: resolvedAnalysis from analyzeCV", resolvedAnalysis);
 
       // Crear un nuevo objeto de archivo con nombre y análisis
       const newCvFile = {
         name: file.name, // Guardar el nombre del archivo
         originalFile: file, // Guardar el archivo original si es necesario para otras operaciones
-        analysis: analysis,
+        analysis: resolvedAnalysis, // Usar el análisis resuelto
         uploadedDate: new Date(),
       };
       
       setCvFiles(prevCvFiles => [...prevCvFiles, newCvFile]);
       // Actualizar selectedCV para apuntar al nuevo archivo y mostrar su análisis
       setSelectedCV(cvFiles.length); // El índice será el actual cvFiles.length antes de añadir el nuevo
-      setCvAnalysis(analysis);
+      setCvAnalysis(resolvedAnalysis); // Usar el análisis resuelto
+      console.log("Dashboard: cvAnalysis state updated with", resolvedAnalysis);
       
       toast({
         title: "CV procesado",
@@ -71,7 +73,27 @@ function Dashboard() {
 
   const handleCVClick = (index) => {
     setSelectedCV(index);
-    setCvAnalysis(cvFiles[index].analysis);
+    // cvFiles[index].analysis también podría ser una Promesa si no se resolvió al guardar.
+    // Es más seguro re-evaluar o asegurar que se guardó el objeto resuelto.
+    // Por ahora, asumimos que el cambio anterior lo resuelve para nuevas subidas.
+    // Si se hace clic en un CV antiguo que se subió sin el await, podría seguir siendo una promesa.
+    // Una solución más robusta sería asegurar que todos los análisis en cvFiles estén resueltos.
+    const clickedCvAnalysis = cvFiles[index].analysis;
+    console.log("Dashboard: handleCVClick - analysis object from cvFiles", clickedCvAnalysis);
+    if (typeof clickedCvAnalysis.then === 'function') {
+        console.warn("Dashboard: ¡El análisis clickeado es una Promesa! Esto no debería suceder con las nuevas subidas.");
+        // Opcionalmente, podrías intentar resolverla aquí si es una promesa,
+        // pero idealmente debería estar resuelta al guardarse.
+        clickedCvAnalysis.then(resolved => {
+            console.log("Dashboard: handleCVClick - Promesa resuelta al hacer clic", resolved);
+            setCvAnalysis(resolved);
+        }).catch(err => {
+            console.error("Dashboard: Error al resolver promesa en handleCVClick", err);
+            // Manejar el error, quizás mostrar un toast
+        });
+    } else {
+        setCvAnalysis(clickedCvAnalysis);
+    }
   };
 
   const handleAddJob = () => {

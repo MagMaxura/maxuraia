@@ -3,7 +3,13 @@ import { motion } from "framer-motion";
 import { Briefcase, MapPin, Mail, Phone, User } from "lucide-react";
 
 function CVAnalysis({ analysis }) {
-  if (!analysis) return null;
+  console.log("CVAnalysis component received analysis prop:", analysis);
+  if (!analysis || typeof analysis.then === 'function') {
+    // Si es null/undefined O si sigue siendo una promesa, no renderizar o mostrar carga.
+    // La verificación de 'then' es por si acaso una promesa se coló.
+    console.log("CVAnalysis: Analysis prop is null, undefined, or still a Promise. Returning null.");
+    return null;
+  }
 
   return (
     <motion.div
