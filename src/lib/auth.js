@@ -87,6 +87,9 @@ export const auth = {
           emailRedirectTo: `${SITE_URL}/auth/callback`
         }
       });
+      
+      // Log para verificar si la llamada a signUp retorna
+      console.log("[DEBUG] supabase.auth.signUp finished. Error:", authError, "User:", authUser);
 
       if (authError) {
         console.error('auth.js: Supabase Auth signUp error:', authError);
