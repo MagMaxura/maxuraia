@@ -158,20 +158,21 @@ export const auth = {
     // Si 'email' ya está en auth.users y no quieres duplicarlo o es manejado por la FK, considera su manejo.
     // Por ahora, lo incluimos asumiendo que la tabla reclutadores tiene una columna email.
 
-    console.log("auth.js: [LOG] saveRecruiterProfile - Attempting INSERT with data:", recruiterDataToInsert);
+    console.log("auth.js: Inserting recruiter profile data (saveRecruiterProfile):", recruiterDataToInsert);
     const { data: insertedRecruiter, error: recruiterInsertError } = await supabase
       .from('reclutadores')
       .insert([recruiterDataToInsert])
-      .select()
-      .single();
+      .select() // Mantenemos select() aquí para confirmar la inserción si es posible
+      .single(); // Mantenemos single() aquí para confirmar la inserción si es posible
 
     if (recruiterInsertError) {
-      console.error('auth.js: [LOG] Error during INSERT in saveRecruiterProfile. Details:', JSON.stringify(recruiterInsertError, null, 2));
-      console.error('auth.js: [LOG] Failed data for INSERT:', JSON.stringify(recruiterDataToInsert, null, 2));
-      throw new Error(`Error al guardar perfil inicial: ${recruiterInsertError.message}`);
+      // Log detallado del error de INSERT
+      console.error('auth.js: Error during INSERT in saveRecruiterProfile:', JSON.stringify(recruiterInsertError, null, 2));
+      console.error('auth.js: Error inserting recruiter profile into reclutadores table:', recruiterInsertError);
+      throw new Error('Error al guardar los datos del perfil del reclutador.');
     }
 
-    console.log("auth.js: [LOG] saveRecruiterProfile - INSERT successful. Result:", insertedRecruiter);
+    console.log("auth.js: Recruiter profile data saved successfully:", insertedRecruiter);
     return insertedRecruiter;
   },
 
@@ -188,27 +189,20 @@ export const auth = {
     // Asegúrate de que todos los campos en dataToUpdate (que vienen de CompleteProfile.jsx
     // ya mapeados a snake_case) existan como columnas en tu tabla reclutadores.
 
-    console.log("auth.js: [LOG] updateRecruiterProfile - Attempting UPDATE for userId:", userId, "with data:", dataToUpdate);
+    console.log("auth.js: Updating recruiter profile data:", dataToUpdate);
     const { data: updatedRecruiter, error: recruiterUpdateError } = await supabase
       .from('reclutadores')
       .update(dataToUpdate)
-      .eq('id', userId)
-      .select(); // Añadir select() para obtener la fila actualizada o un error si no se encuentra/permite
+      .eq('id', userId);
 
+    // Solo necesitamos verificar si hubo un error en la operación UPDATE
     if (recruiterUpdateError) {
-      console.error('auth.js: [LOG] Error during UPDATE in updateRecruiterProfile. Details:', JSON.stringify(recruiterUpdateError, null, 2));
-      console.error('auth.js: [LOG] Failed data for UPDATE:', JSON.stringify(dataToUpdate, null, 2));
-      throw new Error(`Error al actualizar perfil: ${recruiterUpdateError.message}`);
+      console.error('auth.js: Error updating recruiter profile in reclutadores table:', recruiterUpdateError);
+      // Podríamos verificar errores específicos, como violación de RLS (si la política UPDATE falla)
+      throw new Error('Error al actualizar los datos del perfil del reclutador.');
     }
-    
-    // Verificar si la actualización realmente devolvió datos (es decir, encontró y actualizó una fila)
-    if (!updatedRecruiter || updatedRecruiter.length === 0) {
-      console.warn("auth.js: [LOG] updateRecruiterProfile - UPDATE operation did not return data, possibly no matching row or RLS issue. UserID:", userId);
-      // Podrías lanzar un error aquí si esperas que siempre se actualice una fila.
-      // throw new Error('No se encontró el perfil para actualizar o la actualización fue denegada.');
-    } else {
-      console.log("auth.js: [LOG] updateRecruiterProfile - UPDATE successful. Result:", updatedRecruiter);
-    }
+
+    console.log("auth.js: Recruiter profile data updated successfully for user:", userId);
     // Ya no devolvemos los datos actualizados, solo indicamos éxito implícito (sin error)
     return true; // O devolver void
   },

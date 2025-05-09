@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "../components/ui/button";
 import { useToast } from "../components/ui/use-toast";
 import { useAuth } from "../contexts/AuthContext";
-import { Mail } from 'lucide-react'; // Ya no necesitamos los otros iconos aquí
-import { useEffect } from 'react'; // Importar useEffect
+import { Mail, Building2, Phone, Globe, Users, Flag } from 'lucide-react';
 
 function Register() {
   console.log("Register component rendering");
@@ -17,21 +16,11 @@ function Register() {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // Obtener también loading e isAuthenticated
-  const { register, loading, isAuthenticated } = useAuth();
+  const { register } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   console.log("Register: register function available:", !!register);
-
-  // Redirigir si ya está autenticado
-  useEffect(() => {
-    // Solo redirigir si la comprobación inicial de auth ha terminado y el usuario está autenticado
-    if (!loading && isAuthenticated) {
-      console.log("Register.jsx: User already authenticated, redirecting to dashboard.");
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, loading, navigate]);
 
   // validateWebsite ya no es necesaria aquí ya que el campo website fue eliminado del formulario inicial.
 

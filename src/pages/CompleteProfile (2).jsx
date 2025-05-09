@@ -78,9 +78,10 @@ function CompleteProfile() {
     }
 
     setIsSubmitting(true);
-    console.log("CompleteProfile: [LOG] Submitting profile data...");
+    console.log("CompleteProfile: Submitting profile data...");
 
     try {
+      // Crear objeto con nombres de columna correctos (snake_case)
       const dataForUpdate = {
         first_name: formData.firstName,
         last_name: formData.lastName,
@@ -89,15 +90,18 @@ function CompleteProfile() {
                  ? `${formData.phoneCountryCode}${formData.phone}`
                  : formData.phone,
         website: formData.website,
-        country_code: formData.country,
+        country_code: formData.country, // Asumiendo que 'country' en el estado es el código
         industry: formData.industry,
-        company_size: formData.companySize,
+        company_size: formData.companySize, // Mapeo clave
         marketing_consent: formData.marketingConsent,
+        // No incluimos id, email, created_at, trial_ends_at aquí,
+        // ya que no deberían ser actualizados por este formulario
+        // o son manejados por la función updateRecruiterProfile.
       };
 
-      console.log("CompleteProfile: [LOG] Calling updateRecruiterProfile for user ID:", authUser.id, "with data:", dataForUpdate);
+      console.log("CompleteProfile: Calling updateRecruiterProfile with:", dataForUpdate);
+      // Llamar a updateRecruiterProfile con los datos mapeados
       await updateRecruiterProfile(authUser.id, dataForUpdate);
-      console.log("CompleteProfile: [LOG] updateRecruiterProfile call completed.");
 
       toast({
         title: "¡Perfil completado!",
@@ -107,7 +111,7 @@ function CompleteProfile() {
       navigate('/dashboard');
 
     } catch (error) {
-      console.error("CompleteProfile: [LOG] Error saving profile:", error, JSON.stringify(error, null, 2));
+      console.error("CompleteProfile: Error saving profile:", error);
       toast({
         title: "Error al guardar perfil",
         description: error.message || "No se pudo guardar tu perfil. Intenta nuevamente.",

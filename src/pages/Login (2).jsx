@@ -6,28 +6,15 @@ import { motion } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { Link, useNavigate } from "react-router-dom"; // Importar useNavigate
 import { Brain } from 'lucide-react'; // Import Brain icon
-import { useEffect } from 'react'; // Importar useEffect
 
 function Login() {
   const [credentials, setCredentials] = useState({ email: "", password: "" });
   const [isResetting, setIsResetting] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [loginError, setLoginError] = useState(""); // Estado para el mensaje de error
-  // Obtener también isAuthenticated del contexto
-  const { login, resetPassword, loading, isAuthenticated } = useAuth();
+  const { login, resetPassword, loading } = useAuth(); // Get loading state
   const { toast } = useToast();
   const navigate = useNavigate(); // Inicializar useNavigate
-
-  // Redirigir si ya está autenticado
-  useEffect(() => {
-    // Solo redirigir si la comprobación inicial de auth ha terminado y el usuario está autenticado
-    if (!loading && isAuthenticated) {
-      console.log("Login.jsx: User already authenticated, redirecting to dashboard.");
-      // Aquí asumimos que si está autenticado, ya tiene perfil o el flujo lo manejará.
-      // Podríamos verificar perfil aquí también si fuera necesario, pero /dashboard debería ser seguro.
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, loading, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
