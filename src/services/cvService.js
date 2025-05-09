@@ -6,7 +6,8 @@ export const cvService = {
       // 1. Subir el archivo al storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `cvs/${recruiterId}/${fileName}`;
+      // filePath ahora es solo recruiterId/fileName, asumiendo que el bucket es 'cvs'
+      const filePath = `${recruiterId}/${fileName}`;
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('cvs')
