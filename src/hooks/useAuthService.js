@@ -72,7 +72,7 @@ export function useAuthService() {
     console.log("useAuthService: register wrapper called");
     setLoading(true);
     try {
-      const result = await authFunctions.register(formData); // Usar authFunctions
+      const result = await auth.register(formData); // Corregido: usar 'auth' importado
       return result;
     } catch (error) {
       console.error("useAuthService: Registration error in wrapper:", error);
@@ -86,7 +86,7 @@ export function useAuthService() {
     console.log("useAuthService: login wrapper called");
     setLoading(true);
     try {
-      const result = await authFunctions.login(credentials); // Usar authFunctions
+      const result = await auth.login(credentials); // Corregido: usar 'auth' importado
       // La sesión se establecerá a través de onAuthStateChange si el login en auth.js es exitoso
       return result;
     } catch (error) {
@@ -102,7 +102,7 @@ export function useAuthService() {
     console.log("useAuthService: logout wrapper called");
     setLoading(true);
     try {
-      await authFunctions.logout(); // Usar authFunctions
+      await auth.logout(); // Corregido: usar 'auth' importado
       // onAuthStateChange se encargará de limpiar user y session
       toast({
         title: "Sesión cerrada",
@@ -124,7 +124,7 @@ export function useAuthService() {
     console.log("useAuthService: resetPassword wrapper called");
     setLoading(true);
     try {
-      const result = await authFunctions.resetPassword(email); // Usar authFunctions
+      const result = await auth.resetPassword(email); // Corregido: usar 'auth' importado
       toast({
         title: "Email enviado",
         description: "Revisa tu correo para restablecer tu contraseña.",
