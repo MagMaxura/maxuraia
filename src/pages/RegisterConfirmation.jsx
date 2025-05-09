@@ -7,13 +7,14 @@ import { CheckCircle2 } from "lucide-react";
 
 function RegisterConfirmation() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const userData = location.state?.userData;
+  // const location = useLocation(); // Ya no necesitamos userData del state
+  // const userData = location.state?.userData;
 
-  if (!userData) {
-    navigate('/register');
-    return null;
-  }
+  // Ya no necesitamos esta verificación, la página siempre mostrará el mensaje de confirmación.
+  // if (!userData) {
+  //   navigate('/register');
+  //   return null;
+  // }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 p-4">
@@ -35,26 +36,25 @@ function RegisterConfirmation() {
         
         <div className="space-y-4 text-white/80">
           <p>
-            Bienvenido/a {userData.firstName} {userData.lastName} a HR Intelligence
+            ¡Gracias por registrarte en HR Intelligence!
           </p>
           <p>
-            Tu período de prueba gratuito de 7 días ha comenzado.
+            Para completar el proceso y activar tu cuenta, por favor revisa tu bandeja de entrada (y la carpeta de spam) por un correo de confirmación.
           </p>
           <p>
-            Empresa: {userData.company}
+            Haz clic en el enlace dentro del correo para verificar tu dirección de email.
           </p>
         </div>
 
-        <div className="bg-white/5 rounded-lg p-4 mt-6">
+        {/* Opcional: Podrías mostrar el email si lo pasas de otra forma o lo obtienes del contexto/localStorage */}
+        {/* <div className="bg-white/5 rounded-lg p-4 mt-6">
           <p className="text-white/70 text-sm">
-            Te hemos enviado un correo de confirmación a:
-            <br />
-            <span className="font-semibold text-white">{userData.email}</span>
+            Correo enviado a: tu.email@ejemplo.com
           </p>
-        </div>
+        </div> */}
 
         <Button
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate('/login')} // Es más común redirigir a login después de este mensaje
           className="w-full bg-white text-blue-600 hover:bg-white/90 mt-6"
           size="lg"
         >
