@@ -184,13 +184,12 @@ export const auth = {
 
     // Preparamos los datos para actualizar. Excluimos 'id' y 'email' si no queremos que se actualicen.
     // También excluimos campos que no existen en la tabla reclutadores.
-    // const { id, email, created_at, trial_ends_at, ...dataToUpdate } = profileData; // Comentar original
-    
-    // --- PRUEBA: Actualizar solo first_name ---
-    const dataToUpdate = { first_name: profileData.firstName };
-    // -----------------------------------------
+    // Revertir la prueba y usar la lógica original para preparar dataToUpdate
+    const { id, email, created_at, trial_ends_at, ...dataToUpdate } = profileData;
+    // Asegúrate de que todos los campos en dataToUpdate (que vienen de CompleteProfile.jsx
+    // ya mapeados a snake_case) existan como columnas en tu tabla reclutadores.
 
-    console.log("auth.js: [DEBUG] Attempting to update ONLY first_name:", dataToUpdate);
+    console.log("auth.js: Updating recruiter profile data:", dataToUpdate);
     const { data: updatedRecruiter, error: recruiterUpdateError } = await supabase
       .from('reclutadores')
       .update(dataToUpdate)
