@@ -18,6 +18,36 @@ function Dashboard() {
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef(null);
 
+  const handleSaveSuccess = (cvId, candidateId, updatedAnalysis) => {
+    console.log("Dashboard: handleSaveSuccess called with", { cvId, candidateId, updatedAnalysis });
+    // Actualizar el cvFile en el estado cvFiles con los nuevos IDs y el análisis actualizado
+    // Esto es importante para que la próxima vez que se seleccione este CV,
+    // se sepa que ya existe en la BD y se pueda actualizar en lugar de crear uno nuevo.
+    // También asegura que si el análisis fue editado, se refleje en la lista.
+    setCvFiles(prevCvFiles => {
+      return prevCvFiles.map(cvFile => {
+        // Identificar el CV por nombre de archivo original o alguna otra clave única si es necesario
+        // Aquí asumimos que el 'updatedAnalysis' tiene el 'textoCompleto' que podemos usar para comparar
+        // o si el 'selectedCV' (índice) sigue siendo válido y corresponde al CV guardado.
+        // Una forma más robusta sería si 'updatedAnalysis' o 'cvId' permite identificarlo.
+        // Por ahora, si el nombre del archivo coincide con el que está seleccionado actualmente.
+        if (cvFile.name === cvFiles[selectedCV]?.name) {
+          console.log("Dashboard: Updating cvFile in state:", cvFile.name);
+          return {
+            ...cvFile,
+            analysis: updatedAnalysis, // Guardar el análisis posiblemente editado
+            cv_database_id: cvId,
+            candidate_database_id: candidateId,
+          };
+        }
+        return cvFile;
+      });
+    });
+    // Opcionalmente, podrías querer re-seleccionar el CV para forzar una actualización de 'cvAnalysis'
+    // si el objeto 'updatedAnalysis' es diferente en estructura al que ya está en 'cvAnalysis' state.
+    // Pero setCvAnalysis(updatedAnalysis) ya debería estar manejado por el flujo normal si es necesario.
+  };
+
   const menuItems = [
     { id: "cargarNuevoCV", label: "Cargar Nuevo CV", icon: Upload },
     { id: "cvsProcesados", label: "CVs Procesados", icon: Users },
@@ -43,6 +73,8 @@ function Dashboard() {
         originalFile: file, // Guardar el archivo original si es necesario para otras operaciones
         analysis: resolvedAnalysis, // Usar el análisis resuelto
         uploadedDate: new Date(),
+        cv_database_id: null, // Se poblará después de guardar en BD
+        candidate_database_id: null, // Se poblará después de guardar en BD
       };
       
       setCvFiles(prevCvFiles => [...prevCvFiles, newCvFile]);
@@ -229,7 +261,14 @@ function Dashboard() {
               {cvAnalysis && selectedCV !== null && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white p-6 rounded-xl shadow-xl">
                   <h2 className="text-xl font-semibold text-slate-800 mb-4">Análisis del CV: {cvFiles[selectedCV]?.name}</h2>
-                  <CVAnalysis analysis={cvAnalysis} />
+                  <CVAnalysis
+                    analysis={cvAnalysis}
+                    userId={user?.id}
+                    originalFile={cvFiles[selectedCV]?.originalFile}
+                    cvDatabaseId={cvFiles[selectedCV]?.cv_database_id}
+                    candidateDatabaseId={cvFiles[selectedCV]?.candidate_database_id}
+                    onSaveSuccess={handleSaveSuccess} // Pasar la nueva función callback
+                  />
                 </motion.div>
               )}
                {selectedCV === null && cvFiles.length > 0 && (

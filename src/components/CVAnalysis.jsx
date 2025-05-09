@@ -5,80 +5,103 @@ import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea.jsx";
 import { useToast } from "@/components/ui/use-toast.js";
+import { cvService } from '@/services/cvService.js'; // Importar el servicio
 
-// Asumimos que tienes un servicio para interactuar con Supabase
-// import { saveCandidateProfile, saveCvDocument } from '@/services/candidateService'; 
-
-function CVAnalysis({ analysis: initialAnalysis }) {
+function CVAnalysis({ 
+  analysis: initialAnalysis, 
+  userId, 
+  originalFile, 
+  cvDatabaseId, 
+  candidateDatabaseId,
+  onSaveSuccess // Nueva prop para notificar al Dashboard
+}) {
   const [editableAnalysis, setEditableAnalysis] = useState(null);
-  const [isEditing, setIsEditing] = useState(false); // Podríamos añadir un botón "Editar" en el futuro
+  const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log("CVAnalysis component received initialAnalysis prop:", initialAnalysis);
+    console.log("CVAnalysis: initialAnalysis prop:", initialAnalysis);
+    console.log("CVAnalysis: userId prop:", userId);
+    console.log("CVAnalysis: originalFile prop:", originalFile?.name);
+    console.log("CVAnalysis: cvDatabaseId prop:", cvDatabaseId);
+    console.log("CVAnalysis: candidateDatabaseId prop:", candidateDatabaseId);
+
     if (initialAnalysis && typeof initialAnalysis.then !== 'function') {
       setEditableAnalysis({ ...initialAnalysis });
     } else if (initialAnalysis && typeof initialAnalysis.then === 'function') {
-      console.warn("CVAnalysis: initialAnalysis prop is a Promise. Waiting for it to resolve.");
       initialAnalysis.then(resolved => {
-        console.log("CVAnalysis: Promise resolved, setting editableAnalysis", resolved);
         setEditableAnalysis({ ...resolved });
-      }).catch(err => {
-        console.error("CVAnalysis: Error resolving promise for initialAnalysis", err);
-        setEditableAnalysis(null); // o algún estado de error
-      });
+      }).catch(err => setEditableAnalysis(null));
     } else {
       setEditableAnalysis(null);
     }
-  }, [initialAnalysis]);
+  }, [initialAnalysis, userId, originalFile, cvDatabaseId, candidateDatabaseId]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEditableAnalysis(prev => ({ ...prev, [name]: value }));
   };
-
+  
   const handleHabilidadesChange = (e) => {
-    // Para habilidades como array, si se editan en un textarea, se guardan como string.
-    // O se podría implementar una lógica más compleja para tags.
-    // Por ahora, si es un array lo unimos, si es string lo tomamos.
     const value = e.target.value;
     setEditableAnalysis(prev => ({ 
       ...prev, 
-      habilidades: Array.isArray(prev.habilidades) ? value.split(',').map(s => s.trim()) : value 
+      habilidades: value.split(',').map(s => s.trim()).filter(Boolean) 
     }));
   };
-  
-  // Lógica para cuando se editan las habilidades directamente en el array (si se implementan tags)
-  const handleHabilidadesArrayChange = (newHabilidadesArray) => {
-    setEditableAnalysis(prev => ({ ...prev, habilidades: newHabilidadesArray }));
-  };
-
 
   const handleSave = async () => {
-    if (!editableAnalysis) return;
+    if (!editableAnalysis || !userId) {
+      toast({ title: "Error", description: "Faltan datos para guardar.", variant: "destructive" });
+      return;
+    }
+    setIsSaving(true);
     console.log("Guardando análisis:", editableAnalysis);
 
     try {
-      // Aquí iría la lógica para guardar en Supabase
-      // Ejemplo (necesitarás implementar estas funciones en tu servicio):
-      // const candidateData = {
-      //   nombre: editableAnalysis.nombre,
-      //   email: editableAnalysis.email,
-      //   telefono: editableAnalysis.telefono,
-      //   localidad: editableAnalysis.localidad,
-      //   edad: editableAnalysis.edad,
-      //   resumen_profesional: editableAnalysis.resumen,
-      //   // ... otros campos para la tabla Candidatos
-      // };
-      // await saveCandidateProfile(candidateData);
+      let savedCvData;
+      let savedCandidateData;
 
-      // Si también necesitas guardar el CV (archivo o referencia)
-      // await saveCvDocument({ cvText: editableAnalysis.textoCompleto, originalFileName: initialAnalysis.originalFileName /* o similar */ });
+      if (candidateDatabaseId && cvDatabaseId) { // Ya existe, entonces actualizamos
+        console.log("Actualizando candidato existente ID:", candidateDatabaseId);
+        const candidateUpdatePayload = {
+          name: editableAnalysis.nombre,
+          email: editableAnalysis.email,
+          phone: editableAnalysis.telefono,
+          location: editableAnalysis.localidad,
+          age: parseInt(editableAnalysis.edad, 10) || null,
+          experience: editableAnalysis.experiencia,
+          skills: Array.isArray(editableAnalysis.habilidades) ? editableAnalysis.habilidades.join(', ') : editableAnalysis.habilidades, // Guardar como texto
+          summary: editableAnalysis.resumen,
+          // Aquí no actualizamos el CV en sí (tabla cvs), solo el perfil del candidato.
+          // Si se quisiera actualizar el analysis_result en la tabla cvs, se necesitaría otra llamada.
+        };
+        savedCandidateData = await cvService.updateCandidate(candidateDatabaseId, candidateUpdatePayload);
+        savedCvData = { id: cvDatabaseId }; // Asumimos que el CV no cambia, solo el candidato
+        console.log("Candidato actualizado:", savedCandidateData);
+
+      } else { // No existe, entonces creamos (uploadCV maneja la creación de ambos)
+        if (!originalFile) {
+          toast({ title: "Error", description: "Falta el archivo original del CV para el primer guardado.", variant: "destructive" });
+          setIsSaving(false);
+          return;
+        }
+        console.log("Creando nuevo CV y candidato para recruiter ID:", userId);
+        const result = await cvService.uploadCV(originalFile, userId, editableAnalysis);
+        savedCvData = result.cv;
+        savedCandidateData = result.candidate;
+        console.log("Nuevo CV y candidato creados:", result);
+      }
       
       toast({
-        title: "Guardado",
+        title: "Guardado Exitoso",
         description: "La información del candidato ha sido guardada.",
       });
+
+      if (onSaveSuccess && savedCvData && savedCandidateData) {
+        onSaveSuccess(savedCvData.id, savedCandidateData.id, editableAnalysis);
+      }
+
     } catch (error) {
       console.error("Error al guardar:", error);
       toast({
@@ -86,22 +109,22 @@ function CVAnalysis({ analysis: initialAnalysis }) {
         description: "No se pudo guardar la información. " + error.message,
         variant: "destructive",
       });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   if (!editableAnalysis) {
-    console.log("CVAnalysis: editableAnalysis is null. Rendering null or loading.");
     return <p className="text-center p-4">Cargando análisis o datos no disponibles...</p>;
   }
 
-  // Asegurarse de que habilidades sea un array para el mapeo, o un string para el textarea
   const habilidadesDisplay = Array.isArray(editableAnalysis.habilidades) 
                              ? editableAnalysis.habilidades 
-                             : (typeof editableAnalysis.habilidades === 'string' ? editableAnalysis.habilidades.split(',').map(s=>s.trim()) : []);
-  const habilidadesText = Array.isArray(editableAnalysis.habilidades) 
-                          ? editableAnalysis.habilidades.join(", ") 
-                          : (editableAnalysis.habilidades || "");
-
+                             : (typeof editableAnalysis.habilidades === 'string' ? editableAnalysis.habilidades.split(',').map(s=>s.trim()).filter(Boolean) : []);
+  
+  const habilidadesTextForTextarea = Array.isArray(editableAnalysis.habilidades)
+                                   ? editableAnalysis.habilidades.join(", ")
+                                   : (editableAnalysis.habilidades || "");
 
   return (
     <motion.div
@@ -117,7 +140,6 @@ function CVAnalysis({ analysis: initialAnalysis }) {
           </div>
           <div className="flex-1 space-y-3">
             <Input name="nombre" value={editableAnalysis.nombre || ""} onChange={handleChange} placeholder="Nombre completo" className="card-title text-lg font-semibold p-0 border-0 focus-visible:ring-0 h-auto" />
-            
             <div className="flex items-center">
               <MapPin className="h-4 w-4 mr-2 text-[#0a66c2] flex-shrink-0" />
               <Input name="localidad" value={editableAnalysis.localidad || ""} onChange={handleChange} placeholder="Localidad" className="info-value text-slate-700 p-0 border-0 focus-visible:ring-0 h-auto" />
@@ -133,7 +155,7 @@ function CVAnalysis({ analysis: initialAnalysis }) {
           </div>
           <div className="text-right">
             <div className="flex items-center">
-              <Input name="edad" value={editableAnalysis.edad || ""} onChange={handleChange} placeholder="Edad" className="text-[#000000] font-medium text-lg p-0 border-0 focus-visible:ring-0 h-auto w-12 text-right" /> 
+              <Input name="edad" type="number" value={editableAnalysis.edad || ""} onChange={handleChange} placeholder="Edad" className="text-[#000000] font-medium text-lg p-0 border-0 focus-visible:ring-0 h-auto w-12 text-right" /> 
               <span className="text-[#000000] font-medium text-lg ml-1">años</span>
             </div>
           </div>
@@ -155,14 +177,13 @@ function CVAnalysis({ analysis: initialAnalysis }) {
       {/* Habilidades */}
       <div className="linkedin-card p-6">
         <h3 className="section-header">Habilidades</h3>
-        {/* <Textarea 
-          name="habilidades"
-          value={habilidadesText}
-          onChange={handleHabilidadesChange}
+        <Textarea 
+          name="habilidades" // Nombre del campo para el estado
+          value={habilidadesTextForTextarea} // Usar el string para el textarea
+          onChange={handleHabilidadesChange} // Usar el handler que convierte a array
           placeholder="Habilidad 1, Habilidad 2, Habilidad 3..."
           className="text-[#333333] leading-relaxed text-base mt-2 min-h-[80px]"
-        /> */}
-        {/* Alternativa: Mostrar como tags si es un array, o permitir edición más compleja */}
+        />
         <div className="flex flex-wrap gap-2 mt-2">
           {habilidadesDisplay.map((skill, index) => (
             <span key={index} className="skill-tag">
@@ -170,8 +191,6 @@ function CVAnalysis({ analysis: initialAnalysis }) {
             </span>
           ))}
         </div>
-         <p className="text-xs text-slate-400 mt-2">La edición de habilidades como tags individuales se implementará. Por ahora, se guardará el texto completo si se modifica el campo de habilidades en el futuro.</p>
-
       </div>
 
       {/* Experiencia */}
@@ -190,9 +209,9 @@ function CVAnalysis({ analysis: initialAnalysis }) {
       </div>
 
       <div className="flex justify-end mt-6">
-        <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
           <Save className="mr-2 h-4 w-4" />
-          Guardar Cambios
+          {isSaving ? "Guardando..." : "Guardar Cambios"}
         </Button>
       </div>
     </motion.div>
