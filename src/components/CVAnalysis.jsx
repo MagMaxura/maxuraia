@@ -50,14 +50,18 @@ function CVAnalysis({ analysis }) {
       <div className="linkedin-card p-6">
         <h3 className="section-header">Habilidades</h3>
         <div className="flex flex-wrap gap-2">
-          {analysis.habilidades.map((skill, index) => (
-            <span
-              key={index}
-              className="skill-tag"
-            >
-              {skill}
-            </span>
-          ))}
+          {Array.isArray(analysis.habilidades) && analysis.habilidades.length > 0 ? (
+            analysis.habilidades.map((skill, index) => (
+              <span
+                key={index}
+                className="skill-tag"
+              >
+                {skill}
+              </span>
+            ))
+          ) : (
+            <p className="text-sm text-slate-500">No se especificaron habilidades.</p>
+          )}
         </div>
       </div>
 
