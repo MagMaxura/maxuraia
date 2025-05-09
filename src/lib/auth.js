@@ -41,18 +41,30 @@ export const auth = {
       // 2. Verificar si el perfil existe en 'reclutadores'
       console.log("auth.js: Checking for recruiter profile for user ID:", authUser.id);
       // Llamar explícitamente a auth.getRecruiterProfile en lugar de this.getRecruiterProfile
-      const profile = await auth.getRecruiterProfile(authUser.id);
+      let profile = await auth.getRecruiterProfile(authUser.id);
+      let profileExists = !!profile;
+      console.log("auth.js: Initial profile check. Profile exists:", profileExists);
 
-      const profileExists = !!profile;
-      console.log("auth.js: Profile exists:", profileExists);
-
-      // 3. (Opcional pero recomendado) Combinar datos y guardar en localStorage si es necesario
-      //    Si tu app depende de datos del perfil inmediatamente después del login,
-      //    puedes obtenerlos aquí. Por ahora, solo necesitamos saber si existe.
-      //    El hook useAuthService ya maneja el estado del usuario de autenticación.
-      // const fullUserData = profile ? { ...authUser, ...profile } : authUser;
-      // localStorage.setItem(STORAGE_KEY, JSON.stringify(fullUserData)); // Considera si esto es necesario aquí o lo maneja el hook
-
+      // Si el usuario está confirmado pero el perfil no existe, crearlo ahora
+      if (authUser.email_confirmed_at && !profileExists) {
+        console.log("auth.js: User confirmed but no profile. Attempting to create basic profile...");
+        try {
+          const basicProfileData = {
+            id: authUser.id,
+            email: authUser.email,
+            // El resto de los campos serán NULL o sus valores predeterminados de DB
+          };
+          await auth.saveRecruiterProfile(basicProfileData); // INSERT
+          console.log("auth.js: Basic profile created successfully during login flow.");
+          profileExists = true; // Marcar que el perfil ahora existe (aunque sea básico)
+        } catch (insertError) {
+          console.error("auth.js: Error creating basic profile during login flow:", insertError);
+          // Continuar de todas formas, pero el usuario no tendrá perfil y será redirigido a /complete-profile
+          // O podrías lanzar un error aquí si la creación del perfil es crítica en el login.
+          profileExists = false;
+        }
+      }
+      
       // 4. Devolver estado de login y perfil
       return { success: true, profileExists: profileExists, user: authUser };
 

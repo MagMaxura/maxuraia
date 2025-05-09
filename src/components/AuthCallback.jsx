@@ -64,70 +64,18 @@ export default function AuthCallback() {
           setError("No se pudo obtener la sesión de usuario después de la verificación.");
           navigate('/login');
           return;
-        }
-
-        const userId = currentSession.user.id;
-        const userEmail = currentSession.user.email;
-        console.log(`AuthCallback: [LOG] Session established. User ID: ${userId}, Email: ${userEmail}`);
-        setMessage("Verificando perfil...");
-
-        // 2. Verificar si el perfil existe. Si no, crearlo.
-        try {
-          console.log(`AuthCallback: [LOG] Checking for existing profile for user ID: ${userId}`);
-          const existingProfile = await getRecruiterProfile(userId);
-          console.log("AuthCallback: [LOG] Result of getRecruiterProfile (should be true if profile exists, false otherwise):", existingProfile);
-
-          if (!existingProfile) {
-            console.log("AuthCallback: [LOG] Profile does not exist. Attempting to create basic profile...");
-            setMessage("Creando perfil inicial...");
-            const basicProfileData = { id: userId, email: userEmail };
-            console.log("AuthCallback: [LOG] Calling saveRecruiterProfile with:", basicProfileData);
-  
-            // Antes de llamar a saveRecruiterProfile, nos aseguramos de que el cliente Supabase
-            // tenga la sesión más reciente internamente.
-            // supabase.auth.getSession() refresca el estado interno del cliente si es necesario.
-            const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.getSession();
-  
-            if (refreshError || !refreshedSession) {
-              console.error("AuthCallback: [LOG] Critical error refreshing session before saveRecruiterProfile", refreshError);
-              throw new Error("No se pudo confirmar la sesión para guardar el perfil.");
-            }
-            console.log("AuthCallback: [LOG] Session confirmed/refreshed, user ID:", refreshedSession.user.id);
-  
-            // Ahora llamamos a saveRecruiterProfile, que internamente también verificará la sesión.
-            await saveRecruiterProfile(basicProfileData); // INSERT
-            
-            console.log("AuthCallback: [LOG] saveRecruiterProfile call completed.");
-            
-            // Verificar si realmente se creó
-            const newlyCreatedProfile = await getRecruiterProfile(userId);
-            console.log("AuthCallback: [LOG] Profile check after attempting insert (should be true if successful):", newlyCreatedProfile);
-            if (!newlyCreatedProfile) {
-                console.error("AuthCallback: [LOG] CRITICAL - Profile still not found after attempting insert!");
-                // Podrías lanzar un error aquí o manejarlo de otra forma
-            }
-          } else {
-             console.log("AuthCallback: [LOG] Profile already exists.");
-          }
-
-          console.log("AuthCallback: [LOG] Proceeding to navigate to /complete-profile");
-          toast({
-            title: "¡Email verificado!",
-            description: "Ahora completa tu perfil para continuar.",
-            variant: "default",
-          });
-          navigate('/complete-profile');
-
-        } catch (profileError) {
-          console.error('AuthCallback: [LOG] Error during profile check or creation:', profileError, JSON.stringify(profileError, null, 2));
-          setError(`Error al configurar tu perfil: ${profileError.message}`);
-           toast({
-             title: "Error de Configuración",
-             description: `No se pudo verificar o crear tu perfil inicial: ${profileError.message}`,
-             variant: "destructive",
-           });
-          navigate('/login');
-        }
+        // La sesión ha sido establecida por exchangeCodeForSession.
+        // El usuario está ahora autenticado.
+        console.log("AuthCallback: [LOG] Session established via code exchange.");
+        
+        toast({
+          title: "¡Email verificado!",
+          description: "Tu cuenta ha sido activada. Por favor, inicia sesión.",
+          variant: "default",
+        });
+        // Redirigir a login. La página de login ahora se encargará de
+        // verificar el perfil y redirigir a /complete-profile o /dashboard.
+        navigate('/login');
         
       } catch (err) {
         console.error('AuthCallback: Error during callback processing:', err);
