@@ -158,8 +158,20 @@ export const auth = {
       throw new Error('Conflicto de ID de usuario. No se puede guardar el perfil.');
     }
     
+    const placeholderText = "LLENAR POR EL USUARIO";
     const recruiterDataToInsert = {
-      ...profileData, // Asume que profileData ya tiene el formato correcto para la tabla reclutadores
+      id: profileData.id, // Viene de authUser.id
+      email: profileData.email, // Viene de authUser.email
+      company: profileData.company || placeholderText,
+      first_name: profileData.first_name || placeholderText,
+      last_name: profileData.last_name || placeholderText,
+      // Otros campos que podrían ser NOT NULL y no vienen en el basicProfileData
+      // phone: profileData.phone || null, // O un placeholder si es NOT NULL
+      // website: profileData.website || null,
+      // country_code: profileData.country_code || null,
+      // industry: profileData.industry || null,
+      // company_size: profileData.company_size || null,
+      // marketing_consent: profileData.marketing_consent !== undefined ? profileData.marketing_consent : false,
       trial_ends_at: profileData.trial_ends_at || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       created_at: profileData.created_at || new Date().toISOString()
     };
