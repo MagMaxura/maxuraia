@@ -261,18 +261,22 @@ export const auth = {
     }
     try {
       console.log("[DEBUG] Attempting SELECT query in getRecruiterProfile..."); // Log antes de la consulta
-      const { data, error } = await supabase
+      // Usar head:true y count:'exact' para solo verificar existencia sin traer datos
+      const { data, error, count } = await supabase
         .from('reclutadores')
-        .select('id') // Solo necesitamos saber si existe
-        .eq('id', userId)
-        .maybeSingle();
+        .select('*', { head: true, count: 'exact' })
+        .eq('id', userId);
+        // No necesitamos maybeSingle con head:true
+
+      console.log("[DEBUG] SELECT query finished. Error:", error, "Count:", count); // Log después de la consulta
 
       if (error) {
         console.error('auth.js: Error fetching recruiter profile by ID:', error);
         throw error; // O manejar el error de otra forma
       }
-      console.log("auth.js: getRecruiterProfile - Profile check result for", userId, ":", data);
-      return data; // Devuelve el objeto {id: ...} si existe, o null si no existe
+      // console.log("auth.js: getRecruiterProfile - Profile check result for", userId, ":", data); // 'data' será null con head:true
+      // Devolvemos true si count > 0, false si count === 0
+      return count > 0;
     } catch (error) {
       console.error('auth.js: Exception in getRecruiterProfile:', error);
       return null; // O re-lanzar el error
