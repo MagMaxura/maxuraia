@@ -8,6 +8,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import CompleteProfile from "./pages/CompleteProfile"; // Importar la nueva página
+import SupabaseTestPage from "./pages/SupabaseTestPage"; // Importar la página de prueba
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallback from "./components/AuthCallback";
@@ -29,6 +30,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CompleteProfile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/supabase-test"
+              element={
+                <ProtectedRoute>
+                  <SupabaseTestPage />
                 </ProtectedRoute>
               }
             />
