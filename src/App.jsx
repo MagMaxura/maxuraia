@@ -8,7 +8,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import CompleteProfile from "./pages/CompleteProfile"; // Importar la nueva página
-import SupabaseTestPage from "./pages/SupabaseTestPage"; // Importar la página de prueba
+// import SupabaseTestPage from "./pages/SupabaseTestPage"; // Ya no se importa
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallback from "./components/AuthCallback";
@@ -33,14 +33,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
+            {/* <Route
               path="/supabase-test"
               element={
                 <ProtectedRoute>
                   <SupabaseTestPage />
                 </ProtectedRoute>
               }
-            />
+            /> */}
             <Route
               path="/dashboard/*"
               element={

@@ -121,78 +121,80 @@ export function useAuthService() {
   // pero asegurándonos de que llaman a las funciones correctas de src/lib/auth.js
   // y que no manejan navegación o toasts que ya se manejan en los componentes.
 
+  // Las funciones register, login, logout, etc., ahora usan setLoading del hook
+  // pero la lógica principal (llamadas a Supabase, manejo de errores específicos)
+  // está en src/lib/auth.js. Estas funciones en el hook actúan como wrappers.
+
   const register = useCallback(async (formData) => {
-    // Esta función ahora solo llama a auth.register y devuelve el resultado
-    // El componente Register.jsx maneja el toast y la lógica post-registro.
-    console.log("useAuthService: register called");
+    console.log("useAuthService: register wrapper called");
     setLoading(true);
     try {
-      // Llama a la función register de src/lib/auth.js que devuelve { user, needsEmailConfirmation }
-      const result = await auth.register(formData);
-      return result; // Devolver el resultado para que Register.jsx lo maneje
+      const result = await authFunctions.register(formData); // Usar authFunctions
+      return result;
     } catch (error) {
-      console.error("useAuthService: Registration error:", error);
-      // Re-lanzar el error para que Register.jsx lo capture y muestre el toast
+      console.error("useAuthService: Registration error in wrapper:", error);
       throw error;
     } finally {
       setLoading(false);
     }
-  }, []); // No necesita dependencias si solo llama a auth.register
+  }, []);
 
   const login = useCallback(async (credentials) => {
-    // Esta función ahora solo llama a auth.login y devuelve el resultado
-    // El componente Login.jsx maneja el toast y la navegación.
-    console.log("useAuthService: login called");
+    console.log("useAuthService: login wrapper called");
     setLoading(true);
     try {
-      // Llama a la función login de src/lib/auth.js que devuelve { success, profileExists, error }
-      const result = await auth.login(credentials);
-      return result; // Devolver el resultado para que Login.jsx lo maneje
+      const result = await authFunctions.login(credentials); // Usar authFunctions
+      // La sesión se establecerá a través de onAuthStateChange si el login en auth.js es exitoso
+      return result;
     } catch (error) {
-      // Esto no debería ocurrir si auth.login maneja sus propios errores y devuelve un objeto
-      console.error("useAuthService: Unexpected error during login call:", error);
-      return { success: false, error: error.message || "Error inesperado." };
+      console.error("useAuthService: Login error in wrapper:", error);
+      // authFunctions.login ya debería devolver un objeto con el error
+      return { success: false, error: error.message || "Error inesperado en login wrapper." };
     } finally {
       setLoading(false);
     }
-  }, []); // No necesita dependencias si solo llama a auth.login
+  }, []);
 
   const logout = useCallback(async () => {
+    console.log("useAuthService: logout wrapper called");
     setLoading(true);
     try {
-      await auth.logout();
+      await authFunctions.logout(); // Usar authFunctions
+      // onAuthStateChange se encargará de limpiar user y session
       toast({
         title: "Sesión cerrada",
         description: "Has cerrado sesión correctamente.",
       });
     } catch (error) {
+      console.error("useAuthService: Logout error in wrapper:", error);
       toast({
-        title: "Error",
-        description: "No se pudo cerrar la sesión. Inténtalo de nuevo.",
+        title: "Error al cerrar sesión",
+        description: error.message || "No se pudo cerrar la sesión.",
         variant: "destructive",
       });
-       console.error("Logout error:", error);
     } finally {
       setLoading(false);
     }
   }, [toast]);
 
   const resetPassword = useCallback(async (email) => {
+    console.log("useAuthService: resetPassword wrapper called");
     setLoading(true);
     try {
-      await auth.resetPassword(email);
+      const result = await authFunctions.resetPassword(email); // Usar authFunctions
       toast({
         title: "Email enviado",
         description: "Revisa tu correo para restablecer tu contraseña.",
       });
-      return true;
+      return result;
     } catch (error) {
+      console.error("useAuthService: Reset password error in wrapper:", error);
       toast({
-        title: "Error",
+        title: "Error al enviar email",
         description: error.message || "No se pudo enviar el email de recuperación.",
         variant: "destructive",
       });
-      return false;
+      throw error; // Re-lanzar para que el componente lo maneje si es necesario
     } finally {
       setLoading(false);
     }
@@ -200,12 +202,13 @@ export function useAuthService() {
 
   return {
     user,
+    session, // Exponer la sesión completa
     loading,
     authChecked,
     login,
     logout,
     register,
     resetPassword,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user, // Basado en el estado user
   };
 }

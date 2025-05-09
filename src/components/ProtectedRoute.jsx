@@ -14,9 +14,8 @@ function ProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     // Redirect to the /login path if not authenticated
-    // TEMPORALMENTE COMENTADO PARA ACCESO DIRECTO A PÁGINAS PROTEGIDAS DURANTE DEBUG
-    // console.warn("ProtectedRoute: User not authenticated, normally would redirect to /login. Path:", location.pathname);
-    // return <Navigate to="/login" state={{ from: location }} replace />;
+    console.log("ProtectedRoute: User not authenticated, redirecting to /login. Attempted path:", location.pathname);
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Render the protected content if authenticated
