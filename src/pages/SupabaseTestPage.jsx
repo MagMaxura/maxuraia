@@ -10,20 +10,25 @@ function SupabaseTestPage() {
   const [testResults, setTestResults] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const testUserId = authUser?.id;
-  const testUserEmail = authUser?.email;
+  // Estados para entrada manual
+  const [manualUserId, setManualUserId] = useState('');
+  const [manualUserEmail, setManualUserEmail] = useState('');
+
+  // Usar valores manuales si están presentes, sino los del usuario autenticado
+  const effectiveUserId = manualUserId || authUser?.id;
+  const effectiveUserEmail = manualUserEmail || authUser?.email;
 
   const handleTestInsert = async () => {
-    if (!testUserId || !testUserEmail) {
-      toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
+    if (!effectiveUserId || !effectiveUserEmail) {
+      toast({ title: "Error", description: "ID de Usuario y Email son requeridos para la prueba.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
     setTestResults('Intentando INSERT...');
     try {
       const testData = {
-        id: testUserId,
-        email: testUserEmail,
+        id: effectiveUserId,
+        email: effectiveUserEmail,
         first_name: 'TestFirstName',
         last_name: 'TestLastName',
         company: 'TestCompany',
@@ -55,18 +60,18 @@ function SupabaseTestPage() {
   };
 
   const handleTestSelect = async () => {
-    if (!testUserId) {
-      toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
+    if (!effectiveUserId) {
+      toast({ title: "Error", description: "ID de Usuario es requerido para la prueba.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
     setTestResults('Intentando SELECT...');
     try {
-      console.log('[SupabaseTestPage] Intentando SELECT para ID:', testUserId);
+      console.log('[SupabaseTestPage] Intentando SELECT para ID:', effectiveUserId);
       const { data, error } = await supabase
         .from('reclutadores')
         .select('*')
-        .eq('id', testUserId)
+        .eq('id', effectiveUserId)
         .maybeSingle(); // Usar maybeSingle para no fallar si no existe
 
       if (error) {
@@ -87,8 +92,8 @@ function SupabaseTestPage() {
   };
 
   const handleTestUpdate = async () => {
-    if (!testUserId) {
-      toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
+    if (!effectiveUserId) {
+      toast({ title: "Error", description: "ID de Usuario es requerido para la prueba.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
@@ -102,7 +107,7 @@ function SupabaseTestPage() {
       const { data, error } = await supabase
         .from('reclutadores')
         .update(updateData)
-        .eq('id', testUserId)
+        .eq('id', effectiveUserId)
         .select()
         .single(); // Usar single si esperas que la fila exista y se actualice
 
@@ -124,18 +129,18 @@ function SupabaseTestPage() {
   };
   
   const handleDelete = async () => {
-    if (!testUserId) {
-      toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
+    if (!effectiveUserId) {
+      toast({ title: "Error", description: "ID de Usuario es requerido para la prueba.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
     setTestResults('Intentando DELETE...');
     try {
-      console.log('[SupabaseTestPage] Intentando DELETE para ID:', testUserId);
+      console.log('[SupabaseTestPage] Intentando DELETE para ID:', effectiveUserId);
       const { error } = await supabase
         .from('reclutadores')
         .delete()
-        .eq('id', testUserId);
+        .eq('id', effectiveUserId);
 
       if (error) {
         console.error('[SupabaseTestPage] Error en DELETE:', error);
@@ -166,21 +171,54 @@ function SupabaseTestPage() {
   return (
     <div className="p-8 space-y-4">
       <h1 className="text-2xl font-bold">Página de Prueba de Supabase - Tabla 'reclutadores'</h1>
-      <p>Usuario ID: {testUserId}</p>
-      <p>Usuario Email: {testUserEmail}</p>
-      <p>Email Confirmado: {authUser?.email_confirmed_at ? `Sí (en ${new Date(authUser.email_confirmed_at).toLocaleString()})` : 'No'}</p>
       
+      <div className="my-4 p-4 border rounded">
+        <h2 className="text-lg font-semibold mb-2">Datos del Usuario Autenticado (si existe):</h2>
+        <p>ID: {authUser?.id || 'N/A'}</p>
+        <p>Email: {authUser?.email || 'N/A'}</p>
+        <p>Email Confirmado: {authUser?.email_confirmed_at ? `Sí (en ${new Date(authUser.email_confirmed_at).toLocaleString()})` : 'No (o N/A)'}</p>
+      </div>
+
+      <div className="my-4 p-4 border rounded space-y-2">
+        <h2 className="text-lg font-semibold mb-2">Entrada Manual para Pruebas (Opcional):</h2>
+        <div>
+          <label htmlFor="manualId" className="block text-sm font-medium">ID de Usuario Manual:</label>
+          <input
+            type="text"
+            id="manualId"
+            value={manualUserId}
+            onChange={(e) => setManualUserId(e.target.value)}
+            placeholder="Ingresa UUID de usuario"
+            className="mt-1 block w-full p-2 border rounded"
+          />
+        </div>
+        <div>
+          <label htmlFor="manualEmail" className="block text-sm font-medium">Email Manual:</label>
+          <input
+            type="email"
+            id="manualEmail"
+            value={manualUserEmail}
+            onChange={(e) => setManualUserEmail(e.target.value)}
+            placeholder="Ingresa email"
+            className="mt-1 block w-full p-2 border rounded"
+          />
+        </div>
+        <p className="text-xs text-gray-600">Si dejas estos campos vacíos, se usarán los datos del usuario autenticado (si hay uno).</p>
+      </div>
+      
+      <p className="font-semibold">Probando con ID: {effectiveUserId || 'N/A'}, Email: {effectiveUserEmail || 'N/A'}</p>
+
       <div className="space-x-2">
-        <Button onClick={handleTestInsert} disabled={isLoading || !testUserId}>
+        <Button onClick={handleTestInsert} disabled={isLoading || !effectiveUserId || !effectiveUserEmail}>
           {isLoading ? 'Probando...' : 'Probar INSERT'}
         </Button>
-        <Button onClick={handleTestSelect} disabled={isLoading || !testUserId}>
+        <Button onClick={handleTestSelect} disabled={isLoading || !effectiveUserId}>
           {isLoading ? 'Probando...' : 'Probar SELECT'}
         </Button>
-        <Button onClick={handleTestUpdate} disabled={isLoading || !testUserId}>
+        <Button onClick={handleTestUpdate} disabled={isLoading || !effectiveUserId}>
           {isLoading ? 'Probando...' : 'Probar UPDATE'}
         </Button>
-         <Button onClick={handleDelete} variant="destructive" disabled={isLoading || !testUserId}>
+         <Button onClick={handleDelete} variant="destructive" disabled={isLoading || !effectiveUserId}>
           {isLoading ? 'Eliminando...' : 'Probar DELETE'}
         </Button>
       </div>
