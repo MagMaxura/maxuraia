@@ -1,146 +1,148 @@
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase'; // Importar cliente Supabase directamente
+import { useAuth as useAppAuth } from '../contexts/AuthContext'; // Renombrar para evitar conflicto
+import { supabase } from '../lib/supabase';
+import { auth as authFunctions } from '../lib/auth'; // Importar funciones de auth.js
 import { Button } from '../components/ui/button';
 import { useToast } from '../components/ui/use-toast';
 
 function SupabaseTestPage() {
-  const { user: authUser, loading: authLoading } = useAuth();
+  // Usamos useAppAuth para el estado global si es necesario, pero las pruebas serán más directas
+  const { user: globalAuthUser, loading: globalAuthLoading } = useAppAuth();
   const { toast } = useToast();
+
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loggedInUser, setLoggedInUser] = useState(null); // Usuario después del login en esta página
+  const [loginStatus, setLoginStatus] = useState('');
+  
   const [testResults, setTestResults] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Estados para entrada manual
-  const [manualUserId, setManualUserId] = useState('');
-  const [manualUserEmail, setManualUserEmail] = useState('');
+  const handleTestLogin = async () => {
+    setIsLoading(true);
+    setLoginStatus('Intentando login...');
+    setLoggedInUser(null);
+    setTestResults('');
+    try {
+      // Usar la función login de authFunctions directamente
+      const result = await authFunctions.login({ email: loginEmail, password: loginPassword });
+      console.log('[SupabaseTestPage] Login attempt result:', result);
 
-  // Usar valores manuales si están presentes, sino los del usuario autenticado
-  const effectiveUserId = manualUserId || authUser?.id;
-  const effectiveUserEmail = manualUserEmail || authUser?.email;
+      if (result.success && result.user) {
+        setLoggedInUser(result.user);
+        let status = `Login exitoso. User ID: ${result.user.id}, Email: ${result.user.email}. `;
+        status += `Email Confirmado: ${result.user.email_confirmed_at ? 'Sí' : 'No'}. `;
+        status += `Perfil en reclutadores existe: ${result.profileExists ? 'Sí' : 'No'}.`;
+        setLoginStatus(status);
+        toast({ title: "Login de Prueba Exitoso" });
+      } else {
+        setLoginStatus(`Error en Login: ${result.error || 'Error desconocido'}`);
+        toast({ title: "Error en Login de Prueba", description: result.error, variant: "destructive" });
+      }
+    } catch (e) {
+      console.error('[SupabaseTestPage] Excepción en Login:', e);
+      setLoginStatus(`Excepción en Login: ${e.message}`);
+      toast({ title: "Excepción en Login", description: e.message, variant: "destructive" });
+    }
+    setIsLoading(false);
+  };
+
+  // Las funciones CRUD usarán loggedInUser de esta página
+  const currentTestUserId = loggedInUser?.id;
+  const currentTestUserEmail = loggedInUser?.email;
 
   const handleTestInsert = async () => {
-    if (!effectiveUserId || !effectiveUserEmail) {
-      toast({ title: "Error", description: "ID de Usuario y Email son requeridos para la prueba.", variant: "destructive" });
+    if (!currentTestUserId || !currentTestUserEmail) {
+      toast({ title: "Error", description: "Inicia sesión primero en esta página.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
-    setTestResults('Intentando INSERT...');
+    setTestResults('Intentando INSERT en reclutadores...');
     try {
       const testData = {
-        id: effectiveUserId,
-        email: effectiveUserEmail,
-        first_name: 'TestFirstName',
-        last_name: 'TestLastName',
-        company: 'TestCompany',
+        id: currentTestUserId,
+        email: currentTestUserEmail,
+        first_name: 'TestInsertFirstName',
+        last_name: 'TestInsertLastName',
+        company: 'TestInsertCompany',
         created_at: new Date().toISOString(),
-        // Añade otros campos requeridos por tu tabla con valores de prueba
       };
       console.log('[SupabaseTestPage] Datos para INSERT:', testData);
-      const { data, error } = await supabase
-        .from('reclutadores')
-        .insert([testData])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('[SupabaseTestPage] Error en INSERT:', error);
-        setTestResults(`Error en INSERT: ${JSON.stringify(error, null, 2)}`);
-        toast({ title: "Error en INSERT", description: error.message, variant: "destructive" });
-      } else {
-        console.log('[SupabaseTestPage] Éxito en INSERT:', data);
-        setTestResults(`Éxito en INSERT: ${JSON.stringify(data, null, 2)}`);
-        toast({ title: "Éxito en INSERT", description: "Registro insertado." });
-      }
+      // Usar saveRecruiterProfile de authFunctions
+      const data = await authFunctions.saveRecruiterProfile(testData);
+      console.log('[SupabaseTestPage] Éxito en INSERT:', data);
+      setTestResults(`Éxito en INSERT: ${JSON.stringify(data, null, 2)}`);
+      toast({ title: "Éxito en INSERT", description: "Registro insertado." });
     } catch (e) {
-      console.error('[SupabaseTestPage] Excepción en INSERT:', e);
-      setTestResults(`Excepción en INSERT: ${e.message}`);
-      toast({ title: "Excepción en INSERT", description: e.message, variant: "destructive" });
+      console.error('[SupabaseTestPage] Excepción/Error en INSERT:', e);
+      setTestResults(`Excepción/Error en INSERT: ${e.message} \n ${JSON.stringify(e, null, 2)}`);
+      toast({ title: "Error en INSERT", description: e.message, variant: "destructive" });
     }
     setIsLoading(false);
   };
 
   const handleTestSelect = async () => {
-    if (!effectiveUserId) {
-      toast({ title: "Error", description: "ID de Usuario es requerido para la prueba.", variant: "destructive" });
+    if (!currentTestUserId) {
+      toast({ title: "Error", description: "Inicia sesión primero en esta página.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
-    setTestResults('Intentando SELECT...');
+    setTestResults('Intentando SELECT de reclutadores...');
     try {
-      console.log('[SupabaseTestPage] Intentando SELECT para ID:', effectiveUserId);
-      const { data, error } = await supabase
-        .from('reclutadores')
-        .select('*')
-        .eq('id', effectiveUserId)
-        .maybeSingle(); // Usar maybeSingle para no fallar si no existe
-
-      if (error) {
-        console.error('[SupabaseTestPage] Error en SELECT:', error);
-        setTestResults(`Error en SELECT: ${JSON.stringify(error, null, 2)}`);
-        toast({ title: "Error en SELECT", description: error.message, variant: "destructive" });
-      } else {
-        console.log('[SupabaseTestPage] Éxito en SELECT:', data);
-        setTestResults(data ? `Éxito en SELECT: ${JSON.stringify(data, null, 2)}` : 'Éxito en SELECT: No se encontró registro.');
-        toast({ title: "Éxito en SELECT", description: data ? "Registro encontrado." : "No se encontró registro." });
-      }
+      console.log('[SupabaseTestPage] Intentando SELECT para ID:', currentTestUserId);
+      // Usar getRecruiterProfile de authFunctions
+      const profileExists = await authFunctions.getRecruiterProfile(currentTestUserId);
+      const message = profileExists ? `Registro encontrado (getRecruiterProfile devolvió true)` : 'No se encontró registro (getRecruiterProfile devolvió false)';
+      console.log('[SupabaseTestPage] Éxito en SELECT:', message);
+      setTestResults(`Éxito en SELECT: ${message}`);
+      toast({ title: "Éxito en SELECT", description: message });
     } catch (e) {
-      console.error('[SupabaseTestPage] Excepción en SELECT:', e);
-      setTestResults(`Excepción en SELECT: ${e.message}`);
-      toast({ title: "Excepción en SELECT", description: e.message, variant: "destructive" });
+      console.error('[SupabaseTestPage] Excepción/Error en SELECT:', e);
+      setTestResults(`Excepción/Error en SELECT: ${e.message}`);
+      toast({ title: "Error en SELECT", description: e.message, variant: "destructive" });
     }
     setIsLoading(false);
   };
 
   const handleTestUpdate = async () => {
-    if (!effectiveUserId) {
-      toast({ title: "Error", description: "ID de Usuario es requerido para la prueba.", variant: "destructive" });
+    if (!currentTestUserId) {
+      toast({ title: "Error", description: "Inicia sesión primero en esta página.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
-    setTestResults('Intentando UPDATE...');
+    setTestResults('Intentando UPDATE en reclutadores...');
     try {
       const updateData = {
         company: `UpdatedCompany ${new Date().toLocaleTimeString()}`,
-        // Puedes añadir más campos para actualizar
+        first_name: 'UpdatedFirstName', // Asegúrate que los campos que actualizas existen en la tabla
       };
       console.log('[SupabaseTestPage] Datos para UPDATE:', updateData);
-      const { data, error } = await supabase
-        .from('reclutadores')
-        .update(updateData)
-        .eq('id', effectiveUserId)
-        .select()
-        .single(); // Usar single si esperas que la fila exista y se actualice
-
-      if (error) {
-        console.error('[SupabaseTestPage] Error en UPDATE:', error);
-        setTestResults(`Error en UPDATE: ${JSON.stringify(error, null, 2)}`);
-        toast({ title: "Error en UPDATE", description: error.message, variant: "destructive" });
-      } else {
-        console.log('[SupabaseTestPage] Éxito en UPDATE:', data);
-        setTestResults(`Éxito en UPDATE: ${JSON.stringify(data, null, 2)}`);
-        toast({ title: "Éxito en UPDATE", description: "Registro actualizado." });
-      }
+      // Usar updateRecruiterProfile de authFunctions
+      const data = await authFunctions.updateRecruiterProfile(currentTestUserId, updateData);
+      console.log('[SupabaseTestPage] Éxito en UPDATE:', data);
+      setTestResults(`Éxito en UPDATE: ${JSON.stringify(data, null, 2)} (la función devuelve true si no hay error)`);
+      toast({ title: "Éxito en UPDATE", description: "Registro actualizado." });
     } catch (e) {
-      console.error('[SupabaseTestPage] Excepción en UPDATE:', e);
-      setTestResults(`Excepción en UPDATE: ${e.message}`);
-      toast({ title: "Excepción en UPDATE", description: e.message, variant: "destructive" });
+      console.error('[SupabaseTestPage] Excepción/Error en UPDATE:', e);
+      setTestResults(`Excepción/Error en UPDATE: ${e.message} \n ${JSON.stringify(e, null, 2)}`);
+      toast({ title: "Error en UPDATE", description: e.message, variant: "destructive" });
     }
     setIsLoading(false);
   };
   
   const handleDelete = async () => {
-    if (!effectiveUserId) {
-      toast({ title: "Error", description: "ID de Usuario es requerido para la prueba.", variant: "destructive" });
+    if (!currentTestUserId) {
+      toast({ title: "Error", description: "Inicia sesión primero en esta página.", variant: "destructive" });
       return;
     }
     setIsLoading(true);
-    setTestResults('Intentando DELETE...');
+    setTestResults('Intentando DELETE de reclutadores...');
     try {
-      console.log('[SupabaseTestPage] Intentando DELETE para ID:', effectiveUserId);
-      const { error } = await supabase
+      console.log('[SupabaseTestPage] Intentando DELETE para ID:', currentTestUserId);
+      const { error } = await supabase // Usar supabase directo para delete es más simple
         .from('reclutadores')
         .delete()
-        .eq('id', effectiveUserId);
+        .eq('id', currentTestUserId);
 
       if (error) {
         console.error('[SupabaseTestPage] Error en DELETE:', error);
@@ -159,72 +161,72 @@ function SupabaseTestPage() {
     setIsLoading(false);
   };
 
-
-  if (authLoading) {
-    return <div className="p-4">Cargando autenticación...</div>;
-  }
-
-  if (!authUser) {
-    return <div className="p-4">Por favor, inicia sesión para usar esta página de prueba.</div>;
-  }
-
   return (
-    <div className="p-8 space-y-4">
-      <h1 className="text-2xl font-bold">Página de Prueba de Supabase - Tabla 'reclutadores'</h1>
+    <div className="p-8 space-y-6">
+      <h1 className="text-3xl font-bold">Página de Prueba de Supabase</h1>
       
-      <div className="my-4 p-4 border rounded">
-        <h2 className="text-lg font-semibold mb-2">Datos del Usuario Autenticado (si existe):</h2>
-        <p>ID: {authUser?.id || 'N/A'}</p>
-        <p>Email: {authUser?.email || 'N/A'}</p>
-        <p>Email Confirmado: {authUser?.email_confirmed_at ? `Sí (en ${new Date(authUser.email_confirmed_at).toLocaleString()})` : 'No (o N/A)'}</p>
-      </div>
-
-      <div className="my-4 p-4 border rounded space-y-2">
-        <h2 className="text-lg font-semibold mb-2">Entrada Manual para Pruebas (Opcional):</h2>
+      <div className="p-4 border rounded-lg shadow space-y-3">
+        <h2 className="text-xl font-semibold">1. Probar Login</h2>
         <div>
-          <label htmlFor="manualId" className="block text-sm font-medium">ID de Usuario Manual:</label>
-          <input
-            type="text"
-            id="manualId"
-            value={manualUserId}
-            onChange={(e) => setManualUserId(e.target.value)}
-            placeholder="Ingresa UUID de usuario"
-            className="mt-1 block w-full p-2 border rounded"
+          <label htmlFor="loginEmail" className="block text-sm font-medium">Email:</label>
+          <input 
+            type="email" 
+            id="loginEmail"
+            value={loginEmail} 
+            onChange={(e) => setLoginEmail(e.target.value)} 
+            placeholder="Email de prueba"
+            className="mt-1 block w-full p-2 border rounded-md"
+            disabled={isLoading}
           />
         </div>
         <div>
-          <label htmlFor="manualEmail" className="block text-sm font-medium">Email Manual:</label>
-          <input
-            type="email"
-            id="manualEmail"
-            value={manualUserEmail}
-            onChange={(e) => setManualUserEmail(e.target.value)}
-            placeholder="Ingresa email"
-            className="mt-1 block w-full p-2 border rounded"
+          <label htmlFor="loginPassword" className="block text-sm font-medium">Contraseña:</label>
+          <input 
+            type="password" 
+            id="loginPassword"
+            value={loginPassword} 
+            onChange={(e) => setLoginPassword(e.target.value)} 
+            placeholder="Contraseña de prueba"
+            className="mt-1 block w-full p-2 border rounded-md"
+            disabled={isLoading}
           />
         </div>
-        <p className="text-xs text-gray-600">Si dejas estos campos vacíos, se usarán los datos del usuario autenticado (si hay uno).</p>
-      </div>
-      
-      <p className="font-semibold">Probando con ID: {effectiveUserId || 'N/A'}, Email: {effectiveUserEmail || 'N/A'}</p>
-
-      <div className="space-x-2">
-        <Button onClick={handleTestInsert} disabled={isLoading || !effectiveUserId || !effectiveUserEmail}>
-          {isLoading ? 'Probando...' : 'Probar INSERT'}
+        <Button onClick={handleTestLogin} disabled={isLoading}>
+          {isLoading ? 'Probando Login...' : 'Probar Login'}
         </Button>
-        <Button onClick={handleTestSelect} disabled={isLoading || !effectiveUserId}>
-          {isLoading ? 'Probando...' : 'Probar SELECT'}
-        </Button>
-        <Button onClick={handleTestUpdate} disabled={isLoading || !effectiveUserId}>
-          {isLoading ? 'Probando...' : 'Probar UPDATE'}
-        </Button>
-         <Button onClick={handleDelete} variant="destructive" disabled={isLoading || !effectiveUserId}>
-          {isLoading ? 'Eliminando...' : 'Probar DELETE'}
-        </Button>
+        {loginStatus && <p className="mt-2 text-sm text-gray-700 bg-gray-100 p-2 rounded-md">{loginStatus}</p>}
       </div>
 
-      <div className="mt-4 p-4 border rounded bg-gray-50 min-h-[100px]">
-        <h2 className="font-semibold">Resultados:</h2>
+      {loggedInUser && (
+        <div className="p-4 border rounded-lg shadow space-y-3">
+          <h2 className="text-xl font-semibold">2. Datos del Usuario Logueado (en esta página)</h2>
+          <p>ID: {loggedInUser.id}</p>
+          <p>Email: {loggedInUser.email}</p>
+          <p>Email Confirmado: {loggedInUser.email_confirmed_at ? `Sí (en ${new Date(loggedInUser.email_confirmed_at).toLocaleString()})` : 'No'}</p>
+          <p className="text-sm text-gray-600">Las siguientes operaciones usarán este ID y Email.</p>
+        </div>
+      )}
+
+      <div className="p-4 border rounded-lg shadow space-y-3">
+        <h2 className="text-xl font-semibold">3. Operaciones CRUD en 'reclutadores'</h2>
+        <div className="space-x-2">
+          <Button onClick={handleTestInsert} disabled={isLoading || !loggedInUser}>
+            {isLoading ? 'Probando...' : 'Probar INSERT'}
+          </Button>
+          <Button onClick={handleTestSelect} disabled={isLoading || !loggedInUser}>
+            {isLoading ? 'Probando...' : 'Probar SELECT'}
+          </Button>
+          <Button onClick={handleTestUpdate} disabled={isLoading || !loggedInUser}>
+            {isLoading ? 'Probando...' : 'Probar UPDATE'}
+          </Button>
+          <Button onClick={handleDelete} variant="destructive" disabled={isLoading || !loggedInUser}>
+            {isLoading ? 'Eliminando...' : 'Probar DELETE'}
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-4 p-4 border rounded-lg shadow bg-gray-50 min-h-[150px]">
+        <h2 className="text-xl font-semibold">Resultados de Operaciones CRUD:</h2>
         <pre className="text-sm whitespace-pre-wrap">{testResults}</pre>
       </div>
     </div>
