@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Briefcase, MapPin, Mail, Phone, User, Save } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Textarea } from "@/components/ui/textarea.jsx";
+import { useToast } from "@/components/ui/use-toast.js";
 
 // Asumimos que tienes un servicio para interactuar con Supabase
 // import { saveCandidateProfile, saveCvDocument } from '@/services/candidateService'; 
