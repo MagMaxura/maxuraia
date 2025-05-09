@@ -66,16 +66,22 @@ function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen p-4">
-      <nav className="glass-card mb-8 p-4 flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-2xl font-bold text-white">HR Intelligence</h1>
-          <span className="text-gray-200">|</span>
-          <span className="text-gray-200">{user?.company}</span>
+    // Mantener fondo claro general (el p-4 actual o un bg-gray-50 si se prefiere un gris muy sutil)
+    <div className="min-h-screen p-4 md:p-6 bg-gray-50">
+      {/* Header del Dashboard */}
+      <nav className="bg-white shadow rounded-lg mb-6 md:mb-8 p-4 flex justify-between items-center">
+        <div className="flex items-center space-x-3 md:space-x-4">
+          <h1 className="text-xl md:text-2xl font-bold text-slate-800">HR Intelligence</h1>
+          {user?.company && (
+            <>
+              <span className="text-slate-400 hidden sm:inline">|</span>
+              <span className="text-sm md:text-base text-slate-600 hidden sm:inline">{user.company}</span>
+            </>
+          )}
         </div>
         <Button
           variant="ghost"
-          className="text-white hover:bg-white/20"
+          className="text-slate-600 hover:bg-slate-100" // Texto oscuro para header blanco
           onClick={logout}
         >
           <LogOut className="mr-2 h-4 w-4" />
@@ -83,14 +89,15 @@ function Dashboard() {
         </Button>
       </nav>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+        {/* Columna de CVs */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="glass-card p-6"
+          className="bg-white p-6 rounded-lg shadow-lg border border-gray-200" // Card blanco
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">CVs</h2>
+            <h2 className="text-xl font-semibold text-slate-800">CVs</h2> {/* Texto oscuro */}
             <label className="cursor-pointer">
               <input
                 type="file"
@@ -99,9 +106,9 @@ function Dashboard() {
                 className="hidden"
                 disabled={isProcessing}
               />
-              <Button 
-                variant="outline" 
-                className="text-white border-white/20"
+              <Button
+                variant="default"
+                className="bg-blue-600 hover:bg-blue-700 text-white" // Botón azul
                 disabled={isProcessing}
               >
                 <Upload className="mr-2 h-4 w-4" />
@@ -109,17 +116,22 @@ function Dashboard() {
               </Button>
             </label>
           </div>
-          <div className="space-y-4">
+          <div className="space-y-3">
+            {cvFiles.length === 0 && !isProcessing && (
+              <p className="text-slate-500 text-sm text-center py-4">No hay CVs subidos todavía.</p>
+            )}
             {cvFiles.map((file, index) => (
               <div
                 key={index}
-                className={`bg-white/5 p-3 rounded-lg flex items-center justify-between cursor-pointer hover:bg-white/10 transition-colors ${
-                  selectedCV === index ? "border border-white/40" : ""
+                className={`p-3 rounded-md flex items-center justify-between cursor-pointer transition-colors ${
+                  selectedCV === index
+                  ? "bg-blue-100 border-blue-300" // Selección azul claro
+                  : "bg-slate-50 hover:bg-slate-100 border border-transparent"
                 }`}
                 onClick={() => handleCVClick(index)}
               >
-                <span className="text-gray-200">{file.name}</span>
-                <span className="text-sm text-gray-400">
+                <span className="text-slate-700 font-medium truncate" title={file.name}>{file.name}</span> {/* Texto oscuro */}
+                <span className="text-sm text-slate-500"> {/* Texto gris medio */}
                   {new Date().toLocaleDateString()}
                 </span>
               </div>
@@ -127,47 +139,52 @@ function Dashboard() {
           </div>
         </motion.div>
 
+        {/* Columna de Análisis del CV */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="glass-card p-6 col-span-2"
+          className="bg-white p-6 rounded-lg shadow-lg border border-gray-200 lg:col-span-2" // Card blanco
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">Análisis del CV</h2>
+            <h2 className="text-xl font-semibold text-slate-800">Análisis del CV</h2> {/* Texto oscuro */}
           </div>
           {cvAnalysis ? (
             <CVAnalysis analysis={cvAnalysis} />
           ) : (
-            <div className="text-center text-gray-300 py-8">
-              <p>Selecciona un CV para ver su análisis</p>
+            <div className="text-center text-slate-500 py-12"> {/* Texto gris medio */}
+              <p className="text-lg">Selecciona un CV de la lista para ver su análisis detallado aquí.</p>
             </div>
           )}
         </motion.div>
 
+        {/* Sección de Puestos */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="glass-card p-6 col-span-3"
+          className="bg-white p-6 rounded-lg shadow-lg border border-gray-200 lg:col-span-3" // Card blanco
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-white">Puestos</h2>
+            <h2 className="text-xl font-semibold text-slate-800">Puestos</h2> {/* Texto oscuro */}
             <Button
-              variant="outline"
-              className="text-white border-white/20"
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700 text-white" // Botón azul
               onClick={handleAddJob}
             >
               <Briefcase className="mr-2 h-4 w-4" />
               Nuevo Puesto
             </Button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {jobs.length === 0 && (
+              <p className="text-slate-500 text-sm md:col-span-2 xl:col-span-3 text-center py-4">No hay puestos creados todavía.</p>
+            )}
             {jobs.map((job) => (
               <div
                 key={job.id}
-                className="bg-white/5 p-3 rounded-lg"
+                className="bg-slate-50 p-4 rounded-md border border-slate-200 hover:shadow-md transition-shadow"
               >
-                <h3 className="text-white font-medium">{job.title}</h3>
-                <p className="text-gray-300 text-sm mt-1">{job.description}</p>
+                <h3 className="text-slate-700 font-semibold">{job.title}</h3> {/* Texto oscuro */}
+                <p className="text-slate-600 text-sm mt-1 line-clamp-3">{job.description}</p> {/* Texto gris medio */}
               </div>
             ))}
           </div>

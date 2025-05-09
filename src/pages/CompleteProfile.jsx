@@ -19,7 +19,7 @@ function CompleteProfile() {
     company: "",
     phoneCountryCode: "+54", // Default a +54
     phone: "",
-    website: "",
+    website: "https://", // Precargar con https://
     country: "",
     industry: "",
     companySize: "",
