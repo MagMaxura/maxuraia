@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react"; // Importar useRef
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ function Dashboard() {
   const [selectedCV, setSelectedCV] = useState(null);
   const [cvAnalysis, setCvAnalysis] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const fileInputRef = useRef(null); // Crear una referencia para el input file
 
   const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
@@ -98,23 +99,24 @@ function Dashboard() {
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-semibold text-slate-800">CVs</h2> {/* Texto oscuro */}
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept=".pdf,.doc,.docx"
-                onChange={handleFileUpload}
-                className="hidden"
-                disabled={isProcessing}
-              />
-              <Button
-                variant="default"
-                className="bg-blue-600 hover:bg-blue-700 text-white" // Botón azul
-                disabled={isProcessing}
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                {isProcessing ? "Procesando..." : "Subir CV"}
-              </Button>
-            </label>
+            {/* Input de archivo oculto, controlado por el botón */}
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={handleFileUpload}
+              className="hidden"
+              ref={fileInputRef} // Asignar la referencia
+              disabled={isProcessing}
+            />
+            <Button
+              variant="default"
+              className="bg-blue-600 hover:bg-blue-700 text-white" // Botón azul
+              disabled={isProcessing}
+              onClick={() => fileInputRef.current?.click()} // Activar el input al hacer clic en el botón
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              {isProcessing ? "Procesando..." : "Subir CV"}
+            </Button>
           </div>
           <div className="space-y-3">
             {cvFiles.length === 0 && !isProcessing && (
