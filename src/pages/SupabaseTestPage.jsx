@@ -112,9 +112,18 @@ function SupabaseTestPage() {
     setIsLoading(true);
     setTestResults('Intentando UPDATE en reclutadores...');
     try {
+      const timestamp = new Date().toLocaleTimeString();
       const updateData = {
-        company: `UpdatedCompany ${new Date().toLocaleTimeString()}`,
-        first_name: 'UpdatedFirstName', // Asegúrate que los campos que actualizas existen en la tabla
+        first_name: `TestFirstName Updated ${timestamp}`,
+        last_name: `TestLastName Updated ${timestamp}`,
+        company: `TestCompany Updated ${timestamp}`,
+        phone: '+5491122334455', // Ejemplo
+        website: 'https://test-updated.com', // Ejemplo
+        industry: 'tecnologia_actualizada', // Ejemplo
+        company_size: '11-50', // Ejemplo
+        marketing_consent: true, // Ejemplo
+        // Asegúrate de que estos nombres de campo (snake_case) coincidan con tus columnas en la DB
+        // y que los valores sean del tipo correcto.
       };
       console.log('[SupabaseTestPage] Datos para UPDATE:', updateData);
       // Usar updateRecruiterProfile de authFunctions
