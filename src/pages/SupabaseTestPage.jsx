@@ -168,6 +168,7 @@ function SupabaseTestPage() {
       <h1 className="text-2xl font-bold">Página de Prueba de Supabase - Tabla 'reclutadores'</h1>
       <p>Usuario ID: {testUserId}</p>
       <p>Usuario Email: {testUserEmail}</p>
+      <p>Email Confirmado: {authUser?.email_confirmed_at ? `Sí (en ${new Date(authUser.email_confirmed_at).toLocaleString()})` : 'No'}</p>
       
       <div className="space-x-2">
         <Button onClick={handleTestInsert} disabled={isLoading || !testUserId}>

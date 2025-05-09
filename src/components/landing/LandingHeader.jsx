@@ -19,6 +19,12 @@ function LandingHeader() {
             <span className="text-xs text-yellow-300 ml-4"> V1"</span>
             {/* --- END DEBUG --- */}
           <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Enlace temporal a la página de prueba - ELIMINAR LUEGO */}
+            {process.env.NODE_ENV === 'development' && (
+              <Link to="/supabase-test" className="text-xs text-yellow-300 hover:text-yellow-500 transition-colors px-3 sm:px-4 py-2 rounded-md hover:bg-white/10">
+                Test DB
+              </Link>
+            )}
             <Link to="/login"> {/* Link to Login page */}
               <Button variant="ghost" className="text-white hover:bg-white/20 px-3 sm:px-4">
                 Iniciar Sesión
