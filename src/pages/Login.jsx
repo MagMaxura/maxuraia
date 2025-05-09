@@ -44,9 +44,11 @@ function Login() {
     if (result.success) {
       // El toast de éxito puede ser opcional si la redirección es inmediata
       // toast({ title: "Inicio de sesión exitoso", description: "Bienvenido de nuevo.", variant: "default" });
-      if (result.profileExists) {
+      // Redirigir según si el perfil existe Y está completo
+      if (result.profileExists && result.profileIsComplete) {
         navigate('/dashboard');
       } else {
+        // Si el perfil no existe o no está completo, ir a /complete-profile
         navigate('/complete-profile');
       }
     } else {

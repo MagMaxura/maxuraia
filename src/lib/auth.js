@@ -41,9 +41,13 @@ export const auth = {
       // 2. Verificar si el perfil existe en 'reclutadores'
       console.log("auth.js: Checking for recruiter profile for user ID:", authUser.id);
       // Llamar explícitamente a auth.getRecruiterProfile en lugar de this.getRecruiterProfile
-      let profile = await auth.getRecruiterProfile(authUser.id);
+      let profile = await auth.getRecruiterProfile(authUser.id); // Esto ahora devuelve el perfil completo o null
       let profileExists = !!profile;
-      console.log("auth.js: Initial profile check. Profile exists:", profileExists);
+      // Un perfil se considera incompleto si 'company' o 'first_name' tienen el placeholder
+      let profileIsComplete = profileExists && profile.company !== "LLENAR POR EL USUARIO" && profile.first_name !== "LLENAR POR EL USUARIO";
+      
+      console.log("auth.js: Initial profile check. Profile data:", profile);
+      console.log("auth.js: Profile exists:", profileExists, "Is complete:", profileIsComplete);
 
       // Si el usuario está confirmado pero el perfil no existe, crearlo ahora
       if (authUser.email_confirmed_at && !profileExists) {
@@ -52,21 +56,28 @@ export const auth = {
           const basicProfileData = {
             id: authUser.id,
             email: authUser.email,
-            // El resto de los campos serán NULL o sus valores predeterminados de DB
+            // Los placeholders se añaden en saveRecruiterProfile
           };
-          await auth.saveRecruiterProfile(basicProfileData); // INSERT
-          console.log("auth.js: Basic profile created successfully during login flow.");
-          profileExists = true; // Marcar que el perfil ahora existe (aunque sea básico)
+          const newProfile = await auth.saveRecruiterProfile(basicProfileData); // INSERT
+          if (newProfile) {
+            console.log("auth.js: Basic profile created successfully during login flow.");
+            profileExists = true;
+            profileIsComplete = false; // Recién creado, necesita completarse
+            profile = newProfile; // Actualizar la variable de perfil local
+          } else {
+             console.error("auth.js: Failed to create basic profile during login flow (saveRecruiterProfile returned null/undefined).");
+             profileExists = false;
+             profileIsComplete = false;
+          }
         } catch (insertError) {
           console.error("auth.js: Error creating basic profile during login flow:", insertError);
-          // Continuar de todas formas, pero el usuario no tendrá perfil y será redirigido a /complete-profile
-          // O podrías lanzar un error aquí si la creación del perfil es crítica en el login.
           profileExists = false;
+          profileIsComplete = false;
         }
       }
       
-      // 4. Devolver estado de login y perfil
-      return { success: true, profileExists: profileExists, user: authUser };
+      // 4. Devolver estado de login, si el perfil existe y si está completo
+      return { success: true, profileExists: profileExists, profileIsComplete: profileIsComplete, user: authUser };
 
     } catch (error) {
       console.error('auth.js: Login process error:', error);
@@ -291,23 +302,22 @@ export const auth = {
       return null;
     }
     try {
-      console.log("[DEBUG] Attempting SELECT query in getRecruiterProfile..."); // Log antes de la consulta
-      // Usar head:true y count:'exact' para solo verificar existencia sin traer datos
-      const { data, error, count } = await supabase
+      console.log("[DEBUG] Attempting SELECT query in getRecruiterProfile...");
+      // Seleccionar todos los campos para poder verificar el contenido
+      const { data, error } = await supabase
         .from('reclutadores')
-        .select('*', { head: true, count: 'exact' })
-        .eq('id', userId);
-        // No necesitamos maybeSingle con head:true
+        .select('*') // Seleccionar todos los campos
+        .eq('id', userId)
+        .maybeSingle(); // Devuelve el objeto o null si no se encuentra
 
-      console.log("[DEBUG] SELECT query finished. Error:", error, "Count:", count); // Log después de la consulta
+      console.log("[DEBUG] SELECT query finished. Error:", error, "Data:", data);
 
       if (error) {
         console.error('auth.js: Error fetching recruiter profile by ID:', error);
-        throw error; // O manejar el error de otra forma
+        throw error;
       }
-      // console.log("auth.js: getRecruiterProfile - Profile check result for", userId, ":", data); // 'data' será null con head:true
-      // Devolvemos true si count > 0, false si count === 0
-      return count > 0;
+      // Devuelve el objeto de perfil completo (o null si no existe)
+      return data;
     } catch (error) {
       console.error('auth.js: Exception in getRecruiterProfile:', error);
       return null; // O re-lanzar el error
