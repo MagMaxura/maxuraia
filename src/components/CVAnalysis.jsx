@@ -152,6 +152,7 @@ function CVAnalysis({
               <Phone className="h-4 w-4 mr-2 text-[#0a66c2] flex-shrink-0" />
               <Input name="telefono" value={editableAnalysis.telefono || ""} onChange={handleChange} placeholder="Teléfono" className="info-value text-slate-700 p-0 border-0 focus-visible:ring-0 h-auto" />
             </div>
+            <p className="text-xs text-red-600 mt-1 ml-6">*Recomendamos cambiar el teléfono a +549... y eliminar el (15) para luego poder enviarles WhatsApp al candidato.</p>
           </div>
           <div className="text-right">
             <div className="flex items-center">

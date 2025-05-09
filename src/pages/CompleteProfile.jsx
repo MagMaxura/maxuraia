@@ -172,6 +172,7 @@ function CompleteProfile() {
                   disabled={isSubmitting}
                 />
               </div>
+              <p className="text-red-400 text-xs mt-1 ml-1">Tu nombre de pila.</p>
             </div>
 
             {/* Apellido */}
@@ -189,9 +190,10 @@ function CompleteProfile() {
                    disabled={isSubmitting}
                  />
                </div>
-            </div>
-
-            {/* Empresa */}
+               <p className="text-red-400 text-xs mt-1 ml-1">Tu apellido.</p>
+             </div>
+ 
+             {/* Empresa */}
             <div>
               <label className="block text-base font-medium text-white mb-2">Empresa *</label>
               <div className="relative">
@@ -206,6 +208,7 @@ function CompleteProfile() {
                   disabled={isSubmitting}
                 />
               </div>
+              <p className="text-red-400 text-xs mt-1 ml-1">Nombre legal o comercial de tu empresa.</p>
             </div>
 
             {/* País */}
@@ -224,9 +227,10 @@ function CompleteProfile() {
                    {/* Añadir más países si es necesario */}
                  </select>
                </div>
+               <p className="text-red-400 text-xs mt-1 ml-1">País donde opera principalmente tu empresa.</p>
              </div>
 
-            {/* Teléfono */}
+           {/* Teléfono */}
             <div>
               <label className="block text-base font-medium text-white mb-2">Teléfono</label>
               <div className="flex gap-2">
@@ -251,6 +255,7 @@ function CompleteProfile() {
                   disabled={isSubmitting}
                 />
               </div>
+              <p className="text-red-400 text-xs mt-1">Número de contacto principal. Recomendamos formato internacional para WhatsApp (ej: +54 9 XXX ...).</p>
             </div>
 
             {/* Sitio web */}
@@ -267,6 +272,7 @@ function CompleteProfile() {
                   disabled={isSubmitting}
                 />
               </div>
+              <p className="text-red-400 text-xs mt-1 ml-1">URL completa (ej: https://www.tuempresa.com). Requerido para ciertas funciones.</p>
             </div>
 
             {/* Industria */}
@@ -288,6 +294,7 @@ function CompleteProfile() {
                <option value="servicios" className="bg-blue-800">Servicios</option>
                <option value="otros" className="bg-blue-800">Otros</option>
             </select>
+            <p className="text-red-400 text-xs mt-1">Sector principal de actividad de tu empresa.</p>
           </div>
 
             {/* Tamaño de la empresa */}
@@ -309,6 +316,7 @@ function CompleteProfile() {
                   <option value="501+" className="bg-blue-800">501+ empleados</option>
                 </select>
               </div>
+              <p className="text-red-400 text-xs mt-1 ml-1">Rango de empleados de tu empresa.</p>
             </div>
           </div>
 
