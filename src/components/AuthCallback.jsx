@@ -2,87 +2,75 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useToast } from './ui/use-toast';
-import { useAuth } from '../contexts/AuthContext'; // Importar useAuth
-import { Button } from './ui/button'; // Importar Button
+import { Button } from './ui/button'; // Asegurarse que Button esté importado si se usa en el JSX de error
 
 export default function AuthCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  // Obtener las funciones necesarias de useAuth
-  // Necesitamos saveRecruiterProfile (que hace INSERT) y getRecruiterProfile
-  const { saveRecruiterProfile, getRecruiterProfile } = useAuth();
   const [error, setError] = useState(null);
   const [message, setMessage] = useState("Procesando autenticación...");
 
-
   useEffect(() => {
     const handleCallback = async () => {
+      console.log("AuthCallback: [LOG] handleCallback started.");
       try {
-        // Get the auth code from the URL
         const code = searchParams.get('code');
+        const type = searchParams.get('type'); // Para flujo de recuperación de contraseña
+
+        if (type === 'recovery') {
+          console.log("AuthCallback: [LOG] Password recovery flow detected.");
+          toast({
+            title: "Restablece tu contraseña",
+            description: "Por favor ingresa tu nueva contraseña.",
+          });
+          navigate('/reset-password'); // Asumiendo que tienes esta ruta
+          return;
+        }
         
         if (!code) {
-          setError('No code found in URL');
+          console.error('AuthCallback: [LOG] No code found in URL.');
+          setError('Código de autenticación no encontrado en la URL.');
           return;
         }
 
-        // Exchange the code for a session
+        console.log("AuthCallback: [LOG] Attempting to exchange code for session...");
         const { error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (sessionError) {
-          console.error('Error exchanging code for session:', sessionError);
-          setError(sessionError.message);
+          console.error('AuthCallback: [LOG] Error exchanging code for session:', sessionError);
+          setError(sessionError.message || "No se pudo completar el proceso de autenticación.");
           toast({
             title: "Error de autenticación",
-            description: "No se pudo completar el proceso de autenticación.",
+            description: sessionError.message || "No se pudo completar el proceso de autenticación.",
             variant: "destructive",
           });
           navigate('/login');
           return;
         }
 
-        // Check if this is a password reset flow
-        const type = searchParams.get('type');
-        if (type === 'recovery') {
-          navigate('/reset-password');
-          toast({
-            title: "Restablece tu contraseña",
-            description: "Por favor ingresa tu nueva contraseña.",
-          });
-          return;
-        }
-
-        // For email verification flow (not a password recovery)
-        
-        // 1. Obtener la sesión actual para asegurarnos de que el usuario está autenticado
-        console.log("AuthCallback: [LOG] Attempting to get current session...");
-        const { data: { session: currentSession }, error: getSessionError } = await supabase.auth.getSession();
-
-        if (getSessionError || !currentSession) {
-          console.error('AuthCallback: [LOG] Error getting session or no session found.', getSessionError);
-          setError("No se pudo obtener la sesión de usuario después de la verificación.");
-          navigate('/login');
-          return;
-        // La sesión ha sido establecida por exchangeCodeForSession.
-        // El usuario está ahora autenticado.
-        console.log("AuthCallback: [LOG] Session established via code exchange.");
+        // Si llegamos aquí, exchangeCodeForSession fue exitoso y la sesión está establecida.
+        // onAuthStateChange en useAuthService se encargará de actualizar el estado global del usuario.
+        console.log("AuthCallback: [LOG] Session established successfully via code exchange.");
         
         toast({
           title: "¡Email verificado!",
-          description: "Tu cuenta ha sido activada. Por favor, inicia sesión.",
+          description: "Tu cuenta ha sido activada. Por favor, inicia sesión para continuar.",
           variant: "default",
+          duration: 5000,
         });
-        // Redirigir a login. La página de login ahora se encargará de
-        // verificar el perfil y redirigir a /complete-profile o /dashboard.
-        navigate('/login');
         
+        // Redirigir a login. La página de login se encargará de
+        // verificar el perfil (y crearlo si es necesario) y luego redirigir.
+        navigate('/login');
+
       } catch (err) {
-        console.error('AuthCallback: Error during callback processing:', err);
+        // Este catch manejará cualquier error inesperado dentro del bloque try.
+        console.error('AuthCallback: [LOG] Unexpected error during callback processing:', err);
         setError(err.message || "Ocurrió un error desconocido durante la autenticación.");
         toast({
-          title: "Error",
-          description: "Ocurrió un error durante el proceso de autenticación.",
+          title: "Error Inesperado",
+          description: "Ocurrió un error inesperado durante el proceso de autenticación.",
           variant: "destructive",
         });
         navigate('/login');
@@ -90,7 +78,8 @@ export default function AuthCallback() {
     };
 
     handleCallback();
-  }, [navigate, searchParams, toast, saveRecruiterProfile]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, searchParams, toast]); // Dependencias del useEffect
 
   if (error) {
     return (
@@ -110,7 +99,6 @@ export default function AuthCallback() {
     <div className="flex min-h-screen items-center justify-center bg-gray-100">
       <div className="text-center p-8">
         <h1 className="text-2xl font-bold text-gray-700">{message}</h1>
-        {/* Puedes agregar un spinner aquí */}
         <p className="mt-2 text-gray-600">Por favor espera un momento.</p>
       </div>
     </div>
