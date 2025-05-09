@@ -82,7 +82,19 @@ export default function AuthCallback() {
             setMessage("Creando perfil inicial...");
             const basicProfileData = { id: userId, email: userEmail };
             console.log("AuthCallback: [LOG] Calling saveRecruiterProfile with:", basicProfileData);
-            
+  
+            // Antes de llamar a saveRecruiterProfile, nos aseguramos de que el cliente Supabase
+            // tenga la sesión más reciente internamente.
+            // supabase.auth.getSession() refresca el estado interno del cliente si es necesario.
+            const { data: { session: refreshedSession }, error: refreshError } = await supabase.auth.getSession();
+  
+            if (refreshError || !refreshedSession) {
+              console.error("AuthCallback: [LOG] Critical error refreshing session before saveRecruiterProfile", refreshError);
+              throw new Error("No se pudo confirmar la sesión para guardar el perfil.");
+            }
+            console.log("AuthCallback: [LOG] Session confirmed/refreshed, user ID:", refreshedSession.user.id);
+  
+            // Ahora llamamos a saveRecruiterProfile, que internamente también verificará la sesión.
             await saveRecruiterProfile(basicProfileData); // INSERT
             
             console.log("AuthCallback: [LOG] saveRecruiterProfile call completed.");
