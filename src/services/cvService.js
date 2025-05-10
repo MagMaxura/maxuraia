@@ -148,5 +148,51 @@ export const cvService = {
       console.error('Error en deleteCV:', error);
       throw error;
     }
+  },
+
+  async createJobPost(jobPayload) {
+    try {
+      console.log("cvService.createJobPost: Recibido payload:", jobPayload);
+      // Asegurarse de que recruiter_id esté presente
+      if (!jobPayload.recruiter_id) {
+        throw new Error("recruiter_id es requerido para crear un puesto.");
+      }
+
+      // Preparar el payload para Supabase, asegurando que los tipos coincidan
+      // Supabase puede manejar el string JSON directamente para un campo jsonb.
+      // keywords se espera como un array de strings si tu columna es text[] o se puede unir si es text.
+      // Asumimos que jobPayload.keywords ya es un array de strings.
+      // Si tu columna 'keywords' en Supabase es de tipo TEXT, deberías unir el array:
+      // keywords: jobPayload.keywords.join(','),
+      
+      const payloadToInsert = {
+        recruiter_id: jobPayload.recruiter_id,
+        title: jobPayload.title,
+        description: jobPayload.description,
+        requirements: jobPayload.requirements, // Supabase maneja el objeto JS para jsonb
+        keywords: jobPayload.keywords, // Asumiendo que la columna 'keywords' es text[]
+        status: jobPayload.status || 'published', // 'published' por defecto
+        // created_at es manejado por Supabase (default now())
+      };
+      
+      console.log("cvService.createJobPost: Enviando a Supabase:", payloadToInsert);
+
+      const { data, error } = await supabase
+        .from('jobs')
+        .insert([payloadToInsert])
+        .select()
+        .single(); // Asumimos que queremos el registro insertado de vuelta
+
+      if (error) {
+        console.error("cvService.createJobPost: Error de Supabase:", error);
+        throw error;
+      }
+
+      console.log("cvService.createJobPost: Puesto creado exitosamente:", data);
+      return data;
+    } catch (error) {
+      console.error('Error en cvService.createJobPost:', error.message);
+      throw error;
+    }
   }
 };
