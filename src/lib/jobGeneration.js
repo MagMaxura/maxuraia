@@ -50,7 +50,7 @@ Las palabras clave deben ser relevantes para el puesto y facilitar su búsqueda.
         { role: "user", content: recruiterPrompt },
       ],
       temperature: 0.5, // Un poco de creatividad pero manteniendo la relevancia
-      max_tokens: 1500, // Ajustar según necesidad
+      max_tokens: 3500, // Ajustar según necesidad
     });
 
     const responseContent = completion.choices[0].message.content;
