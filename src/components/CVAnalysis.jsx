@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Briefcase, MapPin, Mail, Phone, User, Save, Award, Brain, Zap } from "lucide-react"; // Añadido Award, Brain, Zap
+import { Briefcase, MapPin, Mail, Phone, User, Save, Award, Brain, Zap, Trash2 } from "lucide-react"; // Añadido Trash2
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea.jsx";
