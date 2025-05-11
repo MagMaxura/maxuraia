@@ -124,7 +124,7 @@ function Dashboard() {
       setIsLoadingCVs(false);
       setIsLoadingJobs(false);
     }
-  }, [user, toast]);
+  }, [user?.id]); // Cambiar dependencia a user?.id (o solo user si prefieres el objeto completo)
 
 
   const handleSaveSuccess = (cvId, candidateId, updatedAnalysis) => {
