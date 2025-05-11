@@ -199,5 +199,29 @@ export const cvService = {
       console.error('Error en cvService.createJobPost:', error.message);
       throw error;
     }
+  },
+
+  async getJobsByRecruiterId(recruiterId) {
+    if (!recruiterId) {
+      console.warn("getJobsByRecruiterId: recruiterId no proporcionado.");
+      return [];
+    }
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .select('*') // Seleccionar todos los campos del puesto
+        .eq('recruiter_id', recruiterId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error en getJobsByRecruiterId:', error);
+        throw error;
+      }
+      console.log("cvService.getJobsByRecruiterId: Puestos obtenidos:", data);
+      return data || [];
+    } catch (error) {
+      console.error('Error al obtener puestos de trabajo:', error.message);
+      throw error;
+    }
   }
 };

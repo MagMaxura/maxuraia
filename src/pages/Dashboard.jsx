@@ -8,7 +8,8 @@ import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
 import CVAnalysis from "@/components/CVAnalysis";
 import CreateJobForm from "@/components/CreateJobForm.jsx";
 import CreateJobAIForm from "@/components/CreateJobAIForm.jsx";
-import { cvService } from "@/services/cvService.js"; // Importar cvService
+import { cvService } from "@/services/cvService.js";
+import UploadCVTab from "@/components/dashboard/UploadCVTab.jsx"; // Importar el nuevo componente
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -25,9 +26,95 @@ function Dashboard() {
   const [filesUploadedCount, setFilesUploadedCount] = useState(0);
   const [currentFileProcessingName, setCurrentFileProcessingName] = useState("");
 
-  const [isProcessingJob, setIsProcessingJob] = useState(false); // Para generación/publicación de puestos
-  const [jobPostData, setJobPostData] = useState(null); // Para datos del puesto (manual o IA)
+  const [isProcessingJob, setIsProcessingJob] = useState(false);
+  const [jobPostData, setJobPostData] = useState(null);
   const fileInputRef = useRef(null);
+  const [isLoadingCVs, setIsLoadingCVs] = useState(true);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true); // Nuevo estado para carga de Puestos
+
+  // Cargar CVs y Puestos guardados cuando el componente se monta y el usuario está disponible
+  useEffect(() => {
+    if (user?.id) {
+      const fetchUserCVs = async () => {
+        console.log("Dashboard: Fetching CVs for recruiterId:", user.id);
+        setIsLoadingCVs(true);
+        try {
+          const fetchedCVs = await cvService.getCVsByRecruiterId(user.id);
+          console.log("Dashboard: Fetched CVs from DB:", fetchedCVs);
+          
+          // Mapear los datos de la BD al formato esperado por el estado cvFiles
+          const formattedCVs = fetchedCVs.map(dbCv => {
+            // El análisis completo está en 'analysis_result'
+            // El 'textoCompleto' del CV está en 'content'
+            // El candidato asociado está en 'candidatos' (si existe y es un objeto)
+            let analysisData = dbCv.analysis_result || {};
+            if (dbCv.content && (!analysisData.textoCompleto || analysisData.textoCompleto.trim() === '')) {
+              analysisData.textoCompleto = dbCv.content;
+            }
+            
+            // Asegurar que 'habilidades' en analysisData sea el objeto {tecnicas, blandas}
+            // Si 'skills' del candidato es un array, lo dividimos heurísticamente o lo ponemos todo en técnicas.
+            // Esto es una simplificación; idealmente, analysis_result ya tendría la estructura correcta.
+            if (dbCv.candidatos && Array.isArray(dbCv.candidatos.skills) && (!analysisData.habilidades || typeof analysisData.habilidades !== 'object')) {
+              analysisData.habilidades = {
+                tecnicas: dbCv.candidatos.skills, // Poner todo en técnicas por defecto
+                blandas: []
+              };
+            } else if (analysisData.habilidades && !analysisData.habilidades.tecnicas && !analysisData.habilidades.blandas && Array.isArray(analysisData.habilidades)) {
+              // Si analysis.habilidades es un array simple (formato antiguo)
+               analysisData.habilidades = { tecnicas: analysisData.habilidades, blandas: [] };
+            }
+
+
+            return {
+              name: dbCv.file_name || `CV ${dbCv.id}`,
+              originalFile: null, // No tenemos el objeto File original, pero podríamos tener file_path o file_url
+              analysis: analysisData,
+              uploadedDate: new Date(dbCv.created_at),
+              cv_database_id: dbCv.id,
+              candidate_database_id: dbCv.candidatos?.id || null, // Asumiendo que candidatos es un objeto o null
+            };
+          });
+          
+          setCvFiles(formattedCVs);
+          if (formattedCVs.length > 0) {
+            // Opcional: seleccionar el primer CV de la lista cargada
+            // setSelectedCV(0);
+            // setCvAnalysis(formattedCVs[0].analysis);
+          }
+        } catch (error) {
+          console.error("Dashboard: Error fetching user CVs:", error);
+          toast({ title: "Error al cargar CVs", description: "No se pudieron cargar tus CVs guardados.", variant: "destructive" });
+        } finally {
+          setIsLoadingCVs(false);
+        }
+      };
+      fetchUserCVs();
+
+      const fetchUserJobs = async () => {
+        console.log("Dashboard: Fetching Jobs for recruiterId:", user.id);
+        setIsLoadingJobs(true);
+        try {
+          const fetchedJobs = await cvService.getJobsByRecruiterId(user.id);
+          console.log("Dashboard: Fetched Jobs from DB:", fetchedJobs);
+          setJobs(fetchedJobs || []); // Actualizar estado de jobs
+        } catch (error) {
+          console.error("Dashboard: Error fetching user Jobs:", error);
+          toast({ title: "Error al cargar Puestos", description: "No se pudieron cargar tus puestos de trabajo guardados.", variant: "destructive" });
+        } finally {
+          setIsLoadingJobs(false);
+        }
+      };
+      fetchUserJobs();
+
+    } else {
+      setCvFiles([]);
+      setJobs([]); // Limpiar Puestos si no hay usuario
+      setIsLoadingCVs(false);
+      setIsLoadingJobs(false);
+    }
+  }, [user, toast]);
+
 
   const handleSaveSuccess = (cvId, candidateId, updatedAnalysis) => {
     console.log("Dashboard: handleSaveSuccess called with", { cvId, candidateId, updatedAnalysis });
@@ -244,53 +331,30 @@ function Dashboard() {
         {/* Área de Contenido Principal */}
         <main className="flex-1 p-4 md:p-6 overflow-auto">
           {activeTab === "cargarNuevoCV" && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-6 md:p-8 rounded-xl shadow-xl">
-              <h2 className="text-2xl font-semibold text-slate-800 mb-6">Cargar nuevo CV</h2>
-              <div
-                className="border-2 border-dashed border-gray-300 rounded-lg p-8 md:p-12 text-center cursor-pointer hover:border-blue-500 transition-colors bg-gray-50"
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-              >
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  multiple // Permitir selección múltiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  ref={fileInputRef}
-                  disabled={isBulkProcessing || isProcessing} // Deshabilitar si está en proceso masivo o individual
-                />
-                <FileUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-slate-700 font-medium text-base md:text-lg mb-1">
-                  Arrastra y suelta tu CV aquí, o haz clic para seleccionar
-                </p>
-                <p className="text-xs text-slate-500">
-                  Formatos aceptados: PDF, DOC, DOCX
-                </p>
-                {isProcessing && !isBulkProcessing && <p className="mt-4 text-blue-600">Procesando CV individual...</p>}
-              </div>
-              {isBulkProcessing && (
-                <div className="mt-6 w-full bg-gray-200 rounded-full h-6">
-                  <div
-                    className="bg-blue-600 h-6 rounded-full text-xs font-medium text-blue-100 text-center p-1 leading-none"
-                    style={{ width: `${(filesUploadedCount / totalFilesToUpload) * 100}%` }}
-                  >
-                    {`${filesUploadedCount} / ${totalFilesToUpload}`}
-                  </div>
-                  {currentFileProcessingName && <p className="text-sm text-slate-600 mt-2 text-center">Analizando: {currentFileProcessingName}</p>}
-                </div>
-              )}
-            </motion.div>
+            <UploadCVTab
+              handleFileUpload={handleFileUpload}
+              fileInputRef={fileInputRef}
+              isBulkProcessing={isBulkProcessing}
+              isProcessing={isProcessing}
+              totalFilesToUpload={totalFilesToUpload}
+              filesUploadedCount={filesUploadedCount}
+              currentFileProcessingName={currentFileProcessingName}
+              handleDragOver={handleDragOver}
+              handleDrop={handleDrop}
+            />
           )}
 
           {activeTab === "cvsProcesados" && (
             <div className="space-y-6">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white p-6 rounded-xl shadow-xl">
                 <h2 className="text-xl font-semibold text-slate-800 mb-4">CVs Procesados</h2>
-                {cvFiles.length === 0 && !isProcessing && (
-                  <p className="text-slate-500 text-sm text-center py-4">No hay CVs procesados todavía.</p>
+                {isLoadingCVs && (
+                  <p className="text-slate-500 text-sm text-center py-4">Cargando CVs guardados...</p>
                 )}
+                {!isLoadingCVs && cvFiles.length === 0 && (
+                  <p className="text-slate-500 text-sm text-center py-4">No hay CVs procesados o guardados todavía.</p>
+                )}
+                {/* El map se renderizará si cvFiles tiene elementos, independientemente de isLoadingCVs para mostrar datos mientras se carga si es necesario */}
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {cvFiles.map((file, index) => (
                     <div
@@ -381,9 +445,18 @@ function Dashboard() {
                   <Briefcase className="mr-2 h-4 w-4" /> Crear Nuevo
                 </Button>
               </div>
-              {jobs.length === 0 && (
+              {isLoadingJobs && (
+                <p className="text-slate-500 text-sm text-center py-4">Cargando puestos de trabajo...</p>
+              )}
+              {!isLoadingJobs && jobs.length === 0 && (
                 <p className="text-slate-500 text-sm text-center py-4">No hay puestos publicados todavía.</p>
               )}
+              {!isLoadingJobs && jobs.length > 0 && (
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* El map ya está abajo */}
+                 </div>
+              )}
+              {/* Mover el map fuera del condicional para mostrar datos mientras cargan si es necesario */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {jobs.map((job) => (
                   <div key={job.id} className="bg-slate-50 p-4 rounded-lg border border-slate-200 hover:shadow-md transition-shadow">
