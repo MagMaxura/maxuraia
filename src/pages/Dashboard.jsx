@@ -179,7 +179,7 @@ function Dashboard() {
         console.log(`Dashboard: Análisis resuelto para ${file.name}`, resolvedAnalysis);
 
         const newCvFile = {
-          name: file.name,
+          name: resolvedAnalysis.nombre || file.name, // Usar nombre del candidato, fallback al nombre del archivo
           originalFile: file,
           analysis: resolvedAnalysis,
           uploadedDate: new Date(),

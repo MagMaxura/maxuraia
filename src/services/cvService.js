@@ -5,9 +5,16 @@ export const cvService = {
     try {
       // 1. Subir el archivo al storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
+      // Sanitizar el nombre del candidato para usarlo en el nombre del archivo
+      const candidateNameSanitized = (analysis.nombre || "candidato_desconocido")
+        .toLowerCase()
+        .replace(/\s+/g, '_') // Reemplazar espacios con guiones bajos
+        .replace(/[^a-z0-9_.-]/g, ''); // Eliminar caracteres no alfanuméricos excepto _, ., -
+      
+      const fileName = `${candidateNameSanitized}_${Date.now()}.${fileExt}`;
       // filePath ahora es solo recruiterId/fileName, asumiendo que el bucket es 'cvs'
       const filePath = `${recruiterId}/${fileName}`;
+      console.log("cvService: Nuevo fileName para storage:", fileName);
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('cvs')
