@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Briefcase, MapPin, Mail, Phone, User, Save } from "lucide-react";
+import { Briefcase, MapPin, Mail, Phone, User, Save, Award, Brain, Zap } from "lucide-react"; // Añadido Award, Brain, Zap
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea.jsx";
 import { useToast } from "@/components/ui/use-toast.js";
-import { cvService } from '@/services/cvService.js'; // Importar el servicio
+import { cvService } from '@/services/cvService.js';
 
 function CVAnalysis({ 
   analysis: initialAnalysis, 
@@ -13,7 +13,7 @@ function CVAnalysis({
   originalFile, 
   cvDatabaseId, 
   candidateDatabaseId,
-  onSaveSuccess // Nueva prop para notificar al Dashboard
+  onSaveSuccess 
 }) {
   const [editableAnalysis, setEditableAnalysis] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -21,32 +21,62 @@ function CVAnalysis({
 
   useEffect(() => {
     console.log("CVAnalysis: initialAnalysis prop:", initialAnalysis);
-    console.log("CVAnalysis: userId prop:", userId);
-    console.log("CVAnalysis: originalFile prop:", originalFile?.name);
-    console.log("CVAnalysis: cvDatabaseId prop:", cvDatabaseId);
-    console.log("CVAnalysis: candidateDatabaseId prop:", candidateDatabaseId);
-
     if (initialAnalysis && typeof initialAnalysis.then !== 'function') {
-      setEditableAnalysis({ ...initialAnalysis });
+      // Asegurar que habilidades sea un objeto con tecnicas y blandas
+      const habilidades = initialAnalysis.habilidades && typeof initialAnalysis.habilidades === 'object' 
+        ? initialAnalysis.habilidades 
+        : { tecnicas: [], blandas: [] };
+      
+      if (Array.isArray(initialAnalysis.habilidades) && initialAnalysis.habilidades.length > 0 && !habilidades.tecnicas.length && !habilidades.blandas.length) {
+        // Si initialAnalysis.habilidades es un array simple (versión antigua), lo asignamos a técnicas por defecto
+        habilidades.tecnicas = initialAnalysis.habilidades;
+      }
+
+      setEditableAnalysis({ 
+        ...initialAnalysis,
+        habilidades: {
+          tecnicas: Array.isArray(habilidades.tecnicas) ? habilidades.tecnicas : [],
+          blandas: Array.isArray(habilidades.blandas) ? habilidades.blandas : [],
+        },
+        nivel_escolarizacion: initialAnalysis.nivel_escolarizacion || initialAnalysis.title || "" // Compatibilidad con 'title' si viene de BD
+      });
     } else if (initialAnalysis && typeof initialAnalysis.then === 'function') {
       initialAnalysis.then(resolved => {
-        setEditableAnalysis({ ...resolved });
+        const habilidades = resolved.habilidades && typeof resolved.habilidades === 'object'
+        ? resolved.habilidades
+        : { tecnicas: [], blandas: [] };
+
+        if (Array.isArray(resolved.habilidades) && resolved.habilidades.length > 0 && !habilidades.tecnicas.length && !habilidades.blandas.length) {
+            habilidades.tecnicas = resolved.habilidades;
+        }
+
+        setEditableAnalysis({ 
+            ...resolved, 
+            habilidades: {
+              tecnicas: Array.isArray(habilidades.tecnicas) ? habilidades.tecnicas : [],
+              blandas: Array.isArray(habilidades.blandas) ? habilidades.blandas : [],
+            },
+            nivel_escolarizacion: resolved.nivel_escolarizacion || resolved.title || ""
+        });
       }).catch(err => setEditableAnalysis(null));
     } else {
       setEditableAnalysis(null);
     }
-  }, [initialAnalysis, userId, originalFile, cvDatabaseId, candidateDatabaseId]);
+  }, [initialAnalysis]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEditableAnalysis(prev => ({ ...prev, [name]: value }));
   };
   
-  const handleHabilidadesChange = (e) => {
+  const handleHabilidadesChange = (type, e) => { // 'tecnicas' o 'blandas'
     const value = e.target.value;
-    setEditableAnalysis(prev => ({ 
-      ...prev, 
-      habilidades: value.split(',').map(s => s.trim()).filter(Boolean) 
+    setEditableAnalysis(prev => ({
+      ...prev,
+      habilidades: {
+        ...prev.habilidades,
+        [type]: value.split(',').map(s => s.trim()).filter(Boolean)
+      }
     }));
   };
 
@@ -56,38 +86,57 @@ function CVAnalysis({
       return;
     }
     setIsSaving(true);
-    console.log("Guardando análisis:", editableAnalysis);
+    
+    // Preparamos el objeto analysis que se enviará al servicio, similar a como lo espera la BD
+    const analysisToSave = {
+        ...editableAnalysis,
+        // 'skills' para la BD será la concatenación, 'habilidades' en el objeto es el estructurado
+        // El servicio cvService.uploadCV ya se encarga de tomar editableAnalysis.habilidades (objeto)
+        // y concatenarlo para el campo 'skills' de la tabla 'candidatos'.
+        // Y toma editableAnalysis.nivel_escolarizacion para el campo 'title' de la tabla 'candidatos'.
+    };
+    // Aseguramos que edad sea un número para la BD
+    if (analysisToSave.edad && typeof analysisToSave.edad === 'string') {
+        analysisToSave.edad = parseInt(analysisToSave.edad, 10) || null;
+    }
+
+
+    console.log("Guardando análisis (objeto que se pasa al servicio):", analysisToSave);
 
     try {
       let savedCvData;
       let savedCandidateData;
 
-      if (candidateDatabaseId && cvDatabaseId) { // Ya existe, entonces actualizamos
+      if (candidateDatabaseId && cvDatabaseId) {
         console.log("Actualizando candidato existente ID:", candidateDatabaseId);
         const candidateUpdatePayload = {
-          name: editableAnalysis.nombre,
-          email: editableAnalysis.email,
-          phone: editableAnalysis.telefono,
-          location: editableAnalysis.localidad,
-          age: parseInt(editableAnalysis.edad, 10) || null,
-          experience: editableAnalysis.experiencia,
-          skills: Array.isArray(editableAnalysis.habilidades) ? editableAnalysis.habilidades.join(', ') : editableAnalysis.habilidades, // Guardar como texto
-          summary: editableAnalysis.resumen,
-          // Aquí no actualizamos el CV en sí (tabla cvs), solo el perfil del candidato.
-          // Si se quisiera actualizar el analysis_result en la tabla cvs, se necesitaría otra llamada.
+          name: analysisToSave.nombre,
+          email: analysisToSave.email,
+          phone: analysisToSave.telefono,
+          location: analysisToSave.localidad,
+          age: analysisToSave.edad,
+          experience: analysisToSave.experiencia,
+          skills: [ // Concatenar para la BD
+            ...(analysisToSave.habilidades?.tecnicas || []),
+            ...(analysisToSave.habilidades?.blandas || [])
+          ].filter(Boolean),
+          summary: analysisToSave.resumen,
+          title: analysisToSave.nivel_escolarizacion, // Mapear a 'title'
         };
         savedCandidateData = await cvService.updateCandidate(candidateDatabaseId, candidateUpdatePayload);
-        savedCvData = { id: cvDatabaseId }; // Asumimos que el CV no cambia, solo el candidato
+        savedCvData = { id: cvDatabaseId }; 
         console.log("Candidato actualizado:", savedCandidateData);
-
-      } else { // No existe, entonces creamos (uploadCV maneja la creación de ambos)
+      } else { 
         if (!originalFile) {
           toast({ title: "Error", description: "Falta el archivo original del CV para el primer guardado.", variant: "destructive" });
           setIsSaving(false);
           return;
         }
         console.log("Creando nuevo CV y candidato para recruiter ID:", userId);
-        const result = await cvService.uploadCV(originalFile, userId, editableAnalysis);
+        // cvService.uploadCV espera el objeto 'analysis' completo, y dentro de él
+        // ya hemos estructurado 'habilidades' y 'nivel_escolarizacion'.
+        // La función uploadCV en el servicio se encargará de mapearlos correctamente.
+        const result = await cvService.uploadCV(originalFile, userId, analysisToSave);
         savedCvData = result.cv;
         savedCandidateData = result.candidate;
         console.log("Nuevo CV y candidato creados:", result);
@@ -99,7 +148,8 @@ function CVAnalysis({
       });
 
       if (onSaveSuccess && savedCvData && savedCandidateData) {
-        onSaveSuccess(savedCvData.id, savedCandidateData.id, editableAnalysis);
+        // Devolver el analysisToSave que tiene la estructura completa con nivel_escolarizacion y habilidades obj.
+        onSaveSuccess(savedCvData.id, savedCandidateData.id, analysisToSave);
       }
 
     } catch (error) {
@@ -118,13 +168,12 @@ function CVAnalysis({
     return <p className="text-center p-4">Cargando análisis o datos no disponibles...</p>;
   }
 
-  const habilidadesDisplay = Array.isArray(editableAnalysis.habilidades) 
-                             ? editableAnalysis.habilidades 
-                             : (typeof editableAnalysis.habilidades === 'string' ? editableAnalysis.habilidades.split(',').map(s=>s.trim()).filter(Boolean) : []);
-  
-  const habilidadesTextForTextarea = Array.isArray(editableAnalysis.habilidades)
-                                   ? editableAnalysis.habilidades.join(", ")
-                                   : (editableAnalysis.habilidades || "");
+  const habilidadesTecnicasText = Array.isArray(editableAnalysis.habilidades?.tecnicas)
+                                   ? editableAnalysis.habilidades.tecnicas.join(", ")
+                                   : "";
+  const habilidadesBlandasText = Array.isArray(editableAnalysis.habilidades?.blandas)
+                                   ? editableAnalysis.habilidades.blandas.join(", ")
+                                   : "";
 
   return (
     <motion.div
@@ -163,6 +212,21 @@ function CVAnalysis({
         </div>
       </div>
 
+      {/* Nivel de Escolarización */}
+      <div className="linkedin-card p-6">
+        <h3 className="section-header flex items-center">
+            <Award className="h-5 w-5 mr-2 text-[#0a66c2]" />
+            <span>Nivel de Escolarización / Título</span>
+        </h3>
+        <Input 
+          name="nivel_escolarizacion" 
+          value={editableAnalysis.nivel_escolarizacion || ""} 
+          onChange={handleChange} 
+          placeholder="Ej: Licenciado en Administración, Técnico Superior..."
+          className="text-[#333333] text-base mt-2" 
+        />
+      </div>
+
       {/* Resumen */}
       <div className="linkedin-card p-6">
         <h3 className="section-header">Resumen Profesional</h3>
@@ -175,19 +239,44 @@ function CVAnalysis({
         />
       </div>
 
-      {/* Habilidades */}
+      {/* Habilidades Técnicas */}
       <div className="linkedin-card p-6">
-        <h3 className="section-header">Habilidades</h3>
+        <h3 className="section-header flex items-center">
+            <Zap className="h-5 w-5 mr-2 text-[#0a66c2]" />
+            <span>Habilidades Técnicas</span>
+        </h3>
         <Textarea 
-          name="habilidades" // Nombre del campo para el estado
-          value={habilidadesTextForTextarea} // Usar el string para el textarea
-          onChange={handleHabilidadesChange} // Usar el handler que convierte a array
-          placeholder="Habilidad 1, Habilidad 2, Habilidad 3..."
+          name="habilidades_tecnicas"
+          value={habilidadesTecnicasText}
+          onChange={(e) => handleHabilidadesChange('tecnicas', e)}
+          placeholder="Java, Python, React, SQL, Docker..."
           className="text-[#333333] leading-relaxed text-base mt-2 min-h-[80px]"
         />
         <div className="flex flex-wrap gap-2 mt-2">
-          {habilidadesDisplay.map((skill, index) => (
-            <span key={index} className="skill-tag">
+          {(editableAnalysis.habilidades?.tecnicas || []).map((skill, index) => (
+            <span key={`tech-${index}`} className="skill-tag">
+              {skill}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Habilidades Blandas */}
+      <div className="linkedin-card p-6">
+        <h3 className="section-header flex items-center">
+            <Brain className="h-5 w-5 mr-2 text-[#0a66c2]" />
+            <span>Habilidades Blandas</span>
+        </h3>
+        <Textarea 
+          name="habilidades_blandas"
+          value={habilidadesBlandasText}
+          onChange={(e) => handleHabilidadesChange('blandas', e)}
+          placeholder="Comunicación, Liderazgo, Trabajo en equipo..."
+          className="text-[#333333] leading-relaxed text-base mt-2 min-h-[80px]"
+        />
+        <div className="flex flex-wrap gap-2 mt-2">
+          {(editableAnalysis.habilidades?.blandas || []).map((skill, index) => (
+            <span key={`soft-${index}`} className="skill-tag">
               {skill}
             </span>
           ))}

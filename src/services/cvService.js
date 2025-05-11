@@ -38,13 +38,18 @@ export const cvService = {
           cv_id: cvData.id,
           recruiter_id: recruiterId,
           name: analysis.nombre,
+          title: analysis.nivel_escolarizacion || "No especificado", // Guardar nivel de escolarización
           email: analysis.email,
           phone: analysis.telefono,
           location: analysis.localidad,
-          birth_date: null, // Se podría calcular desde la edad si es necesario
-          age: analysis.edad,
+          birth_date: null,
+          age: parseInt(analysis.edad, 10) || null, // Asegurar que la edad sea un número o null
           experience: analysis.experiencia,
-          skills: analysis.habilidades,
+          // Concatenar habilidades técnicas y blandas en el array 'skills'
+          skills: [
+            ...(analysis.habilidades?.tecnicas || []),
+            ...(analysis.habilidades?.blandas || [])
+          ].filter(Boolean), // Filtrar nulos o vacíos si los hubiera
           summary: analysis.resumen
         })
         .select()
