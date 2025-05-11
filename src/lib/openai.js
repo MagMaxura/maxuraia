@@ -30,9 +30,12 @@ CV a analizar:
 ${text}`;
 
     // Usar un modelo que soporte bien el modo JSON y sea eficiente.
-    // gpt-3.5-turbo-0125 o gpt-4-turbo-preview son buenas opciones si están disponibles.
+    // Usar el modelo más reciente y capaz para extracción.
+    // "gpt-4-turbo-preview" o "gpt-4-0125-preview" o el alias más reciente como "gpt-4-turbo".
+    // Verifica la documentación de OpenAI para el nombre exacto del último modelo recomendado.
+    // Por ahora, usaremos "gpt-4-turbo-preview" como ejemplo.
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo-0125",
+      model: "gpt-4-turbo-preview",
       response_format: { type: "json_object" }, // Solicitar respuesta en formato JSON
       messages: [
         // Podríamos añadir un system prompt si quisiéramos refinar el rol de la IA,

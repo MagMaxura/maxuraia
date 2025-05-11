@@ -23,6 +23,30 @@ export const cvService = {
       if (uploadError) throw uploadError;
 
       // 2. Crear el registro del CV
+
+      // Función para sanitizar strings eliminando caracteres nulos
+      const sanitizeString = (str) => (typeof str === 'string' ? str.replace(/\u0000/g, '') : str);
+
+      // Sanitizar los campos de texto principales del objeto analysis
+      const sanitizedAnalysis = {
+        ...analysis,
+        nombre: sanitizeString(analysis.nombre),
+        localidad: sanitizeString(analysis.localidad),
+        email: sanitizeString(analysis.email),
+        telefono: sanitizeString(analysis.telefono),
+        nivel_escolarizacion: sanitizeString(analysis.nivel_escolarizacion),
+        resumen: sanitizeString(analysis.resumen),
+        experiencia: sanitizeString(analysis.experiencia),
+        textoCompleto: sanitizeString(analysis.textoCompleto), // Muy importante para el campo 'content'
+        habilidades: {
+          tecnicas: Array.isArray(analysis.habilidades?.tecnicas) ? analysis.habilidades.tecnicas.map(sanitizeString) : [],
+          blandas: Array.isArray(analysis.habilidades?.blandas) ? analysis.habilidades.blandas.map(sanitizeString) : [],
+        }
+      };
+      
+      // También sanitizar el texto completo que va al campo 'content'
+      const sanitizedContent = sanitizeString(analysis.textoCompleto);
+
       const { data: cvData, error: cvError } = await supabase
         .from('cvs')
         .insert({
@@ -30,8 +54,8 @@ export const cvService = {
           file_name: fileName,
           file_type: file.type,
           file_path: filePath,
-          content: analysis.textoCompleto,
-          analysis_result: analysis
+          content: sanitizedContent, // Usar contenido sanitizado
+          analysis_result: sanitizedAnalysis // Usar análisis sanitizado
         })
         .select()
         .single();
@@ -44,20 +68,19 @@ export const cvService = {
         .insert({
           cv_id: cvData.id,
           recruiter_id: recruiterId,
-          name: analysis.nombre,
-          title: analysis.nivel_escolarizacion || "No especificado", // Guardar nivel de escolarización
-          email: analysis.email,
-          phone: analysis.telefono,
-          location: analysis.localidad,
+          name: sanitizedAnalysis.nombre,
+          title: sanitizedAnalysis.nivel_escolarizacion || "No especificado",
+          email: sanitizedAnalysis.email,
+          phone: sanitizedAnalysis.telefono,
+          location: sanitizedAnalysis.localidad,
           birth_date: null,
-          age: parseInt(analysis.edad, 10) || null, // Asegurar que la edad sea un número o null
-          experience: analysis.experiencia,
-          // Concatenar habilidades técnicas y blandas en el array 'skills'
+          age: parseInt(sanitizedAnalysis.edad, 10) || null,
+          experience: sanitizedAnalysis.experiencia,
           skills: [
-            ...(analysis.habilidades?.tecnicas || []),
-            ...(analysis.habilidades?.blandas || [])
-          ].filter(Boolean), // Filtrar nulos o vacíos si los hubiera
-          summary: analysis.resumen
+            ...(sanitizedAnalysis.habilidades?.tecnicas || []),
+            ...(sanitizedAnalysis.habilidades?.blandas || [])
+          ].filter(Boolean),
+          summary: sanitizedAnalysis.resumen
         })
         .select()
         .single();

@@ -82,9 +82,35 @@ function CVAnalysis({
 
   const handleSave = async () => {
     if (!editableAnalysis || !userId) {
-      toast({ title: "Error", description: "Faltan datos para guardar.", variant: "destructive" });
+      toast({ title: "Error de Carga", description: "No hay datos de análisis para guardar o falta el ID de usuario.", variant: "destructive" });
       return;
     }
+
+    // Validación de campos requeridos
+    const requiredFields = {
+      nombre: "Nombre",
+      email: "Email",
+      resumen: "Resumen Profesional",
+      experiencia: "Experiencia Profesional",
+      nivel_escolarizacion: "Nivel de Escolarización / Título"
+    };
+    const missingFields = [];
+    for (const field in requiredFields) {
+      if (!editableAnalysis[field] || String(editableAnalysis[field]).trim() === "") {
+        missingFields.push(requiredFields[field]);
+      }
+    }
+
+    if (missingFields.length > 0) {
+      toast({
+        title: "Campos Requeridos Vacíos",
+        description: `Por favor, completa los siguientes campos antes de guardar: ${missingFields.join(', ')}.`,
+        variant: "destructive",
+        duration: 7000,
+      });
+      return;
+    }
+
     setIsSaving(true);
     
     // Preparamos el objeto analysis que se enviará al servicio, similar a como lo espera la BD
