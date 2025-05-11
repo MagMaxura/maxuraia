@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import CVAnalysis from "@/components/CVAnalysis.jsx";
-import { Input } from "@/components/ui/input.jsx"; // Para los campos de filtro
-import { Button } from "@/components/ui/button.jsx"; // Para un posible botón de "Limpiar filtros"
+import { Input } from "@/components/ui/input.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { Trash2 } from 'lucide-react'; // Asegurarse de que Trash2 esté importado
 
 function ProcessedCVsTab({
   cvFiles,
@@ -133,14 +134,36 @@ function ProcessedCVsTab({
                   ? "bg-blue-100 border-blue-300"
                   : "bg-slate-50 hover:bg-slate-100 border border-transparent"
                 }`}
-                onClick={() => handleCVClick(originalIndex)} // Usar el índice original
+                onClick={() => handleCVClick(originalIndex)}
               >
-                <span className="text-slate-700 font-medium truncate" title={file.name}>{file.name}</span>
-                {file.uploadedDate && (
-                  <span className="text-xs text-slate-500">
-                    {new Date(file.uploadedDate).toLocaleDateString()}
-                  </span>
-                )}
+                <div className="flex-grow truncate mr-2"> {/* Añadido mr-2 para espacio */}
+                  <span className="text-slate-700 font-medium" title={file.name}>{file.name}</span>
+                </div>
+                <div className="flex items-center flex-shrink-0">
+                  {file.uploadedDate && (
+                    <span className="text-xs text-slate-500 mr-3">
+                      {new Date(file.uploadedDate).toLocaleDateString()}
+                    </span>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-red-500 hover:bg-red-100 hover:text-red-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (file.cv_database_id && onDeleteCV) { // Verificar que onDeleteCV exista
+                        if (window.confirm(`¿Estás seguro de que quieres eliminar el CV "${file.name}"? Esta acción no se puede deshacer.`)) {
+                          onDeleteCV(file.cv_database_id);
+                        }
+                      } else {
+                        console.warn("Intento de eliminar CV sin ID de BD o función onDeleteCV no disponible:", file);
+                      }
+                    }}
+                    title="Eliminar CV"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             );
           })}
