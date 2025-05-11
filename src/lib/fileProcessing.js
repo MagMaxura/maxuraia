@@ -15,7 +15,13 @@ export async function extractTextFromFile(file) {
     throw new Error('Formato de archivo no soportado: ' + file.type);
   } catch (error) {
     console.error('Error al extraer texto del archivo:', file.name, error);
-    throw error;
+    // Devolver un objeto de error específico en lugar de lanzar la excepción directamente
+    // para que analyzeCV pueda manejarlo.
+    if (error.name === 'PasswordException' || error.message.includes('password') || error.message.includes('protected')) {
+      return { error: "pdf_protected", message: "El PDF está protegido por contraseña y no se puede leer." };
+    }
+    // Podríamos añadir más heurísticas para detectar PDFs basados en imágenes si la librería no da error pero devuelve poco texto.
+    return { error: "extraction_failed", message: error.message };
   }
 }
 
@@ -40,23 +46,39 @@ async function extractTextFromDOCX(file) {
   return result.value;
 }
 
-export async function analyzeCV(text) {
+export async function analyzeCV(textOrExtractionResult) {
   console.log("Iniciando analyzeCV...");
-  if (!text || text.trim() === "") {
-    console.error("Texto del CV está vacío. No se puede analizar.");
-    // Devolver una estructura similar a la esperada pero con errores/vacíos
+
+  // Verificar si textOrExtractionResult es un objeto de error de la extracción
+  if (typeof textOrExtractionResult === 'object' && textOrExtractionResult !== null && textOrExtractionResult.error) {
+    console.warn("analyzeCV: Problema en la extracción de texto:", textOrExtractionResult.error);
+    // Devolver una estructura de análisis que indique el error de extracción
     return {
-        nombre: 'Error: Texto vacío',
-        edad: 'Error',
-        email: 'Error',
-        telefono: 'Error',
-        localidad: 'Error',
-        experiencia: 'Error: Texto del CV vacío.',
-        habilidades: [],
-        resumen: 'Error: Texto del CV vacío.',
-        textoCompleto: text
+      nombre: '', edad: '', email: '', telefono: '', localidad: '',
+      nivel_escolarizacion: '',
+      habilidades: { tecnicas: [], blandas: [] },
+      resumen: '', experiencia: '',
+      textoCompleto: '', // El texto estaría vacío o no disponible
+      extractionError: textOrExtractionResult.error, // 'pdf_protected' o 'extraction_failed'
+      extractionMessage: textOrExtractionResult.message
+    };
+  }
+
+  const text = typeof textOrExtractionResult === 'string' ? textOrExtractionResult : '';
+
+  if (!text || text.trim() === "" || text.trim().length < 50) { // Considerar texto muy corto como posible PDF de imagen
+    console.warn("Texto del CV está vacío o es muy corto. Posible PDF de imagen o problema de extracción.");
+    return {
+        nombre: '', edad: '', email: '', telefono: '', localidad: '',
+        nivel_escolarizacion: '',
+        habilidades: { tecnicas: [], blandas: [] },
+        resumen: '', experiencia: '',
+        textoCompleto: text,
+        extractionError: "empty_or_image_pdf",
+        extractionMessage: "El contenido del CV está vacío o es muy corto, podría ser un PDF basado en imágenes o estar protegido."
       };
   }
+
   try {
     console.log("Intentando análisis con GPT...");
     const gptAnalysis = await analyzeCVWithGPT(text);

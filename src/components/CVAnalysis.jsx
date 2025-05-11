@@ -207,6 +207,15 @@ function CVAnalysis({
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {/* Advertencia de Error de Extracción */}
+      {editableAnalysis.extractionError && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md" role="alert">
+          <p className="font-bold">Advertencia sobre el CV</p>
+          <p>{editableAnalysis.extractionMessage || "No se pudo extraer el texto de este CV. Puede estar protegido, ser una imagen, o estar corrupto."}</p>
+          <p className="mt-2 text-sm">Recomendamos completar la información manualmente para asegurar la calidad de los datos.</p>
+        </div>
+      )}
+
       {/* Información Personal */}
       <div className="linkedin-card p-6">
         <div className="flex items-start space-x-4">
