@@ -280,6 +280,35 @@ function Dashboard() {
     });
   };
 
+  const handleDeleteCV = async (cvDatabaseIdToDelete) => {
+    if (!cvDatabaseIdToDelete) {
+      toast({ title: "Error", description: "No se proporcionó ID para eliminar el CV.", variant: "destructive" });
+      return;
+    }
+    console.log("Dashboard: Intentando eliminar CV con ID de BD:", cvDatabaseIdToDelete);
+    try {
+      await cvService.deleteCV(cvDatabaseIdToDelete);
+      toast({ title: "CV Eliminado", description: "El CV y los datos asociados han sido eliminados." });
+
+      const updatedCvFiles = cvFiles.filter(cv => cv.cv_database_id !== cvDatabaseIdToDelete);
+      setCvFiles(updatedCvFiles);
+      
+      const currentSelectedCv = cvFiles[selectedCV];
+      if (currentSelectedCv && currentSelectedCv.cv_database_id === cvDatabaseIdToDelete) {
+        setSelectedCV(null);
+        setCvAnalysis(null);
+      } else if (selectedCV !== null) {
+        if (selectedCV >= updatedCvFiles.length) {
+            setSelectedCV(null);
+            setCvAnalysis(null);
+        }
+      }
+    } catch (error) {
+      console.error("Dashboard: Error al eliminar CV:", error);
+      toast({ title: "Error al Eliminar", description: `No se pudo eliminar el CV: ${error.message}`, variant: "destructive" });
+    }
+  };
+
   const handleDragOver = (event) => {
     event.preventDefault();
   };
@@ -365,6 +394,7 @@ function Dashboard() {
               isProcessing={isProcessing}
               userId={user?.id}
               onSaveSuccess={handleSaveSuccess}
+              onDeleteCV={handleDeleteCV} // Pasar la función de eliminar
               // Pasar props de filtros
               cvFilters={cvFilters}
               onCvFilterChange={setCvFilters}

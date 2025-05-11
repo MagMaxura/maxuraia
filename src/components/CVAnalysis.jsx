@@ -341,7 +341,42 @@ function CVAnalysis({
         />
       </div>
 
-      <div className="flex justify-end mt-6">
+      <div className="flex justify-end items-center gap-4 mt-6">
+        <Button
+          onClick={async () => {
+            if (cvDatabaseId) {
+              if (window.confirm(`¿Estás seguro de que quieres eliminar este CV y los datos del candidato asociado? Esta acción no se puede deshacer.`)) {
+                setIsSaving(true); // Reutilizar isSaving para deshabilitar botones
+                try {
+                  // onDeleteCV se espera que venga de ProcessedCVsTab -> Dashboard
+                  // y que maneje la llamada al servicio y la actualización del estado.
+                  // Aquí solo invocamos la prop si existe.
+                  // La lógica real de eliminación estará en Dashboard.jsx
+                  if (onDeleteCV) { // onDeleteCV es la prop que vendrá de ProcessedCVsTab
+                    await onDeleteCV(cvDatabaseId);
+                    toast({ title: "CV Eliminado", description: "El CV y los datos del candidato han sido eliminados."});
+                    // El componente se desmontará o recibirá nuevas props si la lista se actualiza en el padre.
+                  } else {
+                    console.warn("onDeleteCV prop no fue proporcionada a CVAnalysis");
+                    toast({ title: "Error de configuración", description: "La función de eliminar no está disponible.", variant: "destructive"});
+                  }
+                } catch (error) {
+                  console.error("Error al intentar eliminar CV desde CVAnalysis:", error);
+                  toast({ title: "Error al Eliminar", description: error.message, variant: "destructive"});
+                } finally {
+                  setIsSaving(false);
+                }
+              }
+            } else {
+              toast({ title: "No se puede eliminar", description: "Este CV aún no ha sido guardado en la base de datos.", variant: "destructive"});
+            }
+          }}
+          variant="destructive"
+          disabled={isSaving || !cvDatabaseId}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Eliminar CV
+        </Button>
         <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
           <Save className="mr-2 h-4 w-4" />
           {isSaving ? "Guardando..." : "Guardar Cambios"}

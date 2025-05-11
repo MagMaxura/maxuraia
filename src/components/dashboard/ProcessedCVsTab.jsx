@@ -158,10 +158,11 @@ function ProcessedCVsTab({
           <CVAnalysis
             analysis={cvAnalysis}
             userId={userId}
-            originalFile={cvFiles[selectedCV]?.originalFile} 
+            originalFile={cvFiles[selectedCV]?.originalFile}
             cvDatabaseId={cvFiles[selectedCV]?.cv_database_id}
             candidateDatabaseId={cvFiles[selectedCV]?.candidate_database_id}
             onSaveSuccess={onSaveSuccess}
+            onDeleteCV={onDeleteCV} // Pasar la prop onDeleteCV que viene del Dashboard
           />
         </motion.div>
       )}
