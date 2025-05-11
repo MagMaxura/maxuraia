@@ -76,13 +76,53 @@ function ProcessedCVsTab({
 
 
   return (
-    <div className="space-y-6">
-      <motion.div 
-        initial={{ opacity: 0 }} 
-        animate={{ opacity: 1 }} 
-        className="bg-white p-6 rounded-xl shadow-xl"
+    <div className="flex flex-col md:flex-row gap-6 h-full"> {/* Contenedor principal Flexbox */}
+      {/* Columna Izquierda/Principal para el Análisis del CV */}
+      <div className="flex-grow md:w-2/3 space-y-6"> {/* Ocupa 2/3 del espacio en pantallas medianas y grandes */}
+        {cvAnalysis && selectedCV !== null && cvFiles[selectedCV] && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="bg-white p-6 rounded-xl shadow-xl h-full" // h-full para ocupar altura disponible
+          >
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">
+              Análisis del CV: {cvFiles[selectedCV]?.name}
+            </h2>
+            <CVAnalysis
+              analysis={cvAnalysis}
+              userId={userId}
+              originalFile={cvFiles[selectedCV]?.originalFile}
+              cvDatabaseId={cvFiles[selectedCV]?.cv_database_id}
+              candidateDatabaseId={cvFiles[selectedCV]?.candidate_database_id}
+              onSaveSuccess={onSaveSuccess}
+              onDeleteCV={onDeleteCV}
+            />
+          </motion.div>
+        )}
+        {!isLoadingCVs && selectedCV === null && cvFiles.length > 0 && (
+          <div className="bg-white p-6 rounded-xl shadow-xl text-center text-slate-500 h-full flex items-center justify-center">
+             <p>Selecciona un CV de la lista de la derecha para ver su análisis.</p>
+          </div>
+        )}
+         {!isLoadingCVs && cvFiles.length === 0 && (
+           <div className="bg-white p-6 rounded-xl shadow-xl text-center text-slate-500 h-full flex items-center justify-center">
+            <p>No hay CVs procesados o guardados todavía.</p>
+           </div>
+        )}
+        {isLoadingCVs && (
+            <div className="bg-white p-6 rounded-xl shadow-xl text-center text-slate-500 h-full flex items-center justify-center">
+                <p>Cargando CVs guardados...</p>
+            </div>
+        )}
+      </div>
+
+      {/* Columna Derecha para Filtros y Lista de CVs */}
+      <motion.div
+        initial={{ opacity: 0, x: 20 }} // Animación desde la derecha
+        animate={{ opacity: 1, x: 0 }}
+        className="md:w-1/3 bg-white p-6 rounded-xl shadow-xl space-y-4 flex flex-col h-full" // Ocupa 1/3 y es una columna flex
       >
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">CVs Procesados</h2>
+        <h2 className="text-xl font-semibold text-slate-800 mb-2 flex-shrink-0">Lista de CVs</h2>
 
         {/* Sección de Filtros */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 p-4 border rounded-md bg-slate-50">
@@ -115,14 +155,16 @@ function ProcessedCVsTab({
           </div>
         </div>
 
-        {isLoadingCVs && (
-          <p className="text-slate-500 text-sm text-center py-4">Cargando CVs guardados...</p>
+        {/* Mensajes de carga/vacío para la lista de CVs */}
+        {isLoadingCVs && !cvFiles.length && ( // Mostrar solo si no hay CVs aún para evitar duplicar mensaje de carga principal
+          <p className="text-slate-500 text-sm text-center py-4">Cargando...</p>
         )}
-        {!isLoadingCVs && filteredCvFiles.length === 0 && (
-          <p className="text-slate-500 text-sm text-center py-4">No se encontraron CVs con los filtros actuales o no hay CVs guardados.</p>
+        {!isLoadingCVs && filteredCvFiles.length === 0 && cvFiles.length > 0 && (
+           <p className="text-slate-500 text-sm text-center py-4">Ningún CV coincide con los filtros.</p>
         )}
-        
-        <div className="space-y-2 max-h-96 overflow-y-auto">
+        {/* No mostrar "No hay CVs" aquí si el panel principal ya lo dice */}
+
+        <div className="space-y-2 overflow-y-auto flex-grow"> {/* flex-grow para que la lista ocupe espacio */}
           {filteredCvFiles.map((file, index) => {
             // Para que handleCVClick funcione con el índice correcto del array original cvFiles
             const originalIndex = cvFiles.findIndex(originalFile => (originalFile.cv_database_id || originalFile.name) === (file.cv_database_id || file.name));
@@ -169,30 +211,7 @@ function ProcessedCVsTab({
           })}
         </div>
       </motion.div>
-
-      {cvAnalysis && selectedCV !== null && cvFiles[selectedCV] && (
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          className="bg-white p-6 rounded-xl shadow-xl"
-        >
-          <h2 className="text-xl font-semibold text-slate-800 mb-4">
-            Análisis del CV: {cvFiles[selectedCV]?.name}
-          </h2>
-          <CVAnalysis
-            analysis={cvAnalysis}
-            userId={userId}
-            originalFile={cvFiles[selectedCV]?.originalFile}
-            cvDatabaseId={cvFiles[selectedCV]?.cv_database_id}
-            candidateDatabaseId={cvFiles[selectedCV]?.candidate_database_id}
-            onSaveSuccess={onSaveSuccess}
-            onDeleteCV={onDeleteCV} // Pasar la prop onDeleteCV que viene del Dashboard
-          />
-        </motion.div>
-      )}
-      {!isLoadingCVs && selectedCV === null && filteredCvFiles.length > 0 && (
-         <p className="text-slate-500 text-center py-4">Selecciona un CV de la lista para ver su análisis.</p>
-       )}
+      {/* El panel de CVAnalysis ya se movió a la columna izquierda/principal */}
     </div>
   );
 }
