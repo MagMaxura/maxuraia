@@ -31,7 +31,17 @@ function Dashboard() {
   const [jobPostData, setJobPostData] = useState(null);
   const fileInputRef = useRef(null);
   const [isLoadingCVs, setIsLoadingCVs] = useState(true);
-  const [isLoadingJobs, setIsLoadingJobs] = useState(true); // Nuevo estado para carga de Puestos
+  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+
+  // Estados para los filtros de CVs
+  const [cvFilters, setCvFilters] = useState({
+    ageMin: '',
+    ageMax: '',
+    title: '', // Para nivel_escolarizacion
+    experienceKeywords: '',
+    skills: '', // String de habilidades separadas por coma
+    location: '',
+  });
 
   // Cargar CVs y Puestos guardados cuando el componente se monta y el usuario está disponible
   useEffect(() => {
@@ -352,9 +362,12 @@ function Dashboard() {
               handleCVClick={handleCVClick}
               cvAnalysis={cvAnalysis}
               isLoadingCVs={isLoadingCVs}
-              isProcessing={isProcessing} // Pasamos isProcessing para el mensaje de "No hay CVs"
+              isProcessing={isProcessing}
               userId={user?.id}
               onSaveSuccess={handleSaveSuccess}
+              // Pasar props de filtros
+              cvFilters={cvFilters}
+              onCvFilterChange={setCvFilters}
             />
           )}
 
