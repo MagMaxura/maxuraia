@@ -15,7 +15,8 @@ function ProcessedCVsTab({
   onSaveSuccess,
   // Props para filtros
   cvFilters,
-  onCvFilterChange, // Función para actualizar los filtros en el Dashboard
+  onCvFilterChange,
+  onDeleteCV, // Añadir onDeleteCV a la desestructuración de props
 }) {
 
   const handleFilterInputChange = (e) => {
