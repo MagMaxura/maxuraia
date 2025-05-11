@@ -207,12 +207,20 @@ function CVAnalysis({
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {/* Advertencia de Error de Extracción */}
-      {editableAnalysis.extractionError && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md" role="alert">
-          <p className="font-bold">Advertencia sobre el CV</p>
-          <p>{editableAnalysis.extractionMessage || "No se pudo extraer el texto de este CV. Puede estar protegido, ser una imagen, o estar corrupto."}</p>
-          <p className="mt-2 text-sm">Recomendamos completar la información manualmente para asegurar la calidad de los datos.</p>
+      {/* Advertencia de Error de Extracción o Extracción Incompleta */}
+      {(editableAnalysis.extractionError ||
+        !editableAnalysis.resumen?.trim() ||
+        !editableAnalysis.experiencia?.trim() ||
+        editableAnalysis.nivel_escolarizacion === "No especificado" || !editableAnalysis.nivel_escolarizacion?.trim()
+      ) && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md mb-6" role="alert">
+          <p className="font-bold">Advertencia sobre el Análisis del CV</p>
+          {editableAnalysis.extractionError ? (
+            <p>{editableAnalysis.extractionMessage || "No se pudo extraer completamente el texto de este CV. Puede estar protegido, ser una imagen o estar corrupto."}</p>
+          ) : (
+            <p>La IA no pudo extraer toda la información relevante (ej: resumen, experiencia o nivel de escolarización). Esto puede ocurrir con formatos de CV complejos o no estándar.</p>
+          )}
+          <p className="mt-2 text-sm">Recomendamos revisar y completar la información manualmente para asegurar la calidad de los datos antes de guardar.</p>
         </div>
       )}
 
