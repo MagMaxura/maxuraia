@@ -9,7 +9,8 @@ import CVAnalysis from "@/components/CVAnalysis";
 import CreateJobForm from "@/components/CreateJobForm.jsx";
 import CreateJobAIForm from "@/components/CreateJobAIForm.jsx";
 import { cvService } from "@/services/cvService.js";
-import UploadCVTab from "@/components/dashboard/UploadCVTab.jsx"; // Importar el nuevo componente
+import UploadCVTab from "@/components/dashboard/UploadCVTab.jsx";
+import ProcessedCVsTab from "@/components/dashboard/ProcessedCVsTab.jsx"; // Importar el nuevo componente
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -345,53 +346,16 @@ function Dashboard() {
           )}
 
           {activeTab === "cvsProcesados" && (
-            <div className="space-y-6">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white p-6 rounded-xl shadow-xl">
-                <h2 className="text-xl font-semibold text-slate-800 mb-4">CVs Procesados</h2>
-                {isLoadingCVs && (
-                  <p className="text-slate-500 text-sm text-center py-4">Cargando CVs guardados...</p>
-                )}
-                {!isLoadingCVs && cvFiles.length === 0 && (
-                  <p className="text-slate-500 text-sm text-center py-4">No hay CVs procesados o guardados todavía.</p>
-                )}
-                {/* El map se renderizará si cvFiles tiene elementos, independientemente de isLoadingCVs para mostrar datos mientras se carga si es necesario */}
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {cvFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className={`p-3 rounded-md flex items-center justify-between cursor-pointer transition-colors ${
-                        selectedCV === index
-                        ? "bg-blue-100 border-blue-300"
-                        : "bg-slate-50 hover:bg-slate-100 border border-transparent"
-                      }`}
-                      onClick={() => handleCVClick(index)}
-                    >
-                      <span className="text-slate-700 font-medium truncate" title={file.name}>{file.name}</span>
-                      <span className="text-xs text-slate-500">
-                        {file.uploadedDate.toLocaleDateString()}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-
-              {cvAnalysis && selectedCV !== null && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white p-6 rounded-xl shadow-xl">
-                  <h2 className="text-xl font-semibold text-slate-800 mb-4">Análisis del CV: {cvFiles[selectedCV]?.name}</h2>
-                  <CVAnalysis
-                    analysis={cvAnalysis}
-                    userId={user?.id}
-                    originalFile={cvFiles[selectedCV]?.originalFile}
-                    cvDatabaseId={cvFiles[selectedCV]?.cv_database_id}
-                    candidateDatabaseId={cvFiles[selectedCV]?.candidate_database_id}
-                    onSaveSuccess={handleSaveSuccess} // Pasar la nueva función callback
-                  />
-                </motion.div>
-              )}
-               {selectedCV === null && cvFiles.length > 0 && (
-                 <p className="text-slate-500 text-center py-4">Selecciona un CV para ver su análisis.</p>
-               )}
-            </div>
+            <ProcessedCVsTab
+              cvFiles={cvFiles}
+              selectedCV={selectedCV}
+              handleCVClick={handleCVClick}
+              cvAnalysis={cvAnalysis}
+              isLoadingCVs={isLoadingCVs}
+              isProcessing={isProcessing} // Pasamos isProcessing para el mensaje de "No hay CVs"
+              userId={user?.id}
+              onSaveSuccess={handleSaveSuccess}
+            />
           )}
 
           {activeTab === "nuevoPuesto" && (
