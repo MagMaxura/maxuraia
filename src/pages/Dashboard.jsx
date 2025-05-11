@@ -18,7 +18,13 @@ function Dashboard() {
   const [jobs, setJobs] = useState([]);
   const [selectedCV, setSelectedCV] = useState(null);
   const [cvAnalysis, setCvAnalysis] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false); // Para carga de CVs
+  // Estados para el procesamiento de CVs (individual y masivo)
+  const [isProcessing, setIsProcessing] = useState(false); // Para el estado general de "procesando algo"
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false); // Específico para carga masiva
+  const [totalFilesToUpload, setTotalFilesToUpload] = useState(0);
+  const [filesUploadedCount, setFilesUploadedCount] = useState(0);
+  const [currentFileProcessingName, setCurrentFileProcessingName] = useState("");
+
   const [isProcessingJob, setIsProcessingJob] = useState(false); // Para generación/publicación de puestos
   const [jobPostData, setJobPostData] = useState(null); // Para datos del puesto (manual o IA)
   const fileInputRef = useRef(null);
@@ -62,49 +68,79 @@ function Dashboard() {
   ];
 
   const handleFileUpload = async (event) => {
-    const files = Array.from(event.target.files);
-    if (files.length === 0) return;
+    const selectedFiles = Array.from(event.target.files);
+    if (selectedFiles.length === 0) return;
 
-    setIsProcessing(true);
-    try {
-      const file = files[0]; // Procesamos un archivo a la vez
-      const text = await extractTextFromFile(file);
-      const resolvedAnalysis = await analyzeCV(text); // Usar await aquí
-      console.log("Dashboard: resolvedAnalysis from analyzeCV", resolvedAnalysis);
+    setIsBulkProcessing(true);
+    setIsProcessing(true); // Estado general de procesamiento
+    setTotalFilesToUpload(selectedFiles.length);
+    setFilesUploadedCount(0);
+    setCurrentFileProcessingName("");
 
-      // Crear un nuevo objeto de archivo con nombre y análisis
-      const newCvFile = {
-        name: file.name, // Guardar el nombre del archivo
-        originalFile: file, // Guardar el archivo original si es necesario para otras operaciones
-        analysis: resolvedAnalysis, // Usar el análisis resuelto
-        uploadedDate: new Date(),
-        cv_database_id: null, // Se poblará después de guardar en BD
-        candidate_database_id: null, // Se poblará después de guardar en BD
-      };
-      
-      setCvFiles(prevCvFiles => [...prevCvFiles, newCvFile]);
-      // Actualizar selectedCV para apuntar al nuevo archivo y mostrar su análisis
-      setSelectedCV(cvFiles.length); // El índice será el actual cvFiles.length antes de añadir el nuevo
-      setCvAnalysis(resolvedAnalysis); // Usar el análisis resuelto
-      console.log("Dashboard: cvAnalysis state updated with", resolvedAnalysis);
-      
-      toast({
-        title: "CV procesado",
-        description: `${file.name} ha sido analizado correctamente.`,
-      });
-      setActiveTab("cvsProcesados"); // Cambiar a la pestaña de CVs procesados después de subir
-    } catch (error) {
-      console.error("Error processing CV:", error);
-      toast({
-        title: "Error al procesar el CV",
-        description: `No se pudo procesar el archivo ${files[0]?.name || ''}. Asegúrate de que sea un PDF, DOC o DOCX válido.`,
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessing(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Resetear el input para permitir subir el mismo archivo de nuevo
+    let anyErrorOccurred = false;
+
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      setCurrentFileProcessingName(file.name);
+      setFilesUploadedCount(i); // Actualizar contador antes de procesar el actual
+
+      try {
+        console.log(`Dashboard: Procesando archivo ${i + 1}/${selectedFiles.length}: ${file.name}`);
+        const text = await extractTextFromFile(file);
+        const resolvedAnalysis = await analyzeCV(text);
+        console.log(`Dashboard: Análisis resuelto para ${file.name}`, resolvedAnalysis);
+
+        const newCvFile = {
+          name: file.name,
+          originalFile: file,
+          analysis: resolvedAnalysis,
+          uploadedDate: new Date(),
+          cv_database_id: null,
+          candidate_database_id: null,
+        };
+
+        // Actualizar estado de forma funcional para asegurar la última versión
+        setCvFiles(prevCvFiles => [...prevCvFiles, newCvFile]);
+        
+        // Seleccionar y mostrar el último CV procesado si es el único o el primero de un lote
+        if (selectedFiles.length === 1 || i === selectedFiles.length -1 ) {
+            setSelectedCV(cvFiles.length + i); // Ajustar índice basado en el estado actual + procesados
+            setCvAnalysis(resolvedAnalysis);
+        }
+
+
+        toast({
+          title: "CV Procesado",
+          description: `${file.name} ha sido analizado correctamente. (${i + 1}/${selectedFiles.length})`,
+        });
+      } catch (error) {
+        anyErrorOccurred = true;
+        console.error(`Error procesando CV ${file.name}:`, error);
+        toast({
+          title: `Error al procesar ${file.name}`,
+          description: `No se pudo procesar el archivo. Asegúrate de que sea un PDF, DOC o DOCX válido. (${i + 1}/${selectedFiles.length})`,
+          variant: "destructive",
+        });
+        // Continuar con el siguiente archivo si uno falla
       }
+    }
+    setFilesUploadedCount(selectedFiles.length); // Marcar todos como "intentados"
+    setIsBulkProcessing(false);
+    setIsProcessing(false);
+    setCurrentFileProcessingName("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Resetear el input
+    }
+
+    if (!anyErrorOccurred && selectedFiles.length > 0) {
+      setActiveTab("cvsProcesados");
+    } else if (selectedFiles.length > 0) {
+        // Si hubo errores, quizás quedarse en la pestaña de carga o ir a procesados
+        // dependiendo de si alguno tuvo éxito.
+        // Si al menos uno tuvo éxito, ir a procesados.
+        if (cvFiles.length > (cvFiles.length - selectedFiles.length + (selectedFiles.filter(f => f !== null)).length) ) { // una heurística
+             setActiveTab("cvsProcesados");
+        }
     }
   };
 
@@ -219,10 +255,11 @@ function Dashboard() {
                 <input
                   type="file"
                   accept=".pdf,.doc,.docx"
+                  multiple // Permitir selección múltiple
                   onChange={handleFileUpload}
                   className="hidden"
                   ref={fileInputRef}
-                  disabled={isProcessing}
+                  disabled={isBulkProcessing || isProcessing} // Deshabilitar si está en proceso masivo o individual
                 />
                 <FileUp className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                 <p className="text-slate-700 font-medium text-base md:text-lg mb-1">
@@ -231,8 +268,19 @@ function Dashboard() {
                 <p className="text-xs text-slate-500">
                   Formatos aceptados: PDF, DOC, DOCX
                 </p>
-                {isProcessing && <p className="mt-4 text-blue-600">Procesando...</p>}
+                {isProcessing && !isBulkProcessing && <p className="mt-4 text-blue-600">Procesando CV individual...</p>}
               </div>
+              {isBulkProcessing && (
+                <div className="mt-6 w-full bg-gray-200 rounded-full h-6">
+                  <div
+                    className="bg-blue-600 h-6 rounded-full text-xs font-medium text-blue-100 text-center p-1 leading-none"
+                    style={{ width: `${(filesUploadedCount / totalFilesToUpload) * 100}%` }}
+                  >
+                    {`${filesUploadedCount} / ${totalFilesToUpload}`}
+                  </div>
+                  {currentFileProcessingName && <p className="text-sm text-slate-600 mt-2 text-center">Analizando: {currentFileProcessingName}</p>}
+                </div>
+              )}
             </motion.div>
           )}
 
