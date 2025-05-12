@@ -36,6 +36,7 @@ function Dashboard() {
   const fileInputRef = useRef(null);
   const [isLoadingCVs, setIsLoadingCVs] = useState(true);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  const [editingJob, setEditingJob] = useState(null); // Para almacenar el job que se está editando
 
   // Estados para los filtros de CVs
   const [cvFilters, setCvFilters] = useState({
@@ -364,6 +365,42 @@ function Dashboard() {
       toast({ title: "Error al Eliminar", description: `No se pudo eliminar el CV: ${error.message}`, variant: "destructive" });
     }
   };
+
+  const handleDeleteJob = async (jobId) => {
+    if (!jobId) {
+      toast({ title: "Error", description: "ID del puesto no proporcionado.", variant: "destructive" });
+      return;
+    }
+    if (!window.confirm("¿Estás seguro de que quieres eliminar este puesto de trabajo?")) {
+      return;
+    }
+    try {
+      await cvService.deleteJobPost(jobId);
+      setJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
+      toast({ title: "Puesto Eliminado", description: "El puesto de trabajo ha sido eliminado." });
+    } catch (error) {
+      console.error("Dashboard: Error eliminando puesto:", error);
+      toast({ title: "Error al Eliminar", description: `No se pudo eliminar el puesto: ${error.message}`, variant: "destructive" });
+    }
+  };
+
+  const handleEditJob = (jobToEdit) => {
+    setEditingJob(jobToEdit); // Guardar los datos del job a editar
+    setActiveTab("nuevoPuesto"); // Cambiar a la pestaña de creación/edición
+  };
+
+  const handleJobPublishedOrUpdated = (job) => {
+    if (editingJob) { // Si estábamos editando
+      setJobs(prevJobs => prevJobs.map(j => j.id === job.id ? job : j));
+      toast({ title: "Puesto Actualizado", description: `${job.title} ha sido actualizado.` });
+    } else { // Si era un nuevo puesto
+      setJobs(prevJobs => [job, ...prevJobs]);
+      // El toast de "Puesto Publicado" ya lo maneja CreateNewJobTab
+    }
+    setEditingJob(null); // Limpiar el estado de edición
+    // setActiveTab("puestosPublicados"); // CreateNewJobTab ya hace esto
+  };
+
 
   const handleDragOver = (event) => {
     event.preventDefault();

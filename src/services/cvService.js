@@ -113,6 +113,59 @@ export const cvService = {
     }
   },
 
+  async updateJobPost(jobId, jobData) {
+    console.log(`cvService.updateJobPost: Actualizando puesto ID: ${jobId} con datos:`, jobData);
+    if (!jobId || !jobData) {
+      console.error("cvService.updateJobPost: jobId y jobData son requeridos.");
+      throw new Error("Faltan datos para actualizar el puesto.");
+    }
+    // Excluir campos que no deberían ser actualizados directamente o que maneja la BD
+    const { recruiter_id, id, created_at, updated_at, ...dataToUpdate } = jobData;
+
+    try {
+      const { data, error } = await supabase
+        .from('jobs')
+        .update(dataToUpdate)
+        .eq('id', jobId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error actualizando puesto de trabajo:", error);
+        throw error;
+      }
+      console.log("Puesto de trabajo actualizado exitosamente:", data);
+      return data;
+    } catch (error) {
+      console.error("Excepción en cvService.updateJobPost:", error);
+      throw error;
+    }
+  },
+
+  async deleteJobPost(jobId) {
+    console.log(`cvService.deleteJobPost: Eliminando puesto ID: ${jobId}`);
+    if (!jobId) {
+      console.error("cvService.deleteJobPost: jobId es requerido.");
+      throw new Error("ID del puesto no proporcionado para eliminar.");
+    }
+    try {
+      const { error } = await supabase
+        .from('jobs')
+        .delete()
+        .eq('id', jobId);
+
+      if (error) {
+        console.error("Error eliminando puesto de trabajo:", error);
+        throw error;
+      }
+      console.log("Puesto de trabajo eliminado exitosamente, ID:", jobId);
+      return { success: true, id: jobId }; // Devolver el ID para facilitar la actualización del estado en el frontend
+    } catch (error) {
+      console.error("Excepción en cvService.deleteJobPost:", error);
+      throw error;
+    }
+  },
+
   // Nueva función para incrementar el contador de análisis de CVs
   async incrementCvAnalysisCount(suscripcionId) {
     if (!suscripcionId) {

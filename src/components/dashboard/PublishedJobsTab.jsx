@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, Edit, Trash2 } from 'lucide-react'; // Importar iconos
 
-function PublishedJobsTab({ jobs, isLoadingJobs, setActiveTab }) {
+function PublishedJobsTab({ jobs, isLoadingJobs, setActiveTab, onEditJob, onDeleteJob }) { // Añadir props onEditJob, onDeleteJob
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }} 
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }} 
       transition={{ duration: 0.3 }}
       className="bg-white p-6 md:p-8 rounded-xl shadow-xl"
@@ -42,9 +42,35 @@ function PublishedJobsTab({ jobs, isLoadingJobs, setActiveTab }) {
               // onClick={() => console.log("Abrir detalle de puesto:", job.id)} // Futura funcionalidad
             >
               <h3 className="text-slate-800 font-semibold text-lg truncate" title={job.title}>{job.title}</h3>
-              <p className="text-slate-600 text-sm mt-2 line-clamp-3 h-16">{job.description}</p> 
-              {/* Añadir más detalles si es necesario, como fecha de creación, estado, etc. */}
+              <p className="text-slate-600 text-sm mt-2 line-clamp-3 h-16">{job.description}</p>
               <p className="text-xs text-slate-400 mt-3">Publicado el: {new Date(job.created_at).toLocaleDateString('es-ES')}</p>
+              {/* Contenedor para los botones de acción */}
+              <div className="flex justify-end space-x-2 mt-4">
+                 <Button
+                   variant="ghost"
+                   size="sm"
+                   className="text-blue-600 hover:bg-blue-100 hover:text-blue-700 px-2 py-1"
+                   onClick={(e) => {
+                     e.stopPropagation(); // Evitar que el click se propague al div padre (si tuviera un onClick)
+                     onEditJob(job);
+                   }}
+                   aria-label={`Modificar puesto ${job.title}`}
+                 >
+                   <Edit className="h-4 w-4" />
+                 </Button>
+                 <Button
+                   variant="ghost"
+                   size="sm"
+                   className="text-red-600 hover:bg-red-100 hover:text-red-700 px-2 py-1"
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     onDeleteJob(job.id);
+                   }}
+                   aria-label={`Eliminar puesto ${job.title}`}
+                 >
+                   <Trash2 className="h-4 w-4" />
+                 </Button>
+              </div>
             </div>
           ))}
         </div>

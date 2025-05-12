@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase.js';
 import { useAuth } from '@/contexts/AuthContext.jsx';
 import { PlusCircle, XCircle } from 'lucide-react';
 
-function CreateJobForm({ initialData, onPublish, isProcessingJob, disabled }) { // Añadir prop disabled
+function CreateJobForm({ initialData, onPublish, isProcessingJob, disabled, isEditing }) { // Añadir prop isEditing
   const { user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -213,7 +213,7 @@ function CreateJobForm({ initialData, onPublish, isProcessingJob, disabled }) { 
       
       <div className="flex justify-end">
         <Button type="submit" disabled={disabled || isProcessingJob || isSubmitting} className="bg-blue-600 hover:bg-blue-700">
-          {isSubmitting || isProcessingJob ? "Procesando..." : "Publicar Puesto"}
+          {isSubmitting || isProcessingJob ? "Procesando..." : (isEditing ? "Actualizar Puesto" : "Publicar Puesto")}
         </Button>
       </div>
     </form>

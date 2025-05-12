@@ -15,13 +15,44 @@ const PLAN_JOB_LIMITS = {
   // y la CHECK constraint. Si usaste "Profesional" en la BD para el básico, ajústalo aquí.
 };
 
-function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublished }) {
+function CreateNewJobTab({
+  setActiveTab,
+  currentJobsCount,
+  onJobPublishedOrUpdated, // Renombrar prop para claridad
+  editingJobData,      // Datos del job a editar
+  clearEditingJob      // Función para limpiar editingJobData en Dashboard
+}) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isProcessingJob, setIsProcessingJob] = useState(false);
-  const [jobPostData, setJobPostData] = useState(null); // Para datos generados por IA o para edición
+  // jobPostData ahora se inicializa con editingJobData si existe
+  const [jobPostData, setJobPostData] = useState(editingJobData || null);
+  const [isEditing, setIsEditing] = useState(!!editingJobData);
 
-  const handlePublishJob = async (jobPayload) => {
+  // Efecto para cargar datos de edición cuando editingJobData cambia y limpiar el estado de edición
+  React.useEffect(() => {
+    if (editingJobData) {
+      setJobPostData(editingJobData);
+      setIsEditing(true);
+    } else {
+      // Si no hay editingJobData (ej. se navega a la pestaña directamente para crear)
+      // o si se limpió después de una edición, resetear.
+      // setJobPostData(null); // No resetear aquí si queremos que la IA persista hasta publicar
+      // setIsEditing(false); // Se maneja al final de handlePublishJob
+    }
+    // No llamar a clearEditingJob aquí para permitir que el formulario se llene.
+    // Se llamará después de que el formulario lo use.
+  }, [editingJobData]);
+  
+  // Efecto para limpiar editingJobData en el Dashboard una vez que se ha usado para inicializar el formulario
+  React.useEffect(() => {
+    if (editingJobData && clearEditingJob) {
+      clearEditingJob();
+    }
+  }, [editingJobData, clearEditingJob]);
+
+
+  const handlePublishJob = async (jobPayloadFromForm) => {
     if (!user?.id) {
       toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
       return;
@@ -40,8 +71,10 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublished }) {
       });
       return;
     }
-
-    if (currentJobsCount >= jobLimit) {
+    
+    // La verificación de límite solo aplica si NO estamos editando.
+    // Si estamos editando, permitimos la actualización sin contar contra el límite de *nuevos* puestos.
+    if (!isEditing && currentJobsCount >= jobLimit) {
       toast({
         title: "Límite de Puestos Alcanzado",
         description: `Has alcanzado el límite de ${jobLimit} puestos activos para tu plan "${planId}". Considera actualizar tu plan para crear más.`,
@@ -53,23 +86,35 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublished }) {
 
     setIsProcessingJob(true);
     try {
-      const payloadWithRecruiter = { ...jobPayload, recruiter_id: user.id };
-      const newJob = await cvService.createJobPost(payloadWithRecruiter);
-      console.log("Puesto publicado desde CreateNewJobTab:", newJob);
+      let publishedOrUpdatedJob;
+      if (isEditing && jobPostData?.id) { // Si estamos editando y tenemos un ID de job
+        console.log("CreateNewJobTab: Actualizando puesto ID:", jobPostData.id);
+        // Asegurarse de que recruiter_id no se envíe o sea el correcto si la RLS lo permite
+        const payloadToUpdate = { ...jobPayloadFromForm };
+        delete payloadToUpdate.recruiter_id; // No se debería cambiar el recruiter_id al editar
+        
+        publishedOrUpdatedJob = await cvService.updateJobPost(jobPostData.id, payloadToUpdate);
+        toast({ title: "¡Puesto Actualizado!", description: `${publishedOrUpdatedJob.title} ha sido actualizado.` });
+      } else { // Creando nuevo puesto
+        const payloadWithRecruiter = { ...jobPayloadFromForm, recruiter_id: user.id };
+        publishedOrUpdatedJob = await cvService.createJobPost(payloadWithRecruiter);
+        toast({ title: "¡Puesto Publicado!", description: `${publishedOrUpdatedJob.title} ha sido publicado.` });
+      }
       
-      toast({ title: "¡Puesto Publicado!", description: `${newJob.title} ha sido publicado.` });
-      setJobPostData(null);
+      console.log(isEditing ? "Puesto actualizado:" : "Puesto publicado:", publishedOrUpdatedJob);
+      setJobPostData(null); // Limpiar datos del formulario (o IA)
+      setIsEditing(false); // Resetear modo edición
       
-      if (onJobPublished) {
-        onJobPublished(newJob); // Notificar al Dashboard para actualizar la lista de jobs
+      if (onJobPublishedOrUpdated) {
+        onJobPublishedOrUpdated(publishedOrUpdatedJob);
       }
 
       if (setActiveTab) {
         setActiveTab("puestosPublicados");
       }
     } catch (error) {
-      console.error("Error al publicar puesto desde CreateNewJobTab:", error);
-      toast({ title: "Error al Publicar", description: `No se pudo publicar el puesto: ${error.message}`, variant: "destructive" });
+      console.error(`Error al ${isEditing ? 'actualizar' : 'publicar'} puesto desde CreateNewJobTab:`, error);
+      toast({ title: `Error al ${isEditing ? 'Actualizar' : 'Publicar'}`, description: `No se pudo ${isEditing ? 'actualizar' : 'publicar'} el puesto: ${error.message}`, variant: "destructive" });
     } finally {
       setIsProcessingJob(false);
     }
@@ -78,12 +123,19 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublished }) {
   const planId = user?.suscripcion?.plan_id || 'basico';
   const status = user?.suscripcion?.status;
   const jobLimit = PLAN_JOB_LIMITS[planId] || 0;
-  const canCreateJob = (status === 'active' || status === 'trialing') && currentJobsCount < jobLimit;
-  const limitReached = (status === 'active' || status === 'trialing') && currentJobsCount >= jobLimit;
+  // canCreateJob ahora solo se aplica si NO estamos editando. Si estamos editando, siempre se puede intentar guardar.
+  const canCreateNewJob = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount < jobLimit;
+  const limitReachedForNew = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount >= jobLimit;
+  const formDisabledOverall = isEditing ? isProcessingJob : (!canCreateNewJob || isProcessingJob);
+
 
   return (
     <div className="space-y-8">
-      {limitReached && (
+      <h2 className="text-2xl font-semibold text-slate-800 mb-2">
+        {isEditing ? "Modificar Puesto de Trabajo" : "Crear Nuevo Puesto de Trabajo"}
+      </h2>
+
+      {limitReachedForNew && (
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -98,7 +150,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublished }) {
           </div>
         </div>
       )}
-       {! (status === 'active' || status === 'trialing') && user?.suscripcion && (
+       {!isEditing && !(status === 'active' || status === 'trialing') && user?.suscripcion && (
          <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md shadow">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -114,22 +166,28 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublished }) {
         </div>
        )}
 
-
+      {/* El formulario de IA podría no ser ideal para editar, o necesitaría lógica para no sobreescribir.
+          Por ahora, lo deshabilitamos si estamos editando, o el usuario puede usarlo para generar una nueva base.
+          Si se usa la IA, se sobreescribirá jobPostData, perdiendo los datos de edición.
+          Una mejor UX sería deshabilitar la IA o que la IA precargue el prompt con datos existentes.
+      */}
       <CreateJobAIForm
         onJobGenerated={(generatedData) => {
           console.log("CreateNewJobTab: Job data generated by AI:", generatedData);
-          setJobPostData(generatedData);
+          setJobPostData(generatedData); // Esto sobreescribirá editingJobData si se usa en modo edición
+          setIsEditing(false); // Si se usa la IA, ya no estamos editando el job original
           toast({ title: "Sugerencia de IA generada", description: "Puedes editar los detalles antes de publicar." });
         }}
         setIsLoadingParent={setIsProcessingJob}
-        disabled={!canCreateJob || isProcessingJob} // Deshabilitar si no puede crear
+        disabled={formDisabledOverall || isProcessingJob}
       />
       <CreateJobForm
-        initialData={jobPostData}
-        key={jobPostData ? JSON.stringify(jobPostData) : 'empty-form'}
+        initialData={jobPostData} // Esto se llenará con editingJobData al inicio si está en modo edición
+        key={jobPostData ? jobPostData.id || JSON.stringify(jobPostData) : 'empty-form'} // Usar ID si existe para la key
         onPublish={handlePublishJob}
         isProcessingJob={isProcessingJob}
-        disabled={!canCreateJob || isProcessingJob} // Deshabilitar si no puede crear
+        disabled={formDisabledOverall || isProcessingJob}
+        isEditing={isEditing} // Pasar isEditing a CreateJobForm para cambiar el texto del botón
       />
     </div>
   );
