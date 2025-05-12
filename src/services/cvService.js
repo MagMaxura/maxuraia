@@ -11,7 +11,7 @@ export const cvService = {
     }
     try {
       const { data, error } = await supabase
-        .from('cvs') // Asumiendo que la tabla se llama 'cvs'
+        .from('cvs')
         .select(`
           *,
           candidatos (
@@ -21,11 +21,15 @@ export const cvService = {
         .eq('recruiter_id', recruiterId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error("Error fetching CVs by recruiter ID:", error);
-      throw error;
+      if (error) {
+        console.error("Error fetching CVs by recruiter ID:", error);
+        // No lanzar el error, devolver array vacío para que el map no falle
+        return [];
+      }
+      return data || []; // data puede ser null si no hay resultados, así que || [] asegura un array
+    } catch (error) { // Capturar cualquier otra excepción
+      console.error("Exception fetching CVs by recruiter ID:", error);
+      return []; // Devolver array vacío en caso de excepción
     }
   },
 
@@ -91,17 +95,21 @@ export const cvService = {
     }
     try {
       const { data, error } = await supabase
-        .from('jobs') // Asumiendo que la tabla se llama 'jobs'
+        .from('jobs')
         .select('*')
         .eq('recruiter_id', recruiterId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching jobs by recruiter ID:", error);
+        // No lanzar el error, devolver array vacío
+        return [];
+      }
       console.log("cvService.getJobsByRecruiterId: Puestos obtenidos:", data);
-      return data || [];
-    } catch (error) {
-      console.error("Error fetching jobs by recruiter ID:", error);
-      throw error;
+      return data || []; // data puede ser null si no hay resultados, así que || [] asegura un array
+    } catch (error) { // Capturar cualquier otra excepción
+      console.error("Exception fetching jobs by recruiter ID:", error);
+      return []; // Devolver array vacío en caso de excepción
     }
   },
 
