@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase.js';
 import { useAuth } from '@/contexts/AuthContext.jsx';
 import { PlusCircle, XCircle } from 'lucide-react';
 
-function CreateJobForm({ initialData, onPublish, isProcessingJob }) {
+function CreateJobForm({ initialData, onPublish, isProcessingJob, disabled }) { // Añadir prop disabled
   const { user } = useAuth();
   const { toast } = useToast();
   const [formData, setFormData] = useState({
@@ -148,13 +148,13 @@ function CreateJobForm({ initialData, onPublish, isProcessingJob }) {
     <form onSubmit={handleSubmit} className="space-y-6 p-4 md:p-6 bg-white rounded-xl shadow-xl border">
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Título del Puesto *</label>
-        <Input id="title" name="title" value={formData.title} onChange={handleChange} placeholder="Ej: Desarrollador Frontend React" required disabled={isProcessingJob || isSubmitting} />
+        <Input id="title" name="title" value={formData.title} onChange={handleChange} placeholder="Ej: Desarrollador Frontend React" required disabled={disabled || isProcessingJob || isSubmitting} />
         <p className="text-xs text-gray-500 mt-1">Un título claro y atractivo para la vacante.</p>
       </div>
 
       <div>
         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descripción Completa *</label>
-        <Textarea id="description" name="description" value={formData.description} onChange={handleChange} placeholder="Describe las responsabilidades, el equipo, la cultura de la empresa, etc." rows={6} required disabled={isProcessingJob || isSubmitting} />
+        <Textarea id="description" name="description" value={formData.description} onChange={handleChange} placeholder="Describe las responsabilidades, el equipo, la cultura de la empresa, etc." rows={6} required disabled={disabled || isProcessingJob || isSubmitting} />
         <p className="text-xs text-gray-500 mt-1">Detalla todo lo que el candidato necesita saber sobre el rol.</p>
       </div>
 
@@ -169,10 +169,10 @@ function CreateJobForm({ initialData, onPublish, isProcessingJob }) {
                 onChange={(e) => handleRequirementCategoryChange(catIndex, e.target.value)}
                 placeholder="Nombre de la Categoría (Ej: Educación, Experiencia)"
                 className="flex-grow"
-                disabled={isProcessingJob || isSubmitting}
+                disabled={disabled || isProcessingJob || isSubmitting}
               />
               {requirementsList.length > 1 && (
-                <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveRequirementCategory(catIndex)} disabled={isProcessingJob || isSubmitting} className="text-red-500 hover:text-red-700">
+                <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveRequirementCategory(catIndex)} disabled={disabled || isProcessingJob || isSubmitting} className="text-red-500 hover:text-red-700">
                   <XCircle className="h-5 w-5" />
                 </Button>
               )}
@@ -184,21 +184,21 @@ function CreateJobForm({ initialData, onPublish, isProcessingJob }) {
                   onChange={(e) => handleRequirementItemChange(catIndex, itemIndex, e.target.value)}
                   placeholder="Detalle del requisito"
                   className="flex-grow"
-                  disabled={isProcessingJob || isSubmitting}
+                  disabled={disabled || isProcessingJob || isSubmitting}
                 />
                 {reqCategory.items.length > 1 ? (
-                  <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveRequirementItem(catIndex, itemIndex)} disabled={isProcessingJob || isSubmitting} className="text-red-500 hover:text-red-700">
+                  <Button type="button" variant="ghost" size="icon" onClick={() => handleRemoveRequirementItem(catIndex, itemIndex)} disabled={disabled || isProcessingJob || isSubmitting} className="text-red-500 hover:text-red-700">
                     <XCircle className="h-4 w-4" />
                   </Button>
                 ) : <div className="w-9 h-9"></div> /* Placeholder for alignment */}
               </div>
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={() => handleAddRequirementItem(catIndex)} disabled={isProcessingJob || isSubmitting} className="text-blue-600 border-blue-600 hover:bg-blue-50">
+            <Button type="button" variant="outline" size="sm" onClick={() => handleAddRequirementItem(catIndex)} disabled={disabled || isProcessingJob || isSubmitting} className="text-blue-600 border-blue-600 hover:bg-blue-50">
               <PlusCircle className="mr-2 h-4 w-4" /> Añadir Ítem a Categoría
             </Button>
           </div>
         ))}
-        <Button type="button" onClick={handleAddRequirementCategory} disabled={isProcessingJob || isSubmitting} className="mt-2">
+        <Button type="button" onClick={handleAddRequirementCategory} disabled={disabled || isProcessingJob || isSubmitting} className="mt-2">
           <PlusCircle className="mr-2 h-4 w-4" /> Añadir Categoría de Requisito
         </Button>
         <p className="text-xs text-gray-500 mt-1">Define categorías (ej: Educación, Experiencia) y los ítems específicos para cada una.</p>
@@ -207,12 +207,12 @@ function CreateJobForm({ initialData, onPublish, isProcessingJob }) {
 
       <div>
         <label htmlFor="keywords" className="block text-sm font-medium text-gray-700 mb-1">Palabras Clave</label>
-        <Input id="keywords" name="keywords" value={formData.keywords} onChange={handleChange} placeholder="Ej: React, JavaScript, Frontend, Remoto" disabled={isProcessingJob || isSubmitting} />
+        <Input id="keywords" name="keywords" value={formData.keywords} onChange={handleChange} placeholder="Ej: React, JavaScript, Frontend, Remoto" disabled={disabled || isProcessingJob || isSubmitting} />
         <p className="text-xs text-gray-500 mt-1">Palabras clave separadas por coma para facilitar la búsqueda.</p>
       </div>
       
       <div className="flex justify-end">
-        <Button type="submit" disabled={isProcessingJob || isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+        <Button type="submit" disabled={disabled || isProcessingJob || isSubmitting} className="bg-blue-600 hover:bg-blue-700">
           {isSubmitting || isProcessingJob ? "Procesando..." : "Publicar Puesto"}
         </Button>
       </div>

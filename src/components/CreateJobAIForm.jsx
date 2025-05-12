@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { generateJobFromPrompt } from '@/lib/jobGeneration.js';
 import { useToast } from "@/components/ui/use-toast.js";
 
-function CreateJobAIForm({ onJobGenerated, setIsLoadingParent }) {
+function CreateJobAIForm({ onJobGenerated, setIsLoadingParent, disabled }) { // Añadir prop disabled
   const [promptText, setPromptText] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
@@ -47,11 +47,15 @@ function CreateJobAIForm({ onJobGenerated, setIsLoadingParent }) {
           placeholder="Ej: Busco un desarrollador frontend con 3 años de experiencia en React, TypeScript y buenas prácticas de UI/UX para un proyecto innovador en el sector fintech. Debe ser proactivo y con capacidad de trabajo en equipo..."
           rows={5}
           className="mt-1"
-          disabled={isGenerating}
+          disabled={disabled || isGenerating}
         />
         <p className="text-xs text-gray-500 mt-1">Cuanto más detallada sea tu descripción, mejor será el resultado de la IA.</p>
       </div>
-      <Button onClick={handleGenerate} disabled={isGenerating || !promptText.trim()} className="w-full md:w-auto bg-green-600 hover:bg-green-700">
+      <Button
+        onClick={handleGenerate}
+        disabled={disabled || isGenerating || !promptText.trim()}
+        className="w-full md:w-auto bg-green-600 hover:bg-green-700"
+      >
         {isGenerating ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

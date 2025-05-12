@@ -173,77 +173,129 @@ function Dashboard() {
     const selectedFiles = Array.from(event.target.files);
     if (selectedFiles.length === 0) return;
 
+    if (!user || !user.suscripcion) {
+      toast({ title: "Error", description: "No se pudo verificar tu plan de suscripción.", variant: "destructive" });
+      return;
+    }
+
+    const PLAN_CV_ANALYSIS_LIMITS = { // Mover o importar de un archivo de configuración si se usa en más lugares
+      trial: 10,
+      basico: 50,
+      business: 1000,
+      enterprise: Infinity,
+    };
+
+    const planId = user.suscripcion.plan_id || 'basico';
+    const status = user.suscripcion.status;
+    let currentAnalysisCount = user.suscripcion.cvs_analizados_este_periodo || 0;
+    const analysisLimit = PLAN_CV_ANALYSIS_LIMITS[planId] || 0;
+
+    if (status !== 'active' && status !== 'trialing') {
+      toast({
+        title: "Suscripción no activa",
+        description: "Tu suscripción no te permite analizar CVs. Revisa tu plan.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsBulkProcessing(true);
-    setIsProcessing(true); // Estado general de procesamiento
+    setIsProcessing(true);
     setTotalFilesToUpload(selectedFiles.length);
     setFilesUploadedCount(0);
     setCurrentFileProcessingName("");
-
     let anyErrorOccurred = false;
+    let CvsProcessedInThisBatch = 0;
 
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
       setCurrentFileProcessingName(file.name);
-      setFilesUploadedCount(i); // Actualizar contador antes de procesar el actual
+      setFilesUploadedCount(i);
+
+      // Verificar límite ANTES de procesar este archivo
+      if (currentAnalysisCount >= analysisLimit) {
+        anyErrorOccurred = true; // Marcar que hubo un problema (límite alcanzado)
+        toast({
+          title: "Límite de Análisis Alcanzado",
+          description: `Has alcanzado tu límite de ${analysisLimit} análisis de CVs para el plan "${planId}". Los archivos restantes no serán procesados.`,
+          variant: "destructive",
+          duration: 7000,
+        });
+        // Detener el procesamiento de más archivos en este lote si se alcanzó el límite
+        // Necesitamos actualizar el contador de archivos subidos para la barra de progreso
+        // para que refleje solo los que se intentaron procesar antes del límite.
+        setTotalFilesToUpload(i); // Ajustar el total a los archivos procesados/intentados antes del límite
+        break;
+      }
 
       try {
         console.log(`Dashboard: Procesando archivo ${i + 1}/${selectedFiles.length}: ${file.name}`);
         const text = await extractTextFromFile(file);
-        const resolvedAnalysis = await analyzeCV(text);
+        const resolvedAnalysis = await analyzeCV(text); // Esto puede tener su propio manejo de errores de extracción
         console.log(`Dashboard: Análisis resuelto para ${file.name}`, resolvedAnalysis);
 
+        // Incrementar contador en la BD DESPUÉS de un análisis exitoso
+        if (user.suscripcion.id && !resolvedAnalysis.extractionError) { // Solo incrementar si no hubo error de extracción
+          try {
+            const updatedSubscription = await cvService.incrementCvAnalysisCount(user.suscripcion.id);
+            currentAnalysisCount = updatedSubscription.cvs_analizados_este_periodo;
+            // TODO: Actualizar el user en AuthContext para reflejar el nuevo currentAnalysisCount
+            // Esto es complejo sin una función setUser expuesta por useAuth o un refreshUserProfile
+            // Por ahora, la UI en UploadCVTab se actualizará en la próxima carga del user.
+            // O, si useAuthService.refreshUserProfile existe y es accesible:
+            // if (auth.refreshUserProfile) auth.refreshUserProfile();
+             console.log("Dashboard: Contador de análisis de CV actualizado a:", currentAnalysisCount);
+          } catch (incrementError) {
+            console.error("Dashboard: Error al incrementar contador de análisis de CV:", incrementError);
+            // Decidir si continuar o tratar como un error de procesamiento del CV
+            // Por ahora, continuamos pero el contador no se actualizó.
+          }
+        }
+        
         const newCvFile = {
-          name: resolvedAnalysis.nombre || file.name, // Usar nombre del candidato, fallback al nombre del archivo
+          name: resolvedAnalysis.nombre || file.name,
           originalFile: file,
           analysis: resolvedAnalysis,
           uploadedDate: new Date(),
           cv_database_id: null,
           candidate_database_id: null,
         };
-
-        // Actualizar estado de forma funcional para asegurar la última versión
         setCvFiles(prevCvFiles => [...prevCvFiles, newCvFile]);
+        CvsProcessedInThisBatch++;
         
-        // Seleccionar y mostrar el último CV procesado si es el único o el primero de un lote
         if (selectedFiles.length === 1 || i === selectedFiles.length -1 ) {
-            setSelectedCV(cvFiles.length + i); // Ajustar índice basado en el estado actual + procesados
+            setSelectedCV(cvFiles.length + CvsProcessedInThisBatch -1); // Ajustar índice
             setCvAnalysis(resolvedAnalysis);
         }
-
-
         toast({
           title: "CV Procesado",
-          description: `${file.name} ha sido analizado correctamente. (${i + 1}/${selectedFiles.length})`,
+          description: `${file.name} ha sido analizado. (${i + 1}/${selectedFiles.length})`,
         });
-      } catch (error) {
+
+      } catch (error) { // Errores de extractTextFromFile o analyzeCV
         anyErrorOccurred = true;
         console.error(`Error procesando CV ${file.name}:`, error);
         toast({
           title: `Error al procesar ${file.name}`,
-          description: `No se pudo procesar el archivo. Asegúrate de que sea un PDF, DOC o DOCX válido. (${i + 1}/${selectedFiles.length})`,
+          description: error.message || `No se pudo procesar el archivo.`,
           variant: "destructive",
         });
-        // Continuar con el siguiente archivo si uno falla
       }
     }
-    setFilesUploadedCount(selectedFiles.length); // Marcar todos como "intentados"
+    setFilesUploadedCount(totalFilesToUpload); // Actualizar al total real procesado o intentado
     setIsBulkProcessing(false);
     setIsProcessing(false);
     setCurrentFileProcessingName("");
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Resetear el input
+      fileInputRef.current.value = "";
     }
 
-    if (!anyErrorOccurred && selectedFiles.length > 0) {
+    if (!anyErrorOccurred && CvsProcessedInThisBatch > 0) {
       setActiveTab("cvsProcesados");
-    } else if (selectedFiles.length > 0) {
-        // Si hubo errores, quizás quedarse en la pestaña de carga o ir a procesados
-        // dependiendo de si alguno tuvo éxito.
-        // Si al menos uno tuvo éxito, ir a procesados.
-        if (cvFiles.length > (cvFiles.length - selectedFiles.length + (selectedFiles.filter(f => f !== null)).length) ) { // una heurística
-             setActiveTab("cvsProcesados");
-        }
+    } else if (CvsProcessedInThisBatch > 0) { // Si algunos se procesaron pero hubo errores (o límite)
+        setActiveTab("cvsProcesados");
     }
+    // Si no se procesó ninguno (ej. límite alcanzado al inicio), no cambiar de pestaña.
   };
 
   const handleCVClick = (index) => {
@@ -408,13 +460,9 @@ function Dashboard() {
           {activeTab === "nuevoPuesto" && (
             <CreateNewJobTab
               setActiveTab={setActiveTab}
-              // Si CreateNewJobTab necesita actualizar la lista de 'jobs' en Dashboard,
-              // se necesitaría una función onJobPublished pasada como prop.
-              // Por ahora, CreateNewJobTab maneja la redirección y Dashboard recargará los jobs
-              // la próxima vez que se monte o si user.id cambia.
-              // Para una actualización inmediata de la lista de jobs en Dashboard,
-              // se podría pasar una función como:
-              // onJobPublished={(newJob) => setJobs(prevJobs => [newJob, ...prevJobs])}
+              currentJobsCount={jobs.length} // Pasar el número actual de trabajos
+              // Opcional: para actualización inmediata de la lista de jobs en Dashboard
+              onJobPublished={(newJob) => setJobs(prevJobs => [newJob, ...prevJobs])}
             />
           )}
 
