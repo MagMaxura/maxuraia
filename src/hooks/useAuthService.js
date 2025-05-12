@@ -18,23 +18,44 @@ export function useAuthService() {
   const handleAuthChange = useCallback(async (event, newSession) => {
     console.log(`useAuthService: handleAuthChange - Event: ${event}, New Session User ID:`, newSession?.user?.id);
     
-    setSession(newSession); // Actualizar el estado de la sesión
-    const currentUser = newSession?.user || null;
-    setUser(currentUser);
-    setAuthChecked(true);
-    setLoading(false);
-
-    if (currentUser) {
-      // La lógica de obtener perfil se ha simplificado aquí,
-      // ya que el principal problema era el bucle de renderizado.
-      // Los componentes pueden llamar a getRecruiterProfile si necesitan los datos del perfil.
-      auth.user = currentUser;
-      console.log("useAuthService: User and session state updated for user:", currentUser.id);
+    setSession(newSession);
+    const supabaseAuthUser = newSession?.user || null;
+    
+    if (supabaseAuthUser) {
+      try {
+        console.log("useAuthService: Fetching full recruiter profile for user ID:", supabaseAuthUser.id);
+        // auth.getRecruiterProfile ahora devuelve el perfil de 'reclutadores' + 'suscripcion'
+        const fullUserProfile = await auth.getRecruiterProfile(supabaseAuthUser.id);
+        
+        if (fullUserProfile) {
+          console.log("useAuthService: Full user profile fetched:", fullUserProfile);
+          setUser(fullUserProfile); // Establecer el estado 'user' con el perfil completo
+          auth.user = fullUserProfile; // Actualizar la referencia en el objeto 'auth' también
+        } else {
+          // Perfil no encontrado en 'reclutadores', pero el usuario está autenticado.
+          // Esto podría ser un usuario recién registrado que aún no ha completado el perfil,
+          // o un estado inconsistente. Por ahora, establecemos user con supabaseAuthUser.
+          // La lógica de creación de perfil en el login o registro debería manejar esto.
+          console.warn("useAuthService: Recruiter profile not found for authenticated user. Setting user to Supabase Auth user object.", supabaseAuthUser.id);
+          setUser(supabaseAuthUser);
+          auth.user = supabaseAuthUser;
+        }
+      } catch (error) {
+        console.error("useAuthService: Error fetching full user profile:", error);
+        // En caso de error al obtener el perfil completo, usar el usuario de Supabase Auth como fallback
+        setUser(supabaseAuthUser);
+        auth.user = supabaseAuthUser;
+        // Podrías mostrar un toast aquí si el error es crítico
+      }
     } else {
-      console.log("useAuthService: No active session, user and session state cleared.");
+      console.log("useAuthService: No active session, clearing user state.");
+      setUser(null);
       auth.clearAuthUser();
     }
-  }, []); // Sin dependencias para que sea estable
+    
+    setAuthChecked(true);
+    setLoading(false);
+  }, []);
 
   useEffect(() => {
     console.log("useAuthService: useEffect - Setting up onAuthStateChange listener.");

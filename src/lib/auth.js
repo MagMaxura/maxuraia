@@ -207,7 +207,42 @@ export const auth = {
     }
 
     console.log("auth.js: [LOG] saveRecruiterProfile - INSERT successful. Result:", insertedRecruiter);
-    return insertedRecruiter;
+
+    // Después de crear el perfil del reclutador, crear una suscripción de prueba por defecto
+    if (insertedRecruiter) {
+      const defaultPlanId = 'trial'; // O 'basico', según tu lógica de negocio
+      const trialDays = 7;
+      const trialEnds = new Date();
+      trialEnds.setDate(trialEnds.getDate() + trialDays);
+
+      const defaultSubscription = {
+        recruiter_id: insertedRecruiter.id,
+        plan_id: defaultPlanId,
+        status: 'trialing', // O 'active' si 'basico' no tiene trial
+        trial_ends_at: trialEnds.toISOString(),
+        // current_period_start y current_period_end pueden ser null o definirse si es necesario
+        // created_at y updated_at se manejarán por defecto en la BD si están configurados
+      };
+
+      console.log("auth.js: Attempting to create default subscription:", defaultSubscription);
+      const { data: newSubscription, error: subError } = await supabase
+        .from('suscripciones')
+        .insert([defaultSubscription])
+        .select()
+        .single();
+
+      if (subError) {
+        console.error("auth.js: Error creating default subscription:", subError);
+        // No lanzar error aquí para no interrumpir el flujo de creación de perfil,
+        // pero sí loguearlo. El usuario tendrá perfil pero no suscripción.
+        // Se podría reintentar o manejar administrativamente.
+      } else {
+        console.log("auth.js: Default subscription created successfully:", newSubscription);
+        // Opcional: añadir la suscripción al objeto insertedRecruiter antes de devolverlo
+        // insertedRecruiter.suscripcion = newSubscription;
+      }
+    }
+    return insertedRecruiter; // Devolver el perfil del reclutador
   },
 
   async updateRecruiterProfile(userId, profileData) {
@@ -304,20 +339,50 @@ export const auth = {
     try {
       console.log("[DEBUG] Attempting SELECT query in getRecruiterProfile...");
       // Seleccionar todos los campos para poder verificar el contenido
-      const { data, error } = await supabase
+      const { data: recruiterProfile, error: recruiterError } = await supabase
         .from('reclutadores')
         .select('*') // Seleccionar todos los campos
         .eq('id', userId)
         .maybeSingle(); // Devuelve el objeto o null si no se encuentra
 
-      console.log("[DEBUG] SELECT query finished. Error:", error, "Data:", data);
+      console.log("[DEBUG] Recruiter profile query finished. Error:", recruiterError, "Data:", recruiterProfile);
 
-      if (error) {
-        console.error('auth.js: Error fetching recruiter profile by ID:', error);
-        throw error;
+      if (recruiterError) {
+        console.error('auth.js: Error fetching recruiter profile by ID:', recruiterError);
+        throw recruiterError;
       }
-      // Devuelve el objeto de perfil completo (o null si no existe)
-      return data;
+
+      if (!recruiterProfile) {
+        // Si no hay perfil de reclutador, no tiene sentido buscar suscripción.
+        return null;
+      }
+
+      // Ahora, obtener la suscripción activa del reclutador
+      console.log("[DEBUG] Attempting to fetch active subscription for recruiterId:", userId);
+      const { data: subscriptionData, error: subscriptionError } = await supabase
+        .from('suscripciones')
+        .select('*')
+        .eq('recruiter_id', userId)
+        // Queremos la suscripción activa o en trial más reciente.
+        // Podríamos filtrar por status 'active' o 'trialing' y luego ordenar.
+        .in('status', ['active', 'trialing'])
+        .order('created_at', { ascending: false }) // Tomar la más reciente si hay varias activas/trial
+        .limit(1) // Solo necesitamos una
+        .maybeSingle(); // Puede que no tenga ninguna suscripción activa
+
+      console.log("[DEBUG] Subscription query finished. Error:", subscriptionError, "Data:", subscriptionData);
+
+      if (subscriptionError) {
+        console.error('auth.js: Error fetching subscription:', subscriptionError);
+        // Decidir si lanzar el error o solo devolver el perfil sin suscripción.
+        // Por ahora, logueamos el error y continuamos, el perfil podría existir sin suscripción activa.
+      }
+      
+      // Combinar el perfil del reclutador con su suscripción (si existe)
+      return {
+        ...recruiterProfile,
+        suscripcion: subscriptionData || null // Añadir la info de suscripción al objeto del perfil
+      };
     } catch (error) {
       console.error('auth.js: Exception in getRecruiterProfile:', error);
       return null; // O re-lanzar el error

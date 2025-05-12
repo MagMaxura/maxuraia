@@ -14,45 +14,66 @@ const fadeInWhileInView = {
 
 const pricingPlans = [
   {
-    name: "Profesional",
-    price: "€49",
+    name: "Profesional", // Anteriormente "Profesional"
+    price: "$12.500", // Actualizar precio
     period: "/mes",
     features: [
-      "Hasta 5 Puestos Activos",
-      "Análisis de 100 CVs/mes",
-      "Preselección IA Básica",
-      "Soporte por Email"
+      "Hasta 3 Puestos de trabajo activos",
+      "Análisis de CVs: Hasta 50/mes",
+      "Macheo de candidatos (match IA): Hasta 50 CVs",
+      "Redacción de publicaciones con IA",
+      "Preselección por IA: Manual", // Indicar limitación
+      "Soporte: Email estándar",
+      "Prueba Gratuita: 7 días"
+      // Características no incluidas se omiten o se marcan explícitamente si se cambia el renderizado
     ],
     cta: "Comenzar Prueba",
-    popular: false
+    popular: false,
+    link: "/register" // Enlace para el botón
   },
   {
     name: "Business",
-    price: "€99",
+    price: "$69.000", // Actualizar precio
     period: "/mes",
     features: [
-      "Hasta 20 Puestos Activos",
-      "Análisis de 500 CVs/mes",
-      "Preselección IA Avanzada",
-      "Chatbot Entrevistador",
-      "Soporte Prioritario"
+      "Hasta 25 Puestos de trabajo activos",
+      "Análisis de CVs: Hasta 1.000/mes",
+      "Macheo de candidatos (match IA): Hasta 1.000 CVs",
+      "Redacción de publicaciones con IA",
+      "Preselección por IA: Avanzada con ranking",
+      "Chatbot para entrevistas automatizadas",
+      "Soporte: Prioritario",
+      "Integración con otras plataformas: Limitada (1 API)",
+      "Personalización: Opcional con costo adicional",
+      "Acceso a métricas e informes avanzados",
+      "Capacitación a equipos de RRHH: Opcional",
+      "Prueba Gratuita: 7 días"
     ],
     cta: "Comenzar Prueba",
-    popular: true
+    popular: true,
+    link: "/register" // Enlace para el botón
   },
   {
     name: "Enterprise",
-    price: "Contacto",
+    price: "Consultar", // Mantener o cambiar a "Contacto"
     period: "",
     features: [
-      "Puestos Ilimitados",
-      "Análisis Ilimitado de CVs",
-      "Funciones Personalizadas",
-      "Integraciones API",
-      "Soporte Dedicado"
+      "Puestos de trabajo activos: Ilimitados",
+      "Análisis de CVs: Ilimitado",
+      "Macheo de candidatos (match IA): Ilimitado",
+      "Redacción de publicaciones con IA",
+      "Preselección por IA: Avanzada y adaptable",
+      "Chatbot para entrevistas automatizadas: Personalizable",
+      "Soporte: Dedicado 24/7",
+      "Integración con otras plataformas: Completa",
+      "Personalización de funciones / marca blanca: Incluida",
+      "Acceso a métricas e informes avanzados: Personalizados",
+      "Capacitación a equipos de RRHH: Incluida",
+      "Prueba Gratuita: A convenir"
     ],
     cta: "Contactar Ventas",
-    popular: false
+    popular: false,
+    link: "#contact" // Enlace para el botón (asumiendo una sección de contacto)
   }
 ];
 
@@ -89,7 +110,7 @@ function PricingSection() {
                   </li>
                 ))}
               </ul>
-              <Link to={plan.name === 'Enterprise' ? '#contact' : '/register'} className="mt-auto w-full block text-center">
+              <Link to={plan.link} className="mt-auto w-full block text-center">
                 <Button size="lg" className={`w-full ${plan.popular ? 'bg-indigo-500 hover:bg-indigo-600 text-white' : 'bg-white text-blue-700 hover:bg-gray-100'}`}>
                   {plan.cta}
                 </Button>
