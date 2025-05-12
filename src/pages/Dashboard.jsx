@@ -508,6 +508,8 @@ function Dashboard() {
               jobs={jobs}
               isLoadingJobs={isLoadingJobs}
               setActiveTab={setActiveTab}
+              onEditJob={handleEditJob}     // Pasar la función de editar
+              onDeleteJob={handleDeleteJob} // Pasar la función de eliminar
             />
           )}
 
