@@ -1,7 +1,7 @@
 import { supabase, getRecruiterByEmail } from "./supabase";
 
 const STORAGE_KEY = 'auth_user';
-const SITE_URL = 'https://employsmartia.com';
+const SITE_URL = 'https://www.employsmartia.com'; // Asegurar consistencia con el dominio canónico y certificado SSL
 
 export const auth = {
   user: null,
