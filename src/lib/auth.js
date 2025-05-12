@@ -48,10 +48,11 @@ export const auth = {
       
       console.log("auth.js: Initial profile check. Profile data:", profile);
       console.log("auth.js: Profile exists:", profileExists, "Is complete:", profileIsComplete);
+      console.log("auth.js: Checking conditions for profile creation: email_confirmed_at:", authUser.email_confirmed_at, "!profileExists:", !profileExists);
 
       // Si el usuario está confirmado pero el perfil no existe, crearlo ahora
       if (authUser.email_confirmed_at && !profileExists) {
-        console.log("auth.js: User confirmed but no profile. Attempting to create basic profile...");
+        console.log("auth.js: CONDITION MET - User confirmed but no profile. Attempting to create basic profile...");
         try {
           const basicProfileData = {
             id: authUser.id,
