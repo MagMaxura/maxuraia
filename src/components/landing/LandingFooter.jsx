@@ -8,9 +8,7 @@ function LandingFooter() {
       <div className="max-w-7xl mx-auto text-center text-white/60 text-sm">
         © {new Date().getFullYear()} EmploySmart IA. Todos los derechos reservados.
         <div className="mt-2 space-x-4">
-          {/* Update these links if you create privacy/terms pages */}
-          <Link to="/privacy" className="hover:text-white transition-colors">Política de Privacidad</Link>
-          <Link to="/terms" className="hover:text-white transition-colors">Términos de Servicio</Link>
+          <Link to="/legal" className="hover:text-white transition-colors">Términos y Políticas</Link>
         </div>
       </div>
     </footer>

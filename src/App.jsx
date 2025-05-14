@@ -8,6 +8,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import Landing from "./pages/Landing";
 import CompleteProfile from "./pages/CompleteProfile"; // Importar la nueva página
+import LegalPage from "./pages/LegalPage"; // Importar página de términos y políticas
 // import SupabaseTestPage from "./pages/SupabaseTestPage"; // Ya no se importa
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -25,6 +26,7 @@ function App() {
             <Route path="/register-confirmation" element={<RegisterConfirmation />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/legal" element={<LegalPage />} />
             <Route
               path="/complete-profile"
               element={
