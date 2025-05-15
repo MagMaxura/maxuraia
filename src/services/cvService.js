@@ -58,11 +58,28 @@ export const cvService = {
       title: analysisData.tituloActual || analysisData.title, // o el campo correspondiente
       summary: analysisData.resumen || analysisData.summary,
       // skills: analysisData.habilidades?.tecnicas?.join(', ') + (analysisData.habilidades?.blandas?.length ? ', ' + analysisData.habilidades.blandas.join(', ') : ''), // Ejemplo de cómo podrías guardar skills como texto
-      skills: analysisData.habilidades, // Guardar el objeto JSONB directamente si la columna es JSONB
+      // skills: analysisData.habilidades, // Comentado para reemplazar con la lógica de array
       experience: analysisData.experiencia || analysisData.experience,
       // age: analysisData.edad, // Si tienes un campo 'age'
       // score: analysisData.scoreGeneral, // Si quieres guardar un score general en el candidato
     };
+
+    // Procesamiento para el campo 'skills'
+    let skillsArray = [];
+    if (analysisData.habilidades && typeof analysisData.habilidades === 'object' && !Array.isArray(analysisData.habilidades)) {
+      // Si es un objeto (y no un array directamente), iterar sobre sus valores
+      Object.values(analysisData.habilidades).forEach(categoryValue => {
+        if (Array.isArray(categoryValue)) {
+          // Concatenar solo si los elementos son strings
+          skillsArray = skillsArray.concat(categoryValue.filter(skill => typeof skill === 'string'));
+        }
+      });
+    } else if (Array.isArray(analysisData.habilidades)) {
+      // Si analysisData.habilidades ya es un array (p.ej. de strings), usarlo directamente
+      // Filtrar para asegurar que solo sean strings si esa es la expectativa
+      skillsArray = analysisData.habilidades.filter(skill => typeof skill === 'string');
+    }
+    candidatePayload.skills = skillsArray; // Asignar el array procesado
 
     // Filtrar propiedades undefined para no enviar nulls innecesarios a Supabase
     for (const key in candidatePayload) {
