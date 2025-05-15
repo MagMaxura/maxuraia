@@ -1,9 +1,15 @@
 import OpenAI from 'openai';
 
-// Asegúrate de que la variable de entorno para la API key de OpenAI esté configurada.
-// Por ejemplo, en un archivo .env: VITO_OPENIA_API_KEY=tu_api_key
+// Asegúrate de que la variable de entorno para la API key de OpenAI esté configurada en Vercel
+// con el nombre VITO_OPENAI_API_KEY (sin el prefijo VITE_ para uso en backend).
+const apiKey = process.env.VITE_OPENAI_API_KEY;
+
+if (!apiKey) {
+  console.error("API Key de OpenAI no encontrada. Asegúrate de que la variable de entorno VITO_OPENAI_API_KEY esté configurada en Vercel para el entorno de backend.");
+}
+
 const openai = new OpenAI({
-  apiKey: process.env.VITE_OPENAI_API_KEY,
+  apiKey: apiKey,
 });
 
 /**
