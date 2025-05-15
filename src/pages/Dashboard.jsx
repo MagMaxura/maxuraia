@@ -282,7 +282,10 @@ function Dashboard() {
 
         {/* Área de Contenido Principal */}
         <main className="flex-1 p-4 md:p-6 overflow-auto">
-          {activeTab === "cargarNuevoCV" && (
+          {console.log("Dashboard: Rendering main content area. Active tab:", activeTab)}
+          {activeTab === "cargarNuevoCV" && (() => {
+            console.log("Dashboard: Rendering UploadCVTab");
+            return (
             <UploadCVTab
               handleFileUpload={handleFileUpload}
               fileInputRef={fileInputRef}
@@ -294,9 +297,12 @@ function Dashboard() {
               handleDragOver={handleDragOver}
               handleDrop={handleDrop}
             />
-          )}
+            );
+          })()}
 
-          {activeTab === "cvsProcesados" && (
+          {activeTab === "cvsProcesados" && (() => {
+            console.log("Dashboard: Rendering ProcessedCVsTab, cvFiles:", cvFiles, "selectedCV:", selectedCV);
+            return (
             <ProcessedCVsTab
               cvFiles={cvFiles}
               selectedCV={selectedCV}
@@ -310,9 +316,12 @@ function Dashboard() {
               cvFilters={cvFilters}
               onCvFilterChange={setCvFilters}
             />
-          )}
+            );
+          })()}
 
-          {activeTab === "nuevoPuesto" && (
+          {activeTab === "nuevoPuesto" && (() => {
+            console.log("Dashboard: Rendering CreateNewJobTab, jobs:", jobs);
+            return (
             <CreateNewJobTab
               setActiveTab={setActiveTab}
               currentJobsCount={jobs ? jobs.length : 0} // Guard already here
@@ -320,24 +329,34 @@ function Dashboard() {
               editingJob={editingJob}
               setEditingJob={setEditingJob}
             />
-          )}
+            );
+          })()}
 
-          {activeTab === "puestosPublicados" && (
+          {activeTab === "puestosPublicados" && (() => {
+            console.log("Dashboard: Rendering PublishedJobsTab, jobs:", jobs);
+            return (
             <PublishedJobsTab
               jobs={jobs}
               isLoading={isLoadingJobs}
               onDeleteJob={handleDeleteJob}
               onEditJob={handleEditJob}
             />
-          )}
+            );
+          })()}
 
-          {activeTab === "analisisIA" && (
+          {activeTab === "analisisIA" && (() => {
+            console.log("Dashboard: Rendering AIAnalysisTab");
+            return (
             <AIAnalysisTab />
-          )}
+            );
+          })()}
 
-          {activeTab === "planActual" && (
+          {activeTab === "planActual" && (() => {
+            console.log("Dashboard: Rendering CurrentPlanTab");
+            return (
             <CurrentPlanTab />
-          )}
+            );
+          })()}
         </main>
       </div>
     </div>
