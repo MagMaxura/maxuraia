@@ -119,41 +119,59 @@ export function useCvUploader({
     }
 
     if (newlyProcessedCvFiles.length > 0) {
-      setCvFiles(prevCvFiles => [...prevCvFiles, ...newlyProcessedCvFiles]);
+      console.log("useCvUploader: Calling setCvFiles with newlyProcessedCvFiles:", newlyProcessedCvFiles);
+      setCvFiles(prevCvFiles => {
+        const updated = [...(prevCvFiles || []), ...newlyProcessedCvFiles]; // Asegurar que prevCvFiles es array
+        console.log("useCvUploader: setCvFiles updater, prevCvFiles:", prevCvFiles, "updated:", updated);
+        return updated;
+      });
+
       if (newlyProcessedCvFiles.length === 1 && selectedFiles.length === 1) {
-        // Si solo se subió un archivo, seleccionarlo
-        // El índice será el tamaño anterior de cvFiles más 0 (el primer nuevo)
-        // Esto requiere que setCvFiles actualice el estado antes de que setSelectedCV lo use.
-        // Es más seguro que Dashboard maneje esto después de que setCvFiles se complete.
-        // O pasar cvFiles.length como prop al hook.
-        // Por ahora, el Dashboard se encargará de la selección.
-        setSelectedCV(prevCvFiles => prevCvFiles.length + newlyProcessedCvFiles.length -1); // Esto es problemático, mejor que lo haga el Dashboard
-        setCvAnalysis(newlyProcessedCvFiles[0].analysis);
+        console.log("useCvUploader: Single file processed. Attempting to set selectedCV and cvAnalysis.");
+        // El cálculo del índice para setSelectedCV aquí es propenso a errores de timing
+        // ya que setCvFiles es asíncrono. El Dashboard tiene un useEffect para esto.
+        // Sin embargo, para depurar, podemos loguear lo que se intentaría pasar.
+        // const newIndex = (cvFiles?.length || 0) + newlyProcessedCvFiles.length -1; // cvFiles aquí es el del closure, no el actualizado
+        // console.log("useCvUploader: Would call setSelectedCV with index (approx):", newIndex);
+        // setSelectedCV(newIndex); // Comentado, el Dashboard lo maneja
+        
+        console.log("useCvUploader: Calling setCvAnalysis with:", newlyProcessedCvFiles[0]?.analysis);
+        setCvAnalysis(newlyProcessedCvFiles[0]?.analysis);
       }
     }
     
+    console.log("useCvUploader: Calling setFilesUploadedCount with:", totalFilesToUpload);
     setFilesUploadedCount(totalFilesToUpload);
+    console.log("useCvUploader: Calling setIsBulkProcessing(false)");
     setIsBulkProcessing(false);
+    console.log("useCvUploader: Calling setIsProcessing(false)");
     setIsProcessing(false);
+    console.log("useCvUploader: Calling setCurrentFileProcessingName('')");
     setCurrentFileProcessingName("");
+
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // Limpiar el input
+      console.log("useCvUploader: Clearing file input.");
+      fileInputRef.current.value = "";
     }
 
     if (!anyErrorOccurred && CvsProcessedInThisBatch > 0) {
+      console.log("useCvUploader: All successful, setting activeTab to 'cvsProcesados'");
       setActiveTab("cvsProcesados");
     } else if (CvsProcessedInThisBatch > 0) {
+      console.log("useCvUploader: Some processed with errors/limit, setting activeTab to 'cvsProcesados'");
       setActiveTab("cvsProcesados");
+    } else {
+      console.log("useCvUploader: No CVs processed in this batch.");
     }
   }, [
-    user, 
-    toast, 
-    fileInputRef, 
-    setCvFiles, 
-    setSelectedCV, 
-    setCvAnalysis, 
+    user,
+    toast,
+    fileInputRef,
+    setCvFiles,
+    // setSelectedCV, // Comentado para que Dashboard lo maneje vía useEffect
+    setCvAnalysis,
     setActiveTab,
-    // cvService, extractTextFromFile, analyzeCV, PLAN_CV_ANALYSIS_LIMITS no son reactivas
+    // No incluir setSelectedCV aquí si el Dashboard lo maneja para evitar dependencias conflictivas
   ]);
 
   const handleDragOver = useCallback((event) => {

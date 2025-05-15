@@ -57,7 +57,7 @@ function Dashboard() {
   // ha sido movida a useDashboardData.js
 
   const handleSaveSuccess = (cvId, candidateId, updatedAnalysis) => {
-    console.log("Dashboard: handleSaveSuccess called with", { cvId, candidateId, updatedAnalysis });
+    console.log("Dashboard: Entering handleSaveSuccess", { cvId, candidateId, updatedAnalysis });
     // Actualizar el cvFile en el estado cvFiles con los nuevos IDs y el análisis actualizado
     // Esto es importante para que la próxima vez que se seleccione este CV,
     // se sepa que ya existe en la BD y se pueda actualizar en lugar de crear uno nuevo.
@@ -133,6 +133,7 @@ function Dashboard() {
 
 
   const handleCVClick = (index) => {
+    console.log("Dashboard: Entering handleCVClick, index:", index, "cvFiles available:", !!cvFiles);
     setSelectedCV(index);
     // cvFiles[index].analysis también podría ser una Promesa si no se resolvió al guardar.
     // Es más seguro re-evaluar o asegurar que se guardó el objeto resuelto.
@@ -158,6 +159,7 @@ function Dashboard() {
   };
 
   const handleAddJob = () => {
+    console.log("Dashboard: Entering handleAddJob");
     const newJob = {
       id: Date.now(),
       title: "Nuevo Puesto Ejemplo",
@@ -171,6 +173,7 @@ function Dashboard() {
   };
 
   const handleDeleteCV = async (cvDatabaseIdToDelete) => {
+    console.log("Dashboard: Entering handleDeleteCV, cvDatabaseIdToDelete:", cvDatabaseIdToDelete);
     if (!cvDatabaseIdToDelete) {
       toast({ title: "Error", description: "No se proporcionó ID para eliminar el CV.", variant: "destructive" });
       return;
@@ -200,6 +203,7 @@ function Dashboard() {
   };
 
   const handleDeleteJob = async (jobId) => {
+    console.log("Dashboard: Entering handleDeleteJob, jobId:", jobId);
     if (!jobId) {
       toast({ title: "Error", description: "ID del puesto no proporcionado.", variant: "destructive" });
       return;
@@ -218,11 +222,13 @@ function Dashboard() {
   };
 
   const handleEditJob = (jobToEdit) => {
+    console.log("Dashboard: Entering handleEditJob, jobToEdit:", jobToEdit);
     setEditingJob(jobToEdit); // Guardar los datos del job a editar
     setActiveTab("nuevoPuesto"); // Cambiar a la pestaña de creación/edición
   };
 
   const handleJobPublishedOrUpdated = (job) => {
+    console.log("Dashboard: Entering handleJobPublishedOrUpdated, job:", job, "editingJob:", editingJob);
     if (editingJob) { // Si estábamos editando
       setJobs(prevJobs => prevJobs.map(j => j.id === job.id ? job : j));
       toast({ title: "Puesto Actualizado", description: `${job.title} ha sido actualizado.` });
