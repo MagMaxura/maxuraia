@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react"; // Añadir useEffect
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Upload, Users, Briefcase, LogOut, FileText, CreditCard, FileUp } from "lucide-react"; // Añadido FileText, CreditCard, FileUp
+import { Upload, Users, Briefcase, LogOut, FileText, CreditCard, FileUp, Brain } from "lucide-react"; // Añadido FileText, CreditCard, FileUp, Brain
 import { useToast } from "@/components/ui/use-toast";
 import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
 import CVAnalysis from "@/components/CVAnalysis";
@@ -14,28 +14,28 @@ import ProcessedCVsTab from "@/components/dashboard/ProcessedCVsTab.jsx";
 import CurrentPlanTab from "@/components/dashboard/CurrentPlanTab.jsx";
 import CreateNewJobTab from "@/components/dashboard/CreateNewJobTab.jsx";
 import PublishedJobsTab from "@/components/dashboard/PublishedJobsTab.jsx"; // Importar el nuevo componente
+import { AIAnalysisTab } from "@/components/dashboard/AIAnalysisTab.jsx"; // Importar la nueva pestaña de Análisis IA
+import { useDashboardData } from "@/hooks/useDashboardData.js"; // Importar el nuevo hook
+import { useCvUploader } from "@/hooks/useCvUploader.js"; // Importar el hook de subida de CVs
 
 function Dashboard() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("cargarNuevoCV"); // Pestaña inicial
-  const [cvFiles, setCvFiles] = useState([]);
-  const [jobs, setJobs] = useState([]);
+
+  // Usar el hook para obtener datos y funciones de seteo
+  const {
+    cvFiles,
+    setCvFiles,
+    jobs,
+    setJobs,
+    isLoadingCVs,
+    isLoadingJobs,
+  } = useDashboardData();
+
   const [selectedCV, setSelectedCV] = useState(null);
   const [cvAnalysis, setCvAnalysis] = useState(null);
-  // Estados para el procesamiento de CVs (individual y masivo)
-  const [isProcessing, setIsProcessing] = useState(false); // Para el estado general de "procesando algo"
-  const [isBulkProcessing, setIsBulkProcessing] = useState(false); // Específico para carga masiva
-  const [totalFilesToUpload, setTotalFilesToUpload] = useState(0);
-  const [filesUploadedCount, setFilesUploadedCount] = useState(0);
-  const [currentFileProcessingName, setCurrentFileProcessingName] = useState("");
-
-  // isProcessingJob y jobPostData se mueven a CreateNewJobTab.jsx
-  // const [isProcessingJob, setIsProcessingJob] = useState(false);
-  // const [jobPostData, setJobPostData] = useState(null);
   const fileInputRef = useRef(null);
-  const [isLoadingCVs, setIsLoadingCVs] = useState(true);
-  const [isLoadingJobs, setIsLoadingJobs] = useState(true);
   const [editingJob, setEditingJob] = useState(null); // Para almacenar el job que se está editando
 
   // Estados para los filtros de CVs
@@ -48,89 +48,8 @@ function Dashboard() {
     location: '',
   });
 
-  // Cargar CVs y Puestos guardados cuando el componente se monta y el usuario está disponible
-  useEffect(() => {
-    if (user?.id) {
-      const fetchUserCVs = async () => {
-        console.log("Dashboard: Fetching CVs for recruiterId:", user.id);
-        setIsLoadingCVs(true);
-        try {
-          const fetchedCVs = await cvService.getCVsByRecruiterId(user.id);
-          console.log("Dashboard: Fetched CVs from DB:", fetchedCVs);
-          
-          // Mapear los datos de la BD al formato esperado por el estado cvFiles
-          const formattedCVs = fetchedCVs.map(dbCv => {
-            // El análisis completo está en 'analysis_result'
-            // El 'textoCompleto' del CV está en 'content'
-            // El candidato asociado está en 'candidatos' (si existe y es un objeto)
-            let analysisData = dbCv.analysis_result || {};
-            if (dbCv.content && (!analysisData.textoCompleto || analysisData.textoCompleto.trim() === '')) {
-              analysisData.textoCompleto = dbCv.content;
-            }
-            
-            // Asegurar que 'habilidades' en analysisData sea el objeto {tecnicas, blandas}
-            // Si 'skills' del candidato es un array, lo dividimos heurísticamente o lo ponemos todo en técnicas.
-            // Esto es una simplificación; idealmente, analysis_result ya tendría la estructura correcta.
-            if (dbCv.candidatos && Array.isArray(dbCv.candidatos.skills) && (!analysisData.habilidades || typeof analysisData.habilidades !== 'object')) {
-              analysisData.habilidades = {
-                tecnicas: dbCv.candidatos.skills, // Poner todo en técnicas por defecto
-                blandas: []
-              };
-            } else if (analysisData.habilidades && !analysisData.habilidades.tecnicas && !analysisData.habilidades.blandas && Array.isArray(analysisData.habilidades)) {
-              // Si analysis.habilidades es un array simple (formato antiguo)
-               analysisData.habilidades = { tecnicas: analysisData.habilidades, blandas: [] };
-            }
-
-
-            return {
-              name: dbCv.file_name || `CV ${dbCv.id}`,
-              originalFile: null, // No tenemos el objeto File original, pero podríamos tener file_path o file_url
-              analysis: analysisData,
-              uploadedDate: new Date(dbCv.created_at),
-              cv_database_id: dbCv.id,
-              candidate_database_id: dbCv.candidatos?.id || null, // Asumiendo que candidatos es un objeto o null
-            };
-          });
-          
-          setCvFiles(formattedCVs);
-          if (formattedCVs.length > 0) {
-            // Opcional: seleccionar el primer CV de la lista cargada
-            // setSelectedCV(0);
-            // setCvAnalysis(formattedCVs[0].analysis);
-          }
-        } catch (error) {
-          console.error("Dashboard: Error fetching user CVs:", error);
-          toast({ title: "Error al cargar CVs", description: "No se pudieron cargar tus CVs guardados.", variant: "destructive" });
-        } finally {
-          setIsLoadingCVs(false);
-        }
-      };
-      fetchUserCVs();
-
-      const fetchUserJobs = async () => {
-        console.log("Dashboard: Fetching Jobs for recruiterId:", user.id);
-        setIsLoadingJobs(true);
-        try {
-          const fetchedJobs = await cvService.getJobsByRecruiterId(user.id);
-          console.log("Dashboard: Fetched Jobs from DB:", fetchedJobs);
-          setJobs(fetchedJobs || []);
-        } catch (error) {
-          console.error("Dashboard: Error fetching user Jobs:", error);
-          toast({ title: "Error al cargar Puestos", description: "No se pudieron cargar tus puestos de trabajo guardados.", variant: "destructive" });
-        } finally {
-          setIsLoadingJobs(false);
-        }
-      };
-      fetchUserJobs();
-
-    } else {
-      setCvFiles([]);
-      setJobs([]); // Limpiar Puestos si no hay usuario
-      setIsLoadingCVs(false);
-      setIsLoadingJobs(false);
-    }
-  }, [user?.id]); // Cambiar dependencia a user?.id (o solo user si prefieres el objeto completo)
-
+  // La lógica de carga de datos inicial (useEffect, fetchUserCVs, fetchUserJobs)
+  // ha sido movida a useDashboardData.js
 
   const handleSaveSuccess = (cvId, candidateId, updatedAnalysis) => {
     console.log("Dashboard: handleSaveSuccess called with", { cvId, candidateId, updatedAnalysis });
@@ -167,137 +86,41 @@ function Dashboard() {
     { id: "cvsProcesados", label: "CVs Procesados", icon: Users },
     { id: "nuevoPuesto", label: "Nuevo Puesto de trabajo", icon: Briefcase },
     { id: "puestosPublicados", label: "Puestos de trabajo publicados", icon: FileText },
+    { id: "analisisIA", label: "Análisis IA Candidatos", icon: Brain }, // Nueva pestaña
     { id: "planActual", label: "Plan actual", icon: CreditCard },
   ];
 
-  const handleFileUpload = async (event) => {
-    const selectedFiles = Array.from(event.target.files);
-    if (selectedFiles.length === 0) return;
+  // Usar el hook para la lógica de subida de CVs
+  const {
+    isProcessing,
+    isBulkProcessing,
+    totalFilesToUpload,
+    filesUploadedCount,
+    currentFileProcessingName,
+    handleFileUpload,
+    handleDragOver,
+    handleDrop,
+  } = useCvUploader({
+    fileInputRef,
+    setCvFiles,
+    setSelectedCV,
+    setCvAnalysis,
+    setActiveTab,
+    // cvFiles: cvFiles, // Podría pasarse si el hook lo necesita para lógica interna
+  });
 
-    if (!user || !user.suscripcion) {
-      toast({ title: "Error", description: "No se pudo verificar tu plan de suscripción.", variant: "destructive" });
-      return;
-    }
-
-    const PLAN_CV_ANALYSIS_LIMITS = { // Mover o importar de un archivo de configuración si se usa en más lugares
-      trial: 10,
-      basico: 50,
-      business: 1000,
-      enterprise: Infinity,
-    };
-
-    const planId = user.suscripcion.plan_id || 'basico';
-    const status = user.suscripcion.status;
-    let currentAnalysisCount = user.suscripcion.cvs_analizados_este_periodo || 0;
-    const analysisLimit = PLAN_CV_ANALYSIS_LIMITS[planId] || 0;
-
-    if (status !== 'active' && status !== 'trialing') {
-      toast({
-        title: "Suscripción no activa",
-        description: "Tu suscripción no te permite analizar CVs. Revisa tu plan.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsBulkProcessing(true);
-    setIsProcessing(true);
-    setTotalFilesToUpload(selectedFiles.length);
-    setFilesUploadedCount(0);
-    setCurrentFileProcessingName("");
-    let anyErrorOccurred = false;
-    let CvsProcessedInThisBatch = 0;
-
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
-      setCurrentFileProcessingName(file.name);
-      setFilesUploadedCount(i);
-
-      // Verificar límite ANTES de procesar este archivo
-      if (currentAnalysisCount >= analysisLimit) {
-        anyErrorOccurred = true; // Marcar que hubo un problema (límite alcanzado)
-        toast({
-          title: "Límite de Análisis Alcanzado",
-          description: `Has alcanzado tu límite de ${analysisLimit} análisis de CVs para el plan "${planId}". Los archivos restantes no serán procesados.`,
-          variant: "destructive",
-          duration: 7000,
-        });
-        // Detener el procesamiento de más archivos en este lote si se alcanzó el límite
-        // Necesitamos actualizar el contador de archivos subidos para la barra de progreso
-        // para que refleje solo los que se intentaron procesar antes del límite.
-        setTotalFilesToUpload(i); // Ajustar el total a los archivos procesados/intentados antes del límite
-        break;
-      }
-
-      try {
-        console.log(`Dashboard: Procesando archivo ${i + 1}/${selectedFiles.length}: ${file.name}`);
-        const text = await extractTextFromFile(file);
-        const resolvedAnalysis = await analyzeCV(text); // Esto puede tener su propio manejo de errores de extracción
-        console.log(`Dashboard: Análisis resuelto para ${file.name}`, resolvedAnalysis);
-
-        // Incrementar contador en la BD DESPUÉS de un análisis exitoso
-        if (user.suscripcion.id && !resolvedAnalysis.extractionError) { // Solo incrementar si no hubo error de extracción
-          try {
-            const updatedSubscription = await cvService.incrementCvAnalysisCount(user.suscripcion.id);
-            currentAnalysisCount = updatedSubscription.cvs_analizados_este_periodo;
-            // TODO: Actualizar el user en AuthContext para reflejar el nuevo currentAnalysisCount
-            // Esto es complejo sin una función setUser expuesta por useAuth o un refreshUserProfile
-            // Por ahora, la UI en UploadCVTab se actualizará en la próxima carga del user.
-            // O, si useAuthService.refreshUserProfile existe y es accesible:
-            // if (auth.refreshUserProfile) auth.refreshUserProfile();
-             console.log("Dashboard: Contador de análisis de CV actualizado a:", currentAnalysisCount);
-          } catch (incrementError) {
-            console.error("Dashboard: Error al incrementar contador de análisis de CV:", incrementError);
-            // Decidir si continuar o tratar como un error de procesamiento del CV
-            // Por ahora, continuamos pero el contador no se actualizó.
-          }
-        }
-        
-        const newCvFile = {
-          name: resolvedAnalysis.nombre || file.name,
-          originalFile: file,
-          analysis: resolvedAnalysis,
-          uploadedDate: new Date(),
-          cv_database_id: null,
-          candidate_database_id: null,
-        };
-        setCvFiles(prevCvFiles => [...prevCvFiles, newCvFile]);
-        CvsProcessedInThisBatch++;
-        
-        if (selectedFiles.length === 1 || i === selectedFiles.length -1 ) {
-            setSelectedCV(cvFiles.length + CvsProcessedInThisBatch -1); // Ajustar índice
-            setCvAnalysis(resolvedAnalysis);
-        }
-        toast({
-          title: "CV Procesado",
-          description: `${file.name} ha sido analizado. (${i + 1}/${selectedFiles.length})`,
-        });
-
-      } catch (error) { // Errores de extractTextFromFile o analyzeCV
-        anyErrorOccurred = true;
-        console.error(`Error procesando CV ${file.name}:`, error);
-        toast({
-          title: `Error al procesar ${file.name}`,
-          description: error.message || `No se pudo procesar el archivo.`,
-          variant: "destructive",
-        });
+  // Efecto para seleccionar el CV y mostrar su análisis cuando solo se sube un archivo.
+  // Esto se maneja mejor aquí que dentro del hook para evitar problemas de timing con setCvFiles.
+  useEffect(() => {
+    if (cvFiles.length > 0 && totalFilesToUpload === 1 && filesUploadedCount === 1 && !isBulkProcessing) {
+      const lastCvIndex = cvFiles.length - 1;
+      if (cvFiles[lastCvIndex] && cvFiles[lastCvIndex].analysis) {
+        setSelectedCV(lastCvIndex);
+        setCvAnalysis(cvFiles[lastCvIndex].analysis);
       }
     }
-    setFilesUploadedCount(totalFilesToUpload); // Actualizar al total real procesado o intentado
-    setIsBulkProcessing(false);
-    setIsProcessing(false);
-    setCurrentFileProcessingName("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+  }, [cvFiles, totalFilesToUpload, filesUploadedCount, isBulkProcessing]);
 
-    if (!anyErrorOccurred && CvsProcessedInThisBatch > 0) {
-      setActiveTab("cvsProcesados");
-    } else if (CvsProcessedInThisBatch > 0) { // Si algunos se procesaron pero hubo errores (o límite)
-        setActiveTab("cvsProcesados");
-    }
-    // Si no se procesó ninguno (ej. límite alcanzado al inicio), no cambiar de pestaña.
-  };
 
   const handleCVClick = (index) => {
     setSelectedCV(index);
@@ -402,20 +225,6 @@ function Dashboard() {
   };
 
 
-  const handleDragOver = (event) => {
-    event.preventDefault();
-  };
-
-  const handleDrop = (event) => {
-    event.preventDefault();
-    const files = Array.from(event.dataTransfer.files);
-    if (fileInputRef.current) {
-        fileInputRef.current.files = event.dataTransfer.files; // Asignar archivos al input
-        handleFileUpload({ target: { files: event.dataTransfer.files } }); // Simular evento
-    }
-  };
-
-
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Header Superior */}
@@ -487,8 +296,7 @@ function Dashboard() {
               isProcessing={isProcessing}
               userId={user?.id}
               onSaveSuccess={handleSaveSuccess}
-              onDeleteCV={handleDeleteCV} // Pasar la función de eliminar
-              // Pasar props de filtros
+              onDeleteCV={handleDeleteCV}
               cvFilters={cvFilters}
               onCvFilterChange={setCvFilters}
             />
@@ -497,20 +305,24 @@ function Dashboard() {
           {activeTab === "nuevoPuesto" && (
             <CreateNewJobTab
               setActiveTab={setActiveTab}
-              currentJobsCount={jobs.length} // Pasar el número actual de trabajos
-              // Opcional: para actualización inmediata de la lista de jobs en Dashboard
-              onJobPublished={(newJob) => setJobs(prevJobs => [newJob, ...prevJobs])}
+              currentJobsCount={jobs.length}
+              onJobPublishedOrUpdated={handleJobPublishedOrUpdated}
+              editingJob={editingJob}
+              setEditingJob={setEditingJob}
             />
           )}
 
           {activeTab === "puestosPublicados" && (
             <PublishedJobsTab
               jobs={jobs}
-              isLoadingJobs={isLoadingJobs}
-              setActiveTab={setActiveTab}
-              onEditJob={handleEditJob}     // Pasar la función de editar
-              onDeleteJob={handleDeleteJob} // Pasar la función de eliminar
+              isLoading={isLoadingJobs}
+              onDeleteJob={handleDeleteJob}
+              onEditJob={handleEditJob}
             />
+          )}
+
+          {activeTab === "analisisIA" && (
+            <AIAnalysisTab />
           )}
 
           {activeTab === "planActual" && (

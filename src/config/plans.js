@@ -54,6 +54,16 @@ export const APP_PLANS = {
   //   features: ['Característica Profesional 1', 'Característica Profesional 2'],
   // },
 };
+// Límites de análisis de CV para la lógica de carga de CVs
+// Estos valores deben estar sincronizados con las 'features' de APP_PLANS
+// y considerar los fallbacks o planes por defecto usados en la aplicación.
+export const PLAN_CV_ANALYSIS_LIMITS = {
+  trial: 10,        // Límite para el período de prueba
+  basico: 50,       // Límite para el plan básico (usado como fallback en Dashboard)
+  profesional_monthly: 50,
+  empresa_monthly: 1000,
+  enterprise: Infinity, // Para planes sin límite definido o personalizados
+};
 
 /**
  * Función para obtener un plan por su ID interno.
