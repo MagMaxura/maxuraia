@@ -19,6 +19,7 @@ import { useDashboardData } from "@/hooks/useDashboardData.js"; // Importar el n
 import { useCvUploader } from "@/hooks/useCvUploader.js"; // Importar el hook de subida de CVs
 
 function Dashboard() {
+  console.log("Dashboard: Rendering or re-rendering...");
   const { user, logout } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("cargarNuevoCV"); // Pestaña inicial
@@ -32,6 +33,8 @@ function Dashboard() {
     isLoadingCVs,
     isLoadingJobs,
   } = useDashboardData();
+  console.log("Dashboard: cvFiles from useDashboardData:", cvFiles);
+  console.log("Dashboard: jobs from useDashboardData:", jobs);
 
   const [selectedCV, setSelectedCV] = useState(null);
   const [cvAnalysis, setCvAnalysis] = useState(null);
@@ -112,11 +115,16 @@ function Dashboard() {
   // Efecto para seleccionar el CV y mostrar su análisis cuando solo se sube un archivo.
   // Esto se maneja mejor aquí que dentro del hook para evitar problemas de timing con setCvFiles.
   useEffect(() => {
-    if (cvFiles.length > 0 && totalFilesToUpload === 1 && filesUploadedCount === 1 && !isBulkProcessing) {
+    console.log("Dashboard useEffect [cvFiles, totalFilesToUpload, filesUploadedCount, isBulkProcessing]: cvFiles type:", typeof cvFiles, "cvFiles:", cvFiles);
+    if (cvFiles && cvFiles.length > 0 && totalFilesToUpload === 1 && filesUploadedCount === 1 && !isBulkProcessing) {
+      console.log("Dashboard useEffect: Condition met for single file upload post-processing.");
       const lastCvIndex = cvFiles.length - 1;
       if (cvFiles[lastCvIndex] && cvFiles[lastCvIndex].analysis) {
+        console.log("Dashboard useEffect: Setting selectedCV and cvAnalysis for the new CV.");
         setSelectedCV(lastCvIndex);
         setCvAnalysis(cvFiles[lastCvIndex].analysis);
+      } else {
+        console.warn("Dashboard useEffect: Last CV or its analysis is missing.", cvFiles[lastCvIndex]);
       }
     }
   }, [cvFiles, totalFilesToUpload, filesUploadedCount, isBulkProcessing]);
@@ -305,7 +313,7 @@ function Dashboard() {
           {activeTab === "nuevoPuesto" && (
             <CreateNewJobTab
               setActiveTab={setActiveTab}
-              currentJobsCount={jobs ? jobs.length : 0}
+              currentJobsCount={jobs ? jobs.length : 0} // Guard already here
               onJobPublishedOrUpdated={handleJobPublishedOrUpdated}
               editingJob={editingJob}
               setEditingJob={setEditingJob}
