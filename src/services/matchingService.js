@@ -1,8 +1,9 @@
 import { supabase } from '../lib/supabase'; // Asegúrate de que la ruta a tu cliente Supabase sea correcta
-import { compareCvWithJobOpenAI } from '../lib/cvComparisonAPI'; // Importamos la función de comparación
+// La importación de compareCvWithJobOpenAI se elimina, ya que ahora se llamará a una API.
 
 /**
- * Procesa y guarda las coincidencias entre candidatos seleccionados (o todos) y un puesto de trabajo específico.
+ * Procesa y guarda las coincidencias entre candidatos seleccionados (o todos) y un puesto de trabajo específico,
+ * llamando a una API de backend para la comparación con OpenAI.
  *
  * @param {string} jobId El UUID del puesto de trabajo a procesar.
  * @param {string[]} [candidateIds] Un array opcional de UUIDs de candidatos a procesar. Si no se provee, se procesarán todos los candidatos.
@@ -128,21 +129,39 @@ export async function processJobMatches(jobId, candidateIds = []) {
 
     console.log(`Comparando CV de ${candidate.name} (${candidate.id}) con el puesto ${jobData.title} (${jobId})...`);
 
-    // 3. Llamar a la API de OpenAI para la comparación
-    const comparisonResult = await compareCvWithJobOpenAI(cvDataForAPI, jobDataForAPI);
+    // 3. Llamar a la API de backend para la comparación con OpenAI
+    let comparisonResult;
+    try {
+      const response = await fetch('/api/openai/compareCv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cvData: cvDataForAPI, jobData: jobDataForAPI }),
+      });
 
-    if (comparisonResult.error) {
-      console.error(`Error al comparar CV de ${candidate.id} con OpenAI: ${comparisonResult.error}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Error del servidor: ${response.status}`);
+      }
+      comparisonResult = await response.json();
+
+    } catch (fetchError) {
+      console.error(`Error al llamar a la API /api/openai/compareCv para candidato ${candidate.id}:`, fetchError);
       allResults.push({
         job_id: jobId,
         candidato_id: candidate.id,
         match_score: 0,
-        analysis: `Error en la comparación: ${comparisonResult.error}`,
+        analysis: `Error en la comunicación con el servicio de comparación: ${fetchError.message}`,
         recommendation: false,
         error: true,
       });
       continue;
     }
+    
+    // El objeto comparisonResult ahora debería tener { score, summary, recommendation }
+    // y no debería tener una propiedad 'error' si la llamada fue exitosa.
+    // Si la API devuelve un error en su JSON, se manejaría arriba.
 
     // 4. Guardar el resultado en la tabla 'matches'
     const analysisText = `Recomendación: ${comparisonResult.recommendation ? 'Sí' : 'No'}. Resumen: ${comparisonResult.summary}`;
