@@ -170,11 +170,17 @@ function ProcessedCVsTab({
             const originalIndex = cvFiles.findIndex(originalFile => (originalFile.cv_database_id || originalFile.name) === (file.cv_database_id || file.name));
             return (
               <div
-                key={file.cv_database_id || index} 
-                className={`p-3 rounded-md flex items-center justify-between cursor-pointer transition-colors ${
-                  selectedCV === originalIndex // Comparar con el índice original
-                  ? "bg-blue-100 border-blue-300"
-                  : "bg-slate-50 hover:bg-slate-100 border border-transparent"
+                key={file.cv_database_id || index}
+                className={`p-3 rounded-md flex items-center justify-between cursor-pointer transition-colors border ${
+                  selectedCV === originalIndex
+                    ? "bg-blue-100 border-blue-300"
+                    : file.cv_database_id && file.cv_database_id !== 'temp-cv-id-error'
+                      ? "bg-green-100 border-green-300 hover:bg-green-200" // Verde claro si está guardado
+                      : "bg-slate-50 hover:bg-slate-100 border-transparent" // Default si no está guardado
+                } ${
+                  file.cv_database_id && file.cv_database_id !== 'temp-cv-id-error' && selectedCV !== originalIndex
+                    ? "hover:border-green-400" // Borde hover más oscuro para guardados no seleccionados
+                    : selectedCV === originalIndex ? "" : "hover:border-slate-300" // Borde hover para no guardados o seleccionados
                 }`}
                 onClick={() => handleCVClick(originalIndex)}
               >

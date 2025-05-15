@@ -166,6 +166,10 @@ function CVAnalysis({
         savedCvData = result.cv;
         savedCandidateData = result.candidate;
         console.log("Nuevo CV y candidato creados:", result);
+        if (result.error) {
+          // Si el servicio uploadCV manejó un error internamente y devolvió error:true
+          throw new Error(result.message || "Error devuelto por el servicio de subida de CV.");
+        }
       }
       
       toast({
