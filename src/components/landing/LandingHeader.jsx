@@ -23,6 +23,11 @@ function LandingHeader() {
             {/* <span className="text-xs text-yellow-300 ml-4"> V1"</span> */} {/* Comentado o eliminado */}
             {/* --- END DEBUG --- */}
           <div className="flex items-center space-x-2 sm:space-x-4">
+            <a href="/#pricing"> {/* Enlace a la sección de precios en la misma página */}
+              <Button variant="ghost" className="text-white hover:bg-white/20 px-3 sm:px-4">
+                Precios
+              </Button>
+            </a>
             {isAuthenticated && user ? (
               <>
                 <span className="text-sm text-white/80 hidden sm:block">{user.email}</span>
