@@ -305,7 +305,7 @@ function Dashboard() {
           {activeTab === "nuevoPuesto" && (
             <CreateNewJobTab
               setActiveTab={setActiveTab}
-              currentJobsCount={jobs.length}
+              currentJobsCount={jobs ? jobs.length : 0}
               onJobPublishedOrUpdated={handleJobPublishedOrUpdated}
               editingJob={editingJob}
               setEditingJob={setEditingJob}
