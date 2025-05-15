@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react'; // Importar useRef
 import { useAuth } from '@/contexts/AuthContext'; // Asumiendo la ruta correcta
 import { cvService } from '@/services/cvService.js'; // Asumiendo la ruta correcta
 import { useToast } from "@/components/ui/use-toast"; // Asumiendo la ruta correcta
@@ -11,9 +11,11 @@ export function useDashboardData() {
   const [jobs, setJobs] = useState([]);
   const [isLoadingCVs, setIsLoadingCVs] = useState(true);
   const [isLoadingJobs, setIsLoadingJobs] = useState(true);
+  const loadedForUserIdRef = useRef(null); // Ref para rastrear para qué userId se cargaron datos
 
   useEffect(() => {
     const currentUserId = user?.id;
+    console.log(`useDashboardData useEffect: currentUserId is ${currentUserId}, loadedForUserIdRef.current is ${loadedForUserIdRef.current}`);
 
     const loadUserCVs = async (userId) => {
       console.log("useDashboardData: Fetching CVs for recruiterId:", userId);
@@ -67,19 +69,36 @@ export function useDashboardData() {
       }
     };
 
-    if (currentUserId) {
+    if (currentUserId && loadedForUserIdRef.current !== currentUserId) {
+      console.log(`useDashboardData: Condition met. Loading data for userId: ${currentUserId}. Previous loaded ID: ${loadedForUserIdRef.current}`);
+      loadedForUserIdRef.current = currentUserId; // Marcar que estamos iniciando la carga para este ID
+
+      // Establecer estados de carga a true ANTES de las llamadas async
+      setIsLoadingCVs(true);
+      setIsLoadingJobs(true);
+
+      console.log("useDashboardData: Calling loadUserCVs...");
       loadUserCVs(currentUserId);
+      console.log("useDashboardData: Calling loadUserJobs...");
       loadUserJobs(currentUserId);
-    } else {
+
+    } else if (!currentUserId) {
+      console.log("useDashboardData: No currentUserId. Clearing data and resetting loadedForUserIdRef.");
       setCvFiles([]);
       setJobs([]);
       setIsLoadingCVs(false);
       setIsLoadingJobs(false);
+      loadedForUserIdRef.current = null;
+    } else if (currentUserId && loadedForUserIdRef.current === currentUserId) {
+      console.log(`useDashboardData: Data already marked as loaded or loading for userId ${currentUserId}. Skipping new fetch.`);
+      // Si los datos ya se cargaron, los estados de isLoading deberían ser false.
+      // Si todavía están cargando de una ejecución anterior de este efecto, se mantendrán true.
+      // No es necesario cambiar isLoading aquí a menos que queramos forzarlo a false si hay datos.
+      // if (cvFiles.length > 0) setIsLoadingCVs(false); // Ejemplo, pero puede ser problemático
+      // if (jobs.length > 0) setIsLoadingJobs(false);
     }
-  }, [user?.id]); // Depender solo de user.id. Las funciones internas usarán la instancia de toast del primer render.
-                  // setCvFiles, setJobs, setIsLoadingCVs, setIsLoadingJobs son estables.
-                  // toast es usado por las funciones internas, pero si es estable, esto no debería ser un problema.
-                  // Si toast no fuera estable y causara el bucle, quitarlo aquí lo detendría.
+  }, [user?.id, toast]); // Dependemos de user.id y toast (usado por las funciones internas)
+                         // Las funciones de seteo de estado son estables.
 
   return {
     cvFiles,
