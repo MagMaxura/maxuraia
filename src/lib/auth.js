@@ -285,13 +285,25 @@ export const auth = {
   },
 
   async logout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error('Logout error:', error);
-      throw error;
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Logout error:', error);
+        // Si el error específico es que la sesión no existe en Supabase,
+        // podemos tratarlo como si el logout ya hubiera ocurrido del lado del servidor.
+        if (error.message === 'Session from session_id claim in JWT does not exist' || error.status === 403) {
+          console.warn('Logout attempted on a session that Supabase considers non-existent. Clearing local state as if logout was successful.');
+        } else {
+          throw error; // Re-lanzar otros errores
+        }
+      }
+    } finally {
+      // Siempre limpiar el estado local, independientemente de si Supabase dio error o no,
+      // especialmente si el error indica que la sesión ya no es válida.
+      this.user = null;
+      localStorage.removeItem(STORAGE_KEY);
+      console.log("auth.js: Local user state and storage cleared after logout attempt.");
     }
-    this.user = null;
-    localStorage.removeItem(STORAGE_KEY);
   },
 
   async resetPassword(email) {
