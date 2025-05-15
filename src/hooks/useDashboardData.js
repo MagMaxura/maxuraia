@@ -28,9 +28,13 @@ export function useDashboardData() {
           if (dbCv.content && (!analysisData.textoCompleto || analysisData.textoCompleto.trim() === '')) {
             analysisData.textoCompleto = dbCv.content;
           }
-          if (dbCv.candidatos && Array.isArray(dbCv.candidatos.skills) && (!analysisData.habilidades || typeof analysisData.habilidades !== 'object')) {
+          
+          // Determinar el objeto candidato correcto (puede ser objeto o primer elemento de un array)
+          const candidateData = Array.isArray(dbCv.candidatos) ? dbCv.candidatos[0] : dbCv.candidatos;
+
+          if (candidateData && Array.isArray(candidateData.skills) && (!analysisData.habilidades || typeof analysisData.habilidades !== 'object')) {
             analysisData.habilidades = {
-              tecnicas: dbCv.candidatos.skills,
+              tecnicas: candidateData.skills,
               blandas: []
             };
           } else if (analysisData.habilidades && !analysisData.habilidades.tecnicas && !analysisData.habilidades.blandas && Array.isArray(analysisData.habilidades)) {
@@ -42,7 +46,7 @@ export function useDashboardData() {
             analysis: analysisData,
             uploadedDate: new Date(dbCv.created_at),
             cv_database_id: dbCv.id,
-            candidate_database_id: dbCv.candidatos?.id || null,
+            candidate_database_id: candidateData?.id || null,
           };
         });
         setCvFiles(formattedCVs);
