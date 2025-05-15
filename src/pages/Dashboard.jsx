@@ -33,13 +33,15 @@ function Dashboard() {
     isLoadingCVs,
     isLoadingJobs,
   } = useDashboardData();
-  console.log("Dashboard: cvFiles from useDashboardData:", cvFiles);
-  console.log("Dashboard: jobs from useDashboardData:", jobs);
+  console.log("Dashboard: cvFiles from useDashboardData:", cvFiles, "(type:", typeof cvFiles, Array.isArray(cvFiles) ? `length: ${cvFiles.length}` : 'not an array', ")");
+  console.log("Dashboard: jobs from useDashboardData:", jobs, "(type:", typeof jobs, Array.isArray(jobs) ? `length: ${jobs.length}` : 'not an array', ")");
 
   const [selectedCV, setSelectedCV] = useState(null);
   const [cvAnalysis, setCvAnalysis] = useState(null);
   const fileInputRef = useRef(null);
   const [editingJob, setEditingJob] = useState(null); // Para almacenar el job que se está editando
+  
+  console.log("Dashboard states: selectedCV:", selectedCV, "cvAnalysis:", cvAnalysis, "editingJob:", editingJob, "activeTab:", activeTab);
 
   // Estados para los filtros de CVs
   const [cvFilters, setCvFilters] = useState({
