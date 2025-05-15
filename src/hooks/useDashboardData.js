@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'; // Eliminado useRef
+import { useState, useEffect, useRef } from 'react'; // Reintroducir useRef
 import { useAuth } from '@/contexts/AuthContext';
 import { cvService } from '@/services/cvService.js';
 import { useToast } from "@/components/ui/use-toast";
@@ -9,8 +9,9 @@ export function useDashboardData() {
 
   const [cvFiles, setCvFiles] = useState([]);
   const [jobs, setJobs] = useState([]);
-  const [isLoadingCVs, setIsLoadingCVs] = useState(false); // Iniciar en false
-  const [isLoadingJobs, setIsLoadingJobs] = useState(false); // Iniciar en false
+  const [isLoadingCVs, setIsLoadingCVs] = useState(false);
+  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  const initialLoadAttemptedForUserIdRef = useRef(null);
 
   useEffect(() => {
     const currentUserId = user?.id;
@@ -48,7 +49,7 @@ export function useDashboardData() {
       } catch (error) {
         console.error("useDashboardData: Error fetching user CVs:", error);
         toast({ title: "Error al cargar CVs", description: "No se pudieron cargar tus CVs guardados.", variant: "destructive" });
-        setCvFiles([]); // Asegurar que cvFiles esté vacío en caso de error
+        setCvFiles([]);
       } finally {
         setIsLoadingCVs(false);
       }
@@ -64,44 +65,37 @@ export function useDashboardData() {
       } catch (error) {
         console.error("useDashboardData: Error fetching user Jobs:", error);
         toast({ title: "Error al cargar Puestos", description: "No se pudieron cargar tus puestos de trabajo guardados.", variant: "destructive" });
-        setJobs([]); // Asegurar que jobs esté vacío en caso de error
+        setJobs([]);
       } finally {
         setIsLoadingJobs(false);
       }
     };
 
     if (!currentUserId) {
-      console.log("useDashboardData useEffect: No currentUserId. Clearing data.");
+      console.log("useDashboardData useEffect: No currentUserId. Clearing data and ref.");
       setCvFiles([]);
       setJobs([]);
       setIsLoadingCVs(false);
       setIsLoadingJobs(false);
+      initialLoadAttemptedForUserIdRef.current = null; // Reiniciar ref
       return;
     }
 
-    // Cargar CVs si hay usuario, la lista está vacía y no se está cargando actualmente
-    if (cvFiles.length === 0 && !isLoadingCVs) {
-      console.log(`useDashboardData useEffect: currentUserId is ${currentUserId}, cvFiles is empty, and not loading. Triggering CVs load.`);
+    if (initialLoadAttemptedForUserIdRef.current !== currentUserId) {
+      console.log(`useDashboardData useEffect: New or different userId. Attempting initial load for ${currentUserId}.`);
+      initialLoadAttemptedForUserIdRef.current = currentUserId;
       loadUserCVs(currentUserId);
-    } else if (cvFiles.length > 0 && isLoadingCVs) {
-      // Si hay CVs pero isLoadingCVs es true (estado anómalo), forzar a false.
-      console.warn("useDashboardData useEffect: cvFiles has data, but isLoadingCVs is true. Setting isLoadingCVs to false.");
-      setIsLoadingCVs(false);
-    }
-
-    // Cargar Jobs si hay usuario, la lista está vacía y no se está cargando actualmente
-    if (jobs.length === 0 && !isLoadingJobs) {
-      console.log(`useDashboardData useEffect: currentUserId is ${currentUserId}, jobs is empty, and not loading. Triggering Jobs load.`);
       loadUserJobs(currentUserId);
-    } else if (jobs.length > 0 && isLoadingJobs) {
-      // Si hay Jobs pero isLoadingJobs es true (estado anómalo), forzar a false.
-      console.warn("useDashboardData useEffect: jobs has data, but isLoadingJobs is true. Setting isLoadingJobs to false.");
-      setIsLoadingJobs(false);
+    } else {
+      console.log(`useDashboardData useEffect: Initial load already attempted for userId ${currentUserId}. Skipping.`);
+      // Si ya se intentó la carga y las listas están vacías, isLoading debería ser false.
+      // Esto previene que se muestre "Cargando..." indefinidamente si no hay datos.
+      if (cvFiles.length === 0 && isLoadingCVs) setIsLoadingCVs(false);
+      if (jobs.length === 0 && isLoadingJobs) setIsLoadingJobs(false);
     }
 
-  }, [user?.id, cvFiles.length, jobs.length, isLoadingCVs, isLoadingJobs, toast]);
-  // Se incluyen cvFiles.length, jobs.length, isLoadingCVs, isLoadingJobs en las dependencias
-  // para que el efecto se re-ejecute si estos cambian y la lógica condicional pueda actuar.
+  }, [user?.id, toast]); // Dependencias principales: user.id y toast.
+                         // Las funciones de seteo de estado y refs no necesitan estar aquí.
 
   return {
     cvFiles,
