@@ -10,6 +10,7 @@ export const cvService = {
       return [];
     }
     try {
+      console.log(`cvService.getCVsByRecruiterId: Querying Supabase for recruiterId: ${recruiterId}`);
       const { data, error } = await supabase
         .from('cvs')
         .select(`
@@ -22,13 +23,18 @@ export const cvService = {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error fetching CVs by recruiter ID:", error);
+        console.error(`cvService.getCVsByRecruiterId: Supabase query error for recruiterId ${recruiterId}:`, JSON.stringify(error, null, 2));
         // No lanzar el error, devolver array vacío para que el map no falle
         return [];
       }
-      return data || []; // data puede ser null si no hay resultados, así que || [] asegura un array
-    } catch (error) { // Capturar cualquier otra excepción
-      console.error("Exception fetching CVs by recruiter ID:", error);
+      console.log(`cvService.getCVsByRecruiterId: Supabase query successful for recruiterId ${recruiterId}. Data received:`, data);
+      if (!data) {
+        console.warn(`cvService.getCVsByRecruiterId: Supabase returned null data for recruiterId ${recruiterId}, returning empty array.`);
+        return [];
+      }
+      return data; // data ya debería ser un array si la consulta es exitosa, o null.
+    } catch (e) { // Capturar cualquier otra excepción
+      console.error(`cvService.getCVsByRecruiterId: Exception for recruiterId ${recruiterId}:`, e);
       return []; // Devolver array vacío en caso de excepción
     }
   },
