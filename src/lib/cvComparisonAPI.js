@@ -3,7 +3,7 @@ import OpenAI from 'openai';
 // Asegúrate de que la variable de entorno para la API key de OpenAI esté configurada.
 // Por ejemplo, en un archivo .env: VITO_OPENIA_API_KEY=tu_api_key
 const openai = new OpenAI({
-  apiKey: process.env.VITO_OPENIA_API_KEY,
+  apiKey: process.env.VITE_OPENIA_API_KEY,
 });
 
 /**
