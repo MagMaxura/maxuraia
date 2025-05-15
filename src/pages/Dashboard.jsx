@@ -114,20 +114,20 @@ function Dashboard() {
 
   // Efecto para seleccionar el CV y mostrar su análisis cuando solo se sube un archivo.
   // Esto se maneja mejor aquí que dentro del hook para evitar problemas de timing con setCvFiles.
-  useEffect(() => {
-    console.log("Dashboard useEffect [cvFiles, totalFilesToUpload, filesUploadedCount, isBulkProcessing]: cvFiles type:", typeof cvFiles, "cvFiles:", cvFiles);
-    if (cvFiles && cvFiles.length > 0 && totalFilesToUpload === 1 && filesUploadedCount === 1 && !isBulkProcessing) {
-      console.log("Dashboard useEffect: Condition met for single file upload post-processing.");
-      const lastCvIndex = cvFiles.length - 1;
-      if (cvFiles[lastCvIndex] && cvFiles[lastCvIndex].analysis) {
-        console.log("Dashboard useEffect: Setting selectedCV and cvAnalysis for the new CV.");
-        setSelectedCV(lastCvIndex);
-        setCvAnalysis(cvFiles[lastCvIndex].analysis);
-      } else {
-        console.warn("Dashboard useEffect: Last CV or its analysis is missing.", cvFiles[lastCvIndex]);
-      }
-    }
-  }, [cvFiles, totalFilesToUpload, filesUploadedCount, isBulkProcessing]);
+  // useEffect(() => {
+  //   console.log("Dashboard useEffect [cvFiles, totalFilesToUpload, filesUploadedCount, isBulkProcessing]: cvFiles type:", typeof cvFiles, "cvFiles:", cvFiles);
+  //   if (cvFiles && cvFiles.length > 0 && totalFilesToUpload === 1 && filesUploadedCount === 1 && !isBulkProcessing) {
+  //     console.log("Dashboard useEffect: Condition met for single file upload post-processing.");
+  //     const lastCvIndex = cvFiles.length - 1;
+  //     if (cvFiles[lastCvIndex] && cvFiles[lastCvIndex].analysis) {
+  //       console.log("Dashboard useEffect: Setting selectedCV and cvAnalysis for the new CV.");
+  //       setSelectedCV(lastCvIndex);
+  //       setCvAnalysis(cvFiles[lastCvIndex].analysis);
+  //     } else {
+  //       console.warn("Dashboard useEffect: Last CV or its analysis is missing.", cvFiles[lastCvIndex]);
+  //     }
+  //   }
+  // }, [cvFiles, totalFilesToUpload, filesUploadedCount, isBulkProcessing]);
 
 
   const handleCVClick = (index) => {
