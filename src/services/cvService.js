@@ -4,38 +4,51 @@ export const cvService = {
   // NOTA: Las implementaciones de las otras funciones (getCVsByRecruiterId, uploadCV, etc.)
   // deben ser completadas si aún son placeholders.
 
-  async getCVsByRecruiterId(recruiterId) {
+  async getCandidatosConCVsByRecruiterId(recruiterId) { // Renombrado y lógica ajustada
     if (!recruiterId) {
-      console.error("cvService.getCVsByRecruiterId: recruiterId es requerido.");
+      console.error("cvService.getCandidatosConCVsByRecruiterId: recruiterId es requerido.");
       return [];
     }
     try {
-      console.log(`cvService.getCVsByRecruiterId: Querying Supabase for recruiterId: ${recruiterId}`);
+      console.log(`cvService.getCandidatosConCVsByRecruiterId: Querying Supabase candidatos for recruiterId: ${recruiterId}`);
+      // Consultar candidatos y traer el CV más reciente asociado (si existe)
+      // Esto asume que 'cvs' tiene una columna 'candidate_id' que referencia 'candidatos.id'
+      // y que quieres el CV más reciente si hay múltiples.
       const { data, error } = await supabase
-        .from('cvs')
+        .from('candidatos')
         .select(`
           *,
-          candidatos (
-            *
+          cvs (
+            id,
+            file_name,
+            analysis_result,
+            created_at,
+            content
           )
         `)
         .eq('recruiter_id', recruiterId)
+        // Si quieres ordenar los candidatos:
         .order('created_at', { ascending: false });
+        // Si quieres ordenar los cvs anidados (Supabase podría no soportar order en anidado directamente en select string así):
+        // .order('created_at', { foreignTable: 'cvs', ascending: false }) -> esto es sintaxis inventada
+        // La forma de ordenar anidados es más compleja o se hace post-fetch.
+        // Por ahora, obtendremos todos los cvs y el frontend puede tomar el más reciente si es necesario.
 
       if (error) {
-        console.error(`cvService.getCVsByRecruiterId: Supabase query error for recruiterId ${recruiterId}:`, JSON.stringify(error, null, 2));
-        // No lanzar el error, devolver array vacío para que el map no falle
+        console.error(`cvService.getCandidatosConCVsByRecruiterId: Supabase query error for recruiterId ${recruiterId}:`, JSON.stringify(error, null, 2));
         return [];
       }
-      console.log(`cvService.getCVsByRecruiterId: Supabase query successful for recruiterId ${recruiterId}. Data received:`, data);
+      console.log(`cvService.getCandidatosConCVsByRecruiterId: Supabase query successful for recruiterId ${recruiterId}. Data received:`, data);
       if (!data) {
-        console.warn(`cvService.getCVsByRecruiterId: Supabase returned null data for recruiterId ${recruiterId}, returning empty array.`);
+        console.warn(`cvService.getCandidatosConCVsByRecruiterId: Supabase returned null data for recruiterId ${recruiterId}, returning empty array.`);
         return [];
       }
-      return data; // data ya debería ser un array si la consulta es exitosa, o null.
-    } catch (e) { // Capturar cualquier otra excepción
-      console.error(`cvService.getCVsByRecruiterId: Exception for recruiterId ${recruiterId}:`, e);
-      return []; // Devolver array vacío en caso de excepción
+      // Si la relación cvs devuelve un array de cvs por candidato, puede que necesites procesarlo.
+      // Por ahora, devolvemos los datos tal cual para que useDashboardData los maneje.
+      return data;
+    } catch (e) {
+      console.error(`cvService.getCandidatosConCVsByRecruiterId: Exception for recruiterId ${recruiterId}:`, e);
+      return [];
     }
   },
 
@@ -94,7 +107,7 @@ export const cvService = {
       }
     }
     
-    console.log("Payload del candidato:", candidatePayload);
+    console.log("Payload del candidato (antes de DB op):", JSON.stringify(candidatePayload, null, 2)); // Log detallado
 
     if (candidateId) {
       console.log(`Actualizando candidato existente ID: ${candidateId}`);
@@ -112,6 +125,8 @@ export const cvService = {
       console.log("Candidato actualizado:", candidateResult);
     } else {
       console.log("Creando nuevo candidato...");
+      // Asegurarse de que el title se está intentando guardar
+      console.log(`Intentando guardar title para nuevo candidato: ${candidatePayload.title}`);
       const { data, error } = await supabase
         .from('candidatos')
         .insert(candidatePayload)

@@ -16,39 +16,58 @@ export function useDashboardData() {
   useEffect(() => {
     const currentUserId = user?.id;
 
-    const loadUserCVs = async (userIdToLoad) => {
-      console.log("useDashboardData: Fetching CVs for recruiterId:", userIdToLoad);
-      setIsLoadingCVs(true);
+    const loadUserCandidatosYCVs = async (userIdToLoad) => { // Renombrado
+      console.log("useDashboardData: Fetching Candidatos (and their CVs) for recruiterId:", userIdToLoad);
+      setIsLoadingCVs(true); // Sigue usando isLoadingCVs para la UI, podría renombrarse luego
       try {
-        const fetchedCVs = await cvService.getCVsByRecruiterId(userIdToLoad);
-        console.log("useDashboardData: Fetched CVs from DB:", fetchedCVs);
-        const formattedCVs = fetchedCVs.map(dbCv => {
-          let analysisData = dbCv.analysis_result || {};
-          if (dbCv.content && (!analysisData.textoCompleto || analysisData.textoCompleto.trim() === '')) {
-            analysisData.textoCompleto = dbCv.content;
+        const fetchedCandidatos = await cvService.getCandidatosConCVsByRecruiterId(userIdToLoad); // Nueva función del servicio
+        console.log("useDashboardData: Fetched Candidatos from DB:", fetchedCandidatos);
+        
+        const formattedData = fetchedCandidatos.map(candidato => {
+          // Cada 'candidato' puede tener un array 'cvs'. Tomamos el más reciente o el primero.
+          const cvPrincipal = candidato.cvs && candidato.cvs.length > 0
+            ? candidato.cvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+            : null;
+
+          let analysisData = cvPrincipal?.analysis_result || {};
+          
+          // Poblar análisis con datos del candidato si no están en analysis_result
+          analysisData.nombre = candidato.name || analysisData.nombre;
+          analysisData.email = candidato.email || analysisData.email;
+          analysisData.telefono = candidato.phone || analysisData.telefono;
+          analysisData.localidad = candidato.location || analysisData.localidad;
+          analysisData.nivel_escolarizacion = candidato.title || analysisData.nivel_escolarizacion || analysisData.title; // Asegurar que el título del candidato se use
+          analysisData.resumen = candidato.summary || analysisData.summary;
+          analysisData.experiencia = candidato.experience || analysisData.experiencia; // Asumiendo que 'experience' es un campo de texto en 'candidatos'
+          
+          // Habilidades: Tomarlas del candidato si existen, sino del análisis del CV
+          if (Array.isArray(candidato.skills) && candidato.skills.length > 0) {
+            // Asumir que candidato.skills es un array plano de strings.
+            // Si tiene estructura {tecnicas: [], blandas: []} en la BD, ajustar aquí.
+             analysisData.habilidades = { tecnicas: candidato.skills, blandas: [] }; // Simplificación, ajustar si es necesario
+          } else if (cvPrincipal?.analysis_result?.habilidades) {
+            analysisData.habilidades = cvPrincipal.analysis_result.habilidades;
+          } else {
+            analysisData.habilidades = { tecnicas: [], blandas: [] };
           }
-          const candidateData = Array.isArray(dbCv.candidatos) ? dbCv.candidatos[0] : dbCv.candidatos;
-          if (candidateData && Array.isArray(candidateData.skills) && (!analysisData.habilidades || typeof analysisData.habilidades !== 'object')) {
-            analysisData.habilidades = {
-              tecnicas: candidateData.skills,
-              blandas: []
-            };
-          } else if (analysisData.habilidades && !analysisData.habilidades.tecnicas && !analysisData.habilidades.blandas && Array.isArray(analysisData.habilidades)) {
-             analysisData.habilidades = { tecnicas: analysisData.habilidades, blandas: [] };
+
+          if (cvPrincipal?.content && (!analysisData.textoCompleto || analysisData.textoCompleto.trim() === '')) {
+            analysisData.textoCompleto = cvPrincipal.content;
           }
+
           return {
-            name: dbCv.file_name || `CV ${dbCv.id}`,
-            originalFile: null,
+            name: candidato.name || (cvPrincipal?.file_name ? `CV de ${candidato.name || 'Candidato'}` : `Candidato ${candidato.id}`),
+            originalFile: null, // Esto podría necesitar ajuste si se sube un nuevo CV para un candidato existente
             analysis: analysisData,
-            uploadedDate: new Date(dbCv.created_at),
-            cv_database_id: dbCv.id,
-            candidate_database_id: candidateData?.id || null,
+            uploadedDate: new Date(cvPrincipal?.created_at || candidato.created_at), // Fecha del CV o del candidato
+            cv_database_id: cvPrincipal?.id || null,
+            candidate_database_id: candidato.id,
           };
         });
-        setCvFiles(formattedCVs);
+        setCvFiles(formattedData); // Sigue usando setCvFiles, podría renombrarse a setProcessedData o similar
       } catch (error) {
-        console.error("useDashboardData: Error fetching user CVs:", error);
-        toast({ title: "Error al cargar CVs", description: "No se pudieron cargar tus CVs guardados.", variant: "destructive" });
+        console.error("useDashboardData: Error fetching user Candidatos/CVs:", error);
+        toast({ title: "Error al cargar Candidatos", description: "No se pudieron cargar tus candidatos guardados.", variant: "destructive" });
         setCvFiles([]);
       } finally {
         setIsLoadingCVs(false);
@@ -84,7 +103,7 @@ export function useDashboardData() {
     if (initialLoadAttemptedForUserIdRef.current !== currentUserId) {
       console.log(`useDashboardData useEffect: New or different userId. Attempting initial load for ${currentUserId}.`);
       initialLoadAttemptedForUserIdRef.current = currentUserId;
-      loadUserCVs(currentUserId);
+      loadUserCandidatosYCVs(currentUserId); // Llamar a la función renombrada
       loadUserJobs(currentUserId);
     } else {
       console.log(`useDashboardData useEffect: Initial load already attempted for userId ${currentUserId}. Skipping.`);
