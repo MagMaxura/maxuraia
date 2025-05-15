@@ -5,7 +5,8 @@ import OpenAI from 'openai';
 const apiKey = process.env.OPENAI_API_KEY;
 
 if (!apiKey) {
-  console.error("API Key de OpenAI no encontrada. Asegúrate de que la variable de entorno VITO_OPENAI_API_KEY esté configurada en Vercel para el entorno de backend.");
+  console.error("API Key de OpenAI no encontrada. Asegúrate de que la variable de entorno OPENAI_API_KEY esté configurada correctamente en Vercel para el entorno de backend y que el despliegue esté actualizado.");
+  console.log("Variables de entorno disponibles (solo para depuración, eliminar después):", Object.keys(process.env)); // Log para depuración
 }
 
 const openai = new OpenAI({
