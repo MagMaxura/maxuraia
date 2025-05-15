@@ -343,9 +343,10 @@ function Dashboard() {
             return (
             <PublishedJobsTab
               jobs={jobs}
-              isLoading={isLoadingJobs}
+              isLoadingJobs={isLoadingJobs} // Corregido el nombre de la prop
               onDeleteJob={handleDeleteJob}
               onEditJob={handleEditJob}
+              setActiveTab={setActiveTab} // Añadir la prop que faltaba
             />
             );
           })()}
