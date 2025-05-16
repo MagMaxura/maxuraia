@@ -169,12 +169,30 @@ export async function processJobMatches(jobId, candidateIds = []) {
       continue;
     }
     
-    // El objeto comparisonResult ahora debería tener { score, summary, recommendation }
-    // y no debería tener una propiedad 'error' si la llamada fue exitosa.
-    // Si la API devuelve un error en su JSON, se manejaría arriba.
-
+    // El objeto comparisonResult (de la API /api/openai/compareCv) ahora tiene:
+    // { score, summary, recommendation_reasoning, recommendation_decision, recommendation (booleano) }
+    
     // 4. Guardar el resultado en la tabla 'matches'
-    const analysisText = `Recomendación: ${comparisonResult.recommendation ? 'Sí' : 'No'}. Resumen: ${comparisonResult.summary}`;
+    // Construir el texto de análisis para incluir todos los nuevos campos.
+    let decision_text_part = `Decisión de Recomendación: ${comparisonResult.recommendation_decision || 'N/A'}`;
+    let reasoning_text_part = comparisonResult.recommendation_reasoning ? `Razonamiento: ${comparisonResult.recommendation_reasoning}` : '';
+    let summary_text_part = comparisonResult.summary ? `Resumen General: ${comparisonResult.summary}` : '';
+
+    let parts = [decision_text_part];
+    if (reasoning_text_part) parts.push(reasoning_text_part);
+    if (summary_text_part) parts.push(summary_text_part);
+
+    let analysisText = parts.reduce((acc, part, index) => {
+      if (index === 0) return part;
+      // Asegurar un punto y espacio entre partes, a menos que la parte anterior ya termine con puntuación.
+      if (acc.match(/[.!?]$/)) return `${acc} ${part}`;
+      return `${acc}. ${part}`;
+    }, '');
+    
+    // Asegurar que el texto final tenga un punto si no lo tiene.
+    if (analysisText && !analysisText.match(/[.!?]$/)) {
+        analysisText += '.';
+    }
 
     const { data: savedMatch, error: saveError } = await supabase
       .from('matches')
