@@ -78,7 +78,7 @@ export function AIAnalysisTab({
     } else {
       setAnalysisResults([]);
     }
-  }, [selectedJobId, fetchExistingMatchesForJob]);
+  }, [selectedJobId]); // El useEffect ahora solo depende de selectedJobId.
 
   const handleCandidateSelection = (candidateId) => {
     setSelectedCandidateIds(prev => {
