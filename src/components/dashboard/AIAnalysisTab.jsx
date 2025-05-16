@@ -1,9 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-// import { supabase } from '../../lib/supabase'; // Se comenta o elimina si fetchCandidates también se va
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { processJobMatches } from '../../services/matchingService';
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
-import { supabase } from '../../lib/supabase'; // Mantener por ahora para fetchCandidates
 
 // Componentes simples para la UI (puedes reemplazarlos con los tuyos de ShadCN/ui u otros)
 const Select = ({ value, onChange, options, placeholder, disabled }) => (
@@ -22,46 +20,36 @@ const Checkbox = ({ checked, onChange, label, id }) => (
   </div>
 );
 
-
-export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir jobs e isLoadingJobs como props
+export function AIAnalysisTab({ 
+  jobs = [], 
+  isLoadingJobs = false, 
+  cvFilesFromDashboard = [], 
+  isLoadingCandidates = false 
+}) {
   const [selectedJobId, setSelectedJobId] = useState('');
-  const [candidates, setCandidates] = useState([]);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState(new Set());
   const [analysisResults, setAnalysisResults] = useState([]);
-
-  // const [isLoadingJobs, setIsLoadingJobs] = useState(false); // Se recibe de props
-  const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [error, setError] = useState('');
 
   const { toast } = useToast();
 
-  // fetchJobs ya no es necesario aquí, los jobs vienen de props
+  const candidatesForSelection = useMemo(() => {
+    if (!cvFilesFromDashboard) return [];
+    const uniqueCandidates = new Map();
+    cvFilesFromDashboard.forEach(cv => {
+      if (cv.candidate_database_id && typeof cv.name === 'string' && cv.name.trim() !== '') {
+        if (!uniqueCandidates.has(cv.candidate_database_id)) {
+          uniqueCandidates.set(cv.candidate_database_id, {
+            id: cv.candidate_database_id,
+            name: cv.name 
+          });
+        }
+      }
+    });
+    return Array.from(uniqueCandidates.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [cvFilesFromDashboard]);
 
-  const fetchCandidates = useCallback(async () => {
-    setIsLoadingCandidates(true);
-    setError('');
-    try {
-      // Solo cargamos nombre e id para la selección
-      const { data, error } = await supabase.from('candidatos').select('id, name').order('name');
-      if (error) throw error;
-      setCandidates(data || []);
-    } catch (err) {
-      console.error("Error fetching candidates:", err);
-      setError('Error al cargar los candidatos.');
-      toast({ title: "Error", description: "No se pudieron cargar los candidatos.", variant: "destructive" });
-    } finally {
-      setIsLoadingCandidates(false);
-    }
-  }, [toast]);
-
-  // Cargar datos iniciales de candidatos
-  useEffect(() => {
-    // fetchJobs(); // Ya no se llama aquí
-    fetchCandidates();
-  }, [fetchCandidates]); // fetchJobs eliminado de dependencias
-
-  // Cargar resultados de análisis existentes cuando se selecciona un trabajo
   const fetchExistingMatchesForJob = useCallback(async (jobId) => {
     if (!jobId) {
       setAnalysisResults([]);
@@ -69,26 +57,16 @@ export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir
     }
     setIsLoadingAnalysis(true);
     try {
-      const { data, error } = await supabase
-        .from('matches')
-        .select(`
-          *,
-          candidatos (id, name)
-        `)
-        .eq('job_id', jobId)
-        .order('match_score', { ascending: false });
-
-      if (error) throw error;
-      setAnalysisResults(data.map(match => ({
-        ...match,
-        // Asegurar que el nombre del candidato esté disponible
-        candidato_name: match.candidatos?.name || 'N/A',
-        // Extraer recomendación del texto de análisis para visualización rápida
-        recommendation: match.analysis && match.analysis.toLowerCase().includes("recomendación: sí")
-      })) || []);
+      // NOTA: Esta función necesita ser refactorizada para obtener datos de 'matches'.
+      // Actualmente, no usa `supabase` directamente.
+      console.warn("[AIAnalysisTab] fetchExistingMatchesForJob: Carga de análisis existentes pendiente de refactorización para no depender de supabase aquí.");
+      // Simulación: se podrían obtener los matches a través de `processJobMatches` o un nuevo servicio.
+      // Por ahora, se limpiarán los resultados y se mostrará un toast.
+      setAnalysisResults([]); 
+      // toast({ title: "Info", description: "La carga de análisis existentes está pendiente de refactorización.", variant: "default" });
     } catch (err) {
-      console.error("Error fetching existing matches:", err);
-      toast({ title: "Error", description: "No se pudieron cargar los análisis existentes para este puesto.", variant: "destructive" });
+      console.error("[AIAnalysisTab] Error en fetchExistingMatchesForJob (pendiente de refactor):", err);
+      toast({ title: "Error", description: "No se pudieron cargar los análisis existentes (pendiente de refactor).", variant: "destructive" });
     } finally {
       setIsLoadingAnalysis(false);
     }
@@ -101,7 +79,6 @@ export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir
       setAnalysisResults([]);
     }
   }, [selectedJobId, fetchExistingMatchesForJob]);
-
 
   const handleCandidateSelection = (candidateId) => {
     setSelectedCandidateIds(prev => {
@@ -117,7 +94,7 @@ export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir
 
   const handleSelectAllCandidates = (isChecked) => {
     if (isChecked) {
-      setSelectedCandidateIds(new Set(candidates.map(c => c.id)));
+      setSelectedCandidateIds(new Set(candidatesForSelection.map(c => c.id)));
     } else {
       setSelectedCandidateIds(new Set());
     }
@@ -165,9 +142,7 @@ export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir
         }
       });
       
-      // Actualizar los resultados, combinando con los existentes y reordenando
-      // Esto es importante si processJobMatches devuelve tanto nuevos como existentes
-      await fetchExistingMatchesForJob(selectedJobId); // Recargar para obtener la vista más actualizada y ordenada
+      await fetchExistingMatchesForJob(selectedJobId); 
       
       const newAnalysesCount = results.filter(r => !r.alreadyExisted && !r.error).length;
       toast({ title: "Análisis Completado", description: `Se procesaron ${newAnalysesCount} nuevos análisis para el puesto "${jobTitle}".` });
@@ -182,7 +157,7 @@ export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir
   };
 
   const jobOptions = jobs.map(job => ({ value: job.id, label: job.title }));
-  const allCandidatesSelected = candidates.length > 0 && selectedCandidateIds.size === candidates.length;
+  const allCandidatesSelected = candidatesForSelection.length > 0 && selectedCandidateIds.size === candidatesForSelection.length;
 
   return (
     <div className="p-4 space-y-6">
@@ -212,7 +187,7 @@ export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir
         {selectedJobId && (
           <div className="mt-4">
             <h4 className="text-md font-medium mb-2">Seleccionar Candidatos</h4>
-            {isLoadingCandidates ? <p>Cargando candidatos...</p> : ( // Usar la prop isLoadingCandidates
+            {isLoadingCandidates ? <p>Cargando candidatos...</p> : (
               <>
                 {candidatesForSelection.length > 0 ? (
                   <div className="max-h-60 overflow-y-auto border rounded-md p-2 space-y-1">
