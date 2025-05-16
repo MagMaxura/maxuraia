@@ -57,20 +57,40 @@ export function AIAnalysisTab({
     }
     setIsLoadingAnalysis(true);
     try {
-      // NOTA: Esta función necesita ser refactorizada para obtener datos de 'matches'.
-      // Actualmente, no usa `supabase` directamente.
-      console.warn("[AIAnalysisTab] fetchExistingMatchesForJob: Carga de análisis existentes pendiente de refactorización para no depender de supabase aquí.");
-      // Simulación: se podrían obtener los matches a través de `processJobMatches` o un nuevo servicio.
-      // Por ahora, se limpiarán los resultados y se mostrará un toast.
-      setAnalysisResults([]); 
-      // toast({ title: "Info", description: "La carga de análisis existentes está pendiente de refactorización.", variant: "default" });
+      console.log(`[AIAnalysisTab] Fetching existing matches for job ID: ${jobId}`);
+      const { data, error: fetchError } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          candidatos (id, name)
+        `)
+        .eq('job_id', jobId)
+        .order('match_score', { ascending: false });
+
+      if (fetchError) {
+        console.error("[AIAnalysisTab] Error fetching existing matches:", fetchError);
+        throw fetchError;
+      }
+      
+      const formattedResults = data.map(match => ({
+        ...match,
+        candidato_name: match.candidatos?.name || 'N/A',
+        // La recomendación ya debería estar en el objeto 'match' si `processJobMatches` la devuelve
+        // y la API de backend la incluye. Si no, se puede derivar aquí:
+        recommendation: typeof match.recommendation === 'boolean' ? match.recommendation : (match.analysis && match.analysis.toLowerCase().includes("recomendación: sí"))
+      })) || [];
+      
+      console.log("[AIAnalysisTab] Fetched and formatted matches:", formattedResults);
+      setAnalysisResults(formattedResults);
+
     } catch (err) {
-      console.error("[AIAnalysisTab] Error en fetchExistingMatchesForJob (pendiente de refactor):", err);
-      toast({ title: "Error", description: "No se pudieron cargar los análisis existentes (pendiente de refactor).", variant: "destructive" });
+      console.error("[AIAnalysisTab] Error in fetchExistingMatchesForJob:", err);
+      toast({ title: "Error", description: "No se pudieron cargar los análisis existentes para este puesto.", variant: "destructive" });
+      setAnalysisResults([]); // Limpiar en caso de error
     } finally {
       setIsLoadingAnalysis(false);
     }
-  }, [toast]);
+  }, [toast]); // supabase es una importación estable, no necesita ser dependencia de useCallback
 
   useEffect(() => {
     if (selectedJobId) {
