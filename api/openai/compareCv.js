@@ -93,7 +93,9 @@ export default async function handler(req, res) {
     const result = {
       score: parseInt(parsedResponse.score, 10),
       summary: parsedResponse.summary,
-      recommendation: parsedResponse.recommendation_text ? parsedResponse.recommendation_text.toLowerCase() === 'sí' : false,
+      recommendation_reasoning: parsedResponse.recommendation_reasoning,
+      recommendation_decision: parsedResponse.recommendation_decision, // Este es el "sí" o "no" textual
+      recommendation: parsedResponse.recommendation_decision ? parsedResponse.recommendation_decision.toLowerCase() === 'sí' : false, // Booleano derivado
     };
 
     return res.status(200).json(result);

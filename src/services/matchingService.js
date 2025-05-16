@@ -198,7 +198,18 @@ export async function processJobMatches(jobId, candidateIds = []) {
       });
     } else {
       console.log(`Match guardado para candidato ${candidate.id} y job ${jobId}. Score: ${comparisonResult.score}`);
-      allResults.push({ ...savedMatch, recommendation: comparisonResult.recommendation, error: false, alreadyExisted: false });
+      // Asegurarse de que el objeto 'savedMatch' (que viene de .select() después del insert)
+      // se combine con los campos textuales y el booleano para consistencia en 'allResults'.
+      // 'savedMatch' contendrá lo que está en la DB (id, job_id, candidato_id, match_score, analysis, created_at).
+      allResults.push({
+        ...savedMatch,
+        summary: comparisonResult.summary, // Añadir para consistencia si se usa antes de recargar
+        recommendation_reasoning: comparisonResult.recommendation_reasoning,
+        recommendation_decision: comparisonResult.recommendation_decision,
+        recommendation: comparisonResult.recommendation, // El booleano
+        error: false,
+        alreadyExisted: false
+      });
     }
   }
 

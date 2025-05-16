@@ -7,8 +7,11 @@ const LegalPage = () => {
         <title>Términos, Privacidad y Reembolsos - EmploySmartIA</title>
         <meta name="robots" content="noindex, nofollow" />
       </head>
-      <div className="container mx-auto px-4 py-8 prose lg:prose-xl">
-        <h1 className="text-3xl font-bold mb-6 text-center">Términos y Condiciones, Política de Privacidad y Política de Reembolsos</h1>
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
+        <h1 className="text-4xl font-bold mb-4 text-center">Información Legal de EmploySmartIA</h1>
+        <p className="text-lg text-gray-700 mb-8 text-center">
+          En esta página encontrarás nuestros Términos y Condiciones de Uso, nuestra Política de Privacidad y nuestra Política de Reembolsos. Te recomendamos leerlos detenidamente.
+        </p>
 
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Términos y Condiciones de Uso</h2>

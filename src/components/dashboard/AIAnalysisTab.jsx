@@ -272,8 +272,9 @@ export function AIAnalysisTab({
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidato</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recomendado</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resumen del Análisis</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Decisión</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Razonamiento</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resumen General</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -281,8 +282,11 @@ export function AIAnalysisTab({
                     <tr key={match.id || `${match.job_id}-${match.candidato_id}`}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{match.candidato_name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{match.match_score}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{match.recommendation ? 'Sí' : 'No'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-500">{match.analysis}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {match.recommendation ? 'Sí' : 'No'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{match.recommendation_reasoning_display || match.recommendation_reasoning || 'N/A'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-500">{match.summary_display || match.summary || 'N/A'}</td>
                     </tr>
                   ))}
                 </tbody>
