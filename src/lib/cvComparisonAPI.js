@@ -1,3 +1,12 @@
+// Este archivo contenía anteriormente la lógica para llamar a OpenAI desde el cliente
+// para la comparación de CVs.
+// Esta lógica ha sido movida a una función de backend segura en /api/openai/compareCv.js
+// para proteger la clave API de OpenAI.
+//
+// El contenido original ha sido comentado para evitar su uso accidental.
+// Si necesitas referenciar el código anterior, revisa el historial de versiones.
+
+/*
 import OpenAI from 'openai';
 
 // Asegúrate de que la variable de entorno para la API key de OpenAI esté configurada en Vercel
@@ -13,15 +22,6 @@ const openai = new OpenAI({
   apiKey: apiKey,
 });
 
-/**
- * Compara un CV con la descripción de un puesto de trabajo utilizando OpenAI.
- * @param {object} cvData - Datos del CV (ej. contenido del CV, resumen, habilidades).
- * @param {object} jobData - Datos del puesto de trabajo (ej. descripción, requisitos).
- * @returns {Promise<object>} Un objeto con:
- *                            - score: Puntaje de compatibilidad (0-100).
- *                            - summary: Resumen explicativo del análisis.
- *                            - recommendation: Booleano (true si se recomienda, false si no).
- */
 export async function compareCvWithJobOpenAI(cvData, jobData) {
   // TODO: Validar que cvData y jobData no estén vacíos y tengan la estructura esperada.
 
@@ -95,29 +95,4 @@ export async function compareCvWithJobOpenAI(cvData, jobData) {
     };
   }
 }
-
-// Ejemplo de uso (esto sería llamado desde el servicio de matching):
-/*
-async function testComparison() {
-  const cvDataExample = {
-    name: "Ana Pérez",
-    title: "Desarrolladora Frontend Senior",
-    summary: "Desarrolladora con 5 años de experiencia en React, Angular y Vue.js. Apasionada por crear interfaces intuitivas y accesibles.",
-    skills: ["React", "JavaScript", "HTML", "CSS", "Angular", "Vue.js", "Node.js"],
-    experience: "5 años desarrollando aplicaciones web complejas. Liderazgo técnico en proyectos.",
-    cv_content: "Contenido completo del CV de Ana Pérez..." // Opcional si el resumen y habilidades son suficientes
-  };
-
-  const jobDataExample = {
-    title: "Desarrollador Fullstack",
-    description: "Buscamos un desarrollador Fullstack con experiencia en tecnologías modernas para unirse a nuestro equipo innovador.",
-    requirements: "Mínimo 3 años de experiencia con React y Node.js. Conocimiento de bases de datos SQL y NoSQL. Experiencia con metodologías ágiles.",
-    keywords: ["React", "Node.js", "Fullstack", "SQL", "MongoDB"]
-  };
-
-  const result = await compareCvWithJobOpenAI(cvDataExample, jobDataExample);
-  console.log("Resultado de la comparación:", result);
-}
-
-// testComparison(); // Descomentar para probar localmente si tienes la API key configurada
 */

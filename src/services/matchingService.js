@@ -132,7 +132,8 @@ export async function processJobMatches(jobId, candidateIds = []) {
     // 3. Llamar a la API de backend para la comparación con OpenAI
     let comparisonResult;
     try {
-      const response = await fetch('/api/openai/compareCv', {
+      // Volver a llamar a la API de backend. La ruta ahora es /api/openai/compareCv (desde la raíz)
+      const response = await fetch('/api/openai/compareCv', { // Ruta relativa a la raíz del dominio
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,13 +142,20 @@ export async function processJobMatches(jobId, candidateIds = []) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Error del servidor: ${response.status}`);
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          // Si la respuesta no es JSON (ej. HTML de error 500 sin JSON)
+          errorData = { error: `Error del servidor: ${response.status} - ${response.statusText}`, details: await response.text() };
+        }
+        console.error("Error data from API:", errorData);
+        throw new Error(errorData.error || errorData.details || `Error del servidor: ${response.status}`);
       }
       comparisonResult = await response.json();
 
-    } catch (fetchError) {
-      console.error(`Error al llamar a la API /api/openai/compareCv para candidato ${candidate.id}:`, fetchError);
+    } catch (fetchOrApiError) {
+      console.error(`Error al llamar a la API /api/openai/compareCv o procesar su respuesta para candidato ${candidate.id}:`, fetchOrApiError);
       allResults.push({
         job_id: jobId,
         candidato_id: candidate.id,
