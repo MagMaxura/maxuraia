@@ -4,6 +4,23 @@
  * Define los planes de la aplicación y su mapeo con los IDs de producto y precio de Paddle.
  */
 export const APP_PLANS = {
+  busqueda_puntual: {
+    id: 'busqueda_puntual',
+    name: 'Employ Smart IA - Búsqueda Puntual',
+    paddleProductId: 'PROD_ID_BUSQUEDA_PUNTUAL', // REEMPLAZAR CON ID REAL DE PADDLE
+    paddlePriceId: 'PRICE_ID_BUSQUEDA_PUNTUAL',   // REEMPLAZAR CON ID REAL DE PADDLE
+    priceDisplay: 'ARS 18,000.00', // Pago único
+    periodicity: 'único por puesto', // Para mostrar en la UI si es necesario
+    description: 'Ideal para emprendedores y pequeñas empresas con necesidades de reclutamiento específicas y puntuales.',
+    features: [
+      "1 Puesto de trabajo activo",
+      "Análisis de CVs: Hasta 100",
+      "Macheo de candidatos (match IA): Hasta 100 CVs",
+      "Redacción de publicaciones con IA",
+      "Preselección por IA: Manual",
+      "Soporte: Email estándar",
+    ],
+  },
   profesional_monthly: {
     id: 'profesional_monthly', // Identificador interno de tu plan
     name: 'Employ Smart IA - Plan Profesional',
@@ -40,6 +57,28 @@ export const APP_PLANS = {
       "Acceso a métricas e informes avanzados",
     ],
   },
+  enterprise_monthly: {
+    id: 'enterprise_monthly',
+    name: 'Employ Smart IA - Plan Enterprise',
+    paddleProductId: 'PROD_ID_ENTERPRISE_MONTHLY', // REEMPLAZAR CON ID REAL DE PADDLE
+    paddlePriceId: 'PRICE_ID_ENTERPRISE_MONTHLY',   // REEMPLAZAR CON ID REAL DE PADDLE
+    priceDisplay: 'ARS 300,000.00/month',
+    description: 'Solución integral y personalizada para grandes empresas con necesidades avanzadas de reclutamiento.',
+    features: [
+      "Puestos de trabajo activos: Ilimitados",
+      "Análisis de CVs: Ilimitados",
+      "Macheo de candidatos (match IA): Ilimitados",
+      "Redacción de publicaciones con IA",
+      "Preselección por IA: Avanzada con ranking y personalización de criterios",
+      "Chatbot para entrevistas automatizadas: Con personalización avanzada de flujos",
+      "Soporte: Dedicado 24/7 con Account Manager",
+      "Integración con otras plataformas: Completa (Múltiples APIs y sistemas)",
+      "Personalización de la plataforma y reportes: Incluida",
+      "Acceso a métricas e informes avanzados: Con consultoría y análisis personalizado",
+      "Acceso anticipado a nuevas funcionalidades Beta",
+
+    ],
+  },
   // Si tienes planes anuales, puedes definirlos aquí de manera similar,
   // asegurándote de usar los IDs de Producto y Precio correctos de Paddle.
   // Ejemplo:
@@ -61,7 +100,9 @@ export const PLAN_CV_ANALYSIS_LIMITS = {
   basico: 50,       // Límite para el plan básico (usado como fallback en Dashboard)
   profesional_monthly: 50,
   empresa_monthly: 1000,
-  enterprise: Infinity, // Para planes sin límite definido o personalizados
+  enterprise_monthly: Infinity, // Corregido para coincidir con el id del plan enterprise
+  busqueda_puntual: 100,
+  enterprise: Infinity, // Mantener por si se usa 'enterprise' genérico en alguna parte
 };
 
 /**

@@ -6,8 +6,7 @@
     }
   ],
   "redirects": [
-    { "source": "/legacy", "destination": "/legal", "permanent": true },
-    { "source": "/privacy", "destination": "/legal", "permanent": true },
-    { "source": "/terms", "destination": "/legal", "permanent": true }
+    { "source": "/legacy", "destination": "/legal", "permanent": true }
+
   ]
 }

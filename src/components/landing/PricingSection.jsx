@@ -36,6 +36,23 @@ const fadeInWhileInView = {
 
 const pricingPlans = [
   {
+    name: "Búsqueda Puntual",
+    price: "$18.000",
+    period: "pago único",
+    features: [
+      "1 Puesto de trabajo activo",
+      "Análisis de CVs: Hasta 100",
+      "Macheo de candidatos (match IA): Hasta 100 CVs",
+      "Redacción de publicaciones con IA",
+      "Preselección por IA: Manual",
+      "Soporte: Email estándar",
+      "Ideal para emprendedores y pequeñas empresas",
+    ],
+    cta: "Comprar Ahora",
+    planId: "busqueda_puntual",
+    popular: false,
+  },
+  {
     name: "Profesional", // Anteriormente "Profesional"
     price: "$12.500", // Actualizar precio
     period: "/mes",
@@ -79,25 +96,25 @@ const pricingPlans = [
   },
   {
     name: "Enterprise",
-    price: "Consultar", // Mantener o cambiar a "Contacto"
-    period: "",
-    features: [
+    price: "$300.000",
+    period: "/mes",
+    features: [ // Características del plan Enterprise de src/config/plans.js
       "Puestos de trabajo activos: Ilimitados",
-      "Análisis de CVs: Ilimitado",
-      "Macheo de candidatos (match IA): Ilimitado",
+      "Análisis de CVs: Ilimitados",
+      "Macheo de candidatos (match IA): Ilimitados",
       "Redacción de publicaciones con IA",
-      "Preselección por IA: Avanzada y adaptable",
-      "Chatbot para entrevistas automatizadas: Personalizable",
-      "Soporte: Dedicado 24/7",
-      "Integración con otras plataformas: Completa",
-      "Personalización de funciones / marca blanca: Incluida",
-      "Acceso a métricas e informes avanzados: Personalizados",
-      "Capacitación a equipos de RRHH: Incluida",
-      "Prueba Gratuita: A convenir"
+      "Preselección por IA: Avanzada con ranking y personalización de criterios",
+      "Chatbot para entrevistas automatizadas: Con personalización avanzada de flujos",
+      "Soporte: Dedicado 24/7 con Account Manager",
+      "Integración con otras plataformas: Completa (Múltiples APIs y sistemas)",
+      "Personalización de la plataforma y reportes: Incluida",
+      "Acceso a métricas e informes avanzados: Con consultoría y análisis personalizado",
+      "Acceso anticipado a nuevas funcionalidades Beta",
     ],
     cta: "Contactar Ventas",
+    planId: "enterprise_monthly", // ID para buscar en APP_PLANS
     popular: false,
-    link: "#contact" // Enlace para el botón (asumiendo una sección de contacto)
+    link: "#contact" // Mantener si es para un ancla de contacto
   }
 ];
 

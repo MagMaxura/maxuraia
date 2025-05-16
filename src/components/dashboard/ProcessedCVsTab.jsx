@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import CVAnalysis from "@/components/CVAnalysis.jsx";
 import { Input } from "@/components/ui/input.jsx";
@@ -17,8 +17,25 @@ function ProcessedCVsTab({
   // Props para filtros
   cvFilters,
   onCvFilterChange,
-  onDeleteCV, // Añadir onDeleteCV a la desestructuración de props
+  onDeleteCV,
 }) {
+
+  useEffect(() => {
+    if (cvFiles && cvFiles.length > 0 && selectedCV === null) {
+      // Intentar encontrar el CV más reciente por uploadedDate
+      let latestCvIndex = 0;
+      if (cvFiles.every(cv => cv.uploadedDate)) {
+        latestCvIndex = cvFiles.reduce((latestIndex, currentCv, currentIndex, arr) => {
+          return new Date(currentCv.uploadedDate) > new Date(arr[latestIndex].uploadedDate) ? currentIndex : latestIndex;
+        }, 0);
+      } else {
+        // Si no todos tienen fecha, seleccionar el último del array como fallback
+        latestCvIndex = cvFiles.length - 1;
+      }
+      handleCVClick(latestCvIndex);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cvFiles, selectedCV]); // No incluir handleCVClick para evitar re-renders innecesarios si la función cambia de referencia
 
   const handleFilterInputChange = (e) => {
     const { name, value } = e.target;
@@ -122,36 +139,39 @@ function ProcessedCVsTab({
         animate={{ opacity: 1, x: 0 }}
         className="md:w-1/3 bg-white p-6 rounded-xl shadow-xl space-y-4 flex flex-col h-full" // Ocupa 1/3 y es una columna flex
       >
-        <h2 className="text-xl font-semibold text-slate-800 mb-2 flex-shrink-0">Lista de CVs</h2>
+        <h2 className="text-xl font-semibold text-slate-800 mb-4 flex-shrink-0">Lista de CVs</h2>
 
         {/* Sección de Filtros */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6 p-4 border rounded-md bg-slate-50">
-          <div>
-            <label htmlFor="filterAgeMin" className="text-sm font-medium text-gray-700">Edad Mín.</label>
-            <Input type="number" name="ageMin" id="filterAgeMin" value={cvFilters.ageMin} onChange={handleFilterInputChange} placeholder="Ej: 25" className="mt-1 text-sm" />
-          </div>
-          <div>
-            <label htmlFor="filterAgeMax" className="text-sm font-medium text-gray-700">Edad Máx.</label>
-            <Input type="number" name="ageMax" id="filterAgeMax" value={cvFilters.ageMax} onChange={handleFilterInputChange} placeholder="Ej: 40" className="mt-1 text-sm" />
-          </div>
-          <div>
-            <label htmlFor="filterTitle" className="text-sm font-medium text-gray-700">Título/Escolaridad</label>
-            <Input name="title" id="filterTitle" value={cvFilters.title} onChange={handleFilterInputChange} placeholder="Ej: Ingeniero, Licenciado" className="mt-1 text-sm" />
-          </div>
-          <div>
-            <label htmlFor="filterLocation" className="text-sm font-medium text-gray-700">Localidad</label>
-            <Input name="location" id="filterLocation" value={cvFilters.location} onChange={handleFilterInputChange} placeholder="Ej: Buenos Aires" className="mt-1 text-sm" />
-          </div>
-          <div>
-            <label htmlFor="filterSkills" className="text-sm font-medium text-gray-700">Habilidades (separadas por coma)</label>
-            <Input name="skills" id="filterSkills" value={cvFilters.skills} onChange={handleFilterInputChange} placeholder="Ej: React, Liderazgo" className="mt-1 text-sm" />
-          </div>
-          <div>
-            <label htmlFor="filterExperienceKeywords" className="text-sm font-medium text-gray-700">Palabras en Experiencia</label>
-            <Input name="experienceKeywords" id="filterExperienceKeywords" value={cvFilters.experienceKeywords} onChange={handleFilterInputChange} placeholder="Ej: gestión de proyectos" className="mt-1 text-sm" />
-          </div>
-          <div className="md:col-span-2 lg:col-span-3 flex justify-end">
-            <Button variant="ghost" onClick={clearFilters} className="text-sm">Limpiar Filtros</Button>
+        <div className="mb-4 p-4 border rounded-lg bg-slate-50 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-700 mb-3">Filtrar CVs</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <div>
+              <label htmlFor="filterAgeMin" className="block text-xs font-medium text-gray-600 mb-1">Edad Mín.</label>
+              <Input type="number" name="ageMin" id="filterAgeMin" value={cvFilters.ageMin} onChange={handleFilterInputChange} placeholder="Ej: 25" className="text-sm" />
+            </div>
+            <div>
+              <label htmlFor="filterAgeMax" className="block text-xs font-medium text-gray-600 mb-1">Edad Máx.</label>
+              <Input type="number" name="ageMax" id="filterAgeMax" value={cvFilters.ageMax} onChange={handleFilterInputChange} placeholder="Ej: 40" className="text-sm" />
+            </div>
+            <div>
+              <label htmlFor="filterTitle" className="block text-xs font-medium text-gray-600 mb-1">Título/Escolaridad</label>
+              <Input name="title" id="filterTitle" value={cvFilters.title} onChange={handleFilterInputChange} placeholder="Ej: Ing., Lic." className="text-sm" />
+            </div>
+            <div>
+              <label htmlFor="filterLocation" className="block text-xs font-medium text-gray-600 mb-1">Localidad</label>
+              <Input name="location" id="filterLocation" value={cvFilters.location} onChange={handleFilterInputChange} placeholder="Ej: CABA" className="text-sm" />
+            </div>
+            <div>
+              <label htmlFor="filterSkills" className="block text-xs font-medium text-gray-600 mb-1">Habilidades (coma)</label>
+              <Input name="skills" id="filterSkills" value={cvFilters.skills} onChange={handleFilterInputChange} placeholder="Ej: React, Node" className="text-sm" />
+            </div>
+            <div>
+              <label htmlFor="filterExperienceKeywords" className="block text-xs font-medium text-gray-600 mb-1">Exp. Keywords</label>
+              <Input name="experienceKeywords" id="filterExperienceKeywords" value={cvFilters.experienceKeywords} onChange={handleFilterInputChange} placeholder="Ej: Proyectos" className="text-sm" />
+            </div>
+            <div className="sm:col-span-2 md:col-span-3 flex justify-end mt-2">
+              <Button variant="ghost" onClick={clearFilters} className="text-xs px-3 py-1 h-auto">Limpiar Filtros</Button>
+            </div>
           </div>
         </div>
 
@@ -173,14 +193,12 @@ function ProcessedCVsTab({
                 key={file.cv_database_id || index}
                 className={`p-3 rounded-md flex items-center justify-between cursor-pointer transition-colors border ${
                   selectedCV === originalIndex
-                    ? "bg-blue-100 border-blue-300"
+                    ? "bg-blue-100 border-blue-400 shadow-md" // Seleccionado
                     : file.cv_database_id && file.cv_database_id !== 'temp-cv-id-error'
-                      ? "bg-green-100 border-green-300 hover:bg-green-200" // Verde claro si está guardado
-                      : "bg-slate-50 hover:bg-slate-100 border-transparent" // Default si no está guardado
+                      ? "bg-green-50 border-green-300 hover:bg-green-100 hover:border-green-400" // Guardado
+                      : "bg-red-50 border-red-300 hover:bg-red-100 hover:border-red-400" // No guardado
                 } ${
-                  file.cv_database_id && file.cv_database_id !== 'temp-cv-id-error' && selectedCV !== originalIndex
-                    ? "hover:border-green-400" // Borde hover más oscuro para guardados no seleccionados
-                    : selectedCV === originalIndex ? "" : "hover:border-slate-300" // Borde hover para no guardados o seleccionados
+                  selectedCV !== originalIndex ? "hover:shadow-sm" : ""
                 }`}
                 onClick={() => handleCVClick(originalIndex)}
               >

@@ -173,8 +173,8 @@ function CVAnalysis({
       }
       
       toast({
-        title: "Candidato Guardado",
-        description: "El perfil del candidato se ha registrado con éxito en la base de datos.",
+        title: "CV Cargado con Éxito",
+        description: "La información del CV y el perfil del candidato se han guardado correctamente.",
       });
 
       if (onSaveSuccess && savedCvData && savedCandidateData) {
