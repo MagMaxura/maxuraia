@@ -135,15 +135,45 @@ export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir
 
     setIsLoadingAnalysis(true);
     setError('');
+
+    const currentJob = jobs.find(j => j.id === selectedJobId);
+    const jobTitle = currentJob ? currentJob.title : `ID ${selectedJobId}`;
+    const candidateIdsToProcess = Array.from(selectedCandidateIds);
+
+    console.log(`[AIAnalysisTab] Iniciando análisis para el puesto "${jobTitle}" con ${candidateIdsToProcess.length} candidato(s) seleccionados.`);
+    
+    candidateIdsToProcess.forEach(candidateId => {
+      const candidate = candidatesForSelection.find(c => c.id === candidateId);
+      const candidateName = candidate ? candidate.name : `ID ${candidateId}`;
+      console.log(`[AIAnalysisTab] Candidato a procesar: ${candidateName} (ID: ${candidateId}) para el puesto: "${jobTitle}"`);
+    });
+
     try {
-      const results = await processJobMatches(selectedJobId, Array.from(selectedCandidateIds));
+      const results = await processJobMatches(selectedJobId, candidateIdsToProcess);
+      
+      console.log(`[AIAnalysisTab] Resultados crudos de processJobMatches para el puesto "${jobTitle}":`, results);
+
+      results.forEach(result => {
+        const candidate = candidatesForSelection.find(c => c.id === result.candidato_id);
+        const candidateName = candidate ? candidate.name : `ID ${result.candidato_id}`;
+        if (result.error) {
+          console.error(`[AIAnalysisTab] Error al procesar/guardar análisis para ${candidateName} (Puesto: "${jobTitle}"): ${result.saveError || result.analysis}`);
+        } else if (result.alreadyExisted) {
+          console.log(`[AIAnalysisTab] Análisis para ${candidateName} (Puesto: "${jobTitle}") ya existía. Score: ${result.match_score}.`);
+        } else {
+          console.log(`[AIAnalysisTab] Nuevo análisis guardado exitosamente para ${candidateName} (Puesto: "${jobTitle}"). Score: ${result.match_score}.`);
+        }
+      });
+      
       // Actualizar los resultados, combinando con los existentes y reordenando
       // Esto es importante si processJobMatches devuelve tanto nuevos como existentes
       await fetchExistingMatchesForJob(selectedJobId); // Recargar para obtener la vista más actualizada y ordenada
       
-      toast({ title: "Análisis Completado", description: `Se procesaron ${results.filter(r => !r.alreadyExisted && !r.error).length} nuevos análisis.` });
+      const newAnalysesCount = results.filter(r => !r.alreadyExisted && !r.error).length;
+      toast({ title: "Análisis Completado", description: `Se procesaron ${newAnalysesCount} nuevos análisis para el puesto "${jobTitle}".` });
+
     } catch (err) {
-      console.error("Error running analysis:", err);
+      console.error(`[AIAnalysisTab] Error general al ejecutar el análisis para el puesto "${jobTitle}":`, err);
       setError('Ocurrió un error durante el análisis.');
       toast({ title: "Error de Análisis", description: err.message || "Ocurrió un error.", variant: "destructive" });
     } finally {
@@ -182,7 +212,7 @@ export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir
         {selectedJobId && (
           <div className="mt-4">
             <h4 className="text-md font-medium mb-2">Seleccionar Candidatos</h4>
-            {isLoadingCandidatesFromProps ? <p>Cargando candidatos...</p> : (
+            {isLoadingCandidates ? <p>Cargando candidatos...</p> : ( // Usar la prop isLoadingCandidates
               <>
                 {candidatesForSelection.length > 0 ? (
                   <div className="max-h-60 overflow-y-auto border rounded-md p-2 space-y-1">
