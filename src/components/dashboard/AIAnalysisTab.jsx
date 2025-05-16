@@ -182,7 +182,7 @@ export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir
         {selectedJobId && (
           <div className="mt-4">
             <h4 className="text-md font-medium mb-2">Seleccionar Candidatos</h4>
-            {isLoadingCandidates ? <p>Cargando candidatos...</p> : (
+            {isLoadingCandidatesFromProps ? <p>Cargando candidatos...</p> : (
               <>
                 {candidatesForSelection.length > 0 ? (
                   <div className="max-h-60 overflow-y-auto border rounded-md p-2 space-y-1">
