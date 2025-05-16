@@ -354,7 +354,12 @@ function Dashboard() {
           {activeTab === "analisisIA" && (() => {
             console.log("Dashboard: Rendering AIAnalysisTab");
             return (
-            <AIAnalysisTab />
+            <AIAnalysisTab
+              jobs={jobs}
+              isLoadingJobs={isLoadingJobs}
+              cvFilesFromDashboard={cvFiles}
+              isLoadingCandidates={isLoadingCVs}
+            />
             );
           })()}
 

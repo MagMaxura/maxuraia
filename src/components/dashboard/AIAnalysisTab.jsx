@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../../lib/supabase'; // Ajusta la ruta si es necesario
-import { processJobMatches } from '../../services/matchingService'; // Ajusta la ruta si es necesario
-import { Button } from '../ui/button'; // Asumiendo que tienes un componente Button
-import { useToast } from '../ui/use-toast'; // Asumiendo que tienes un hook para toasts
+// import { supabase } from '../../lib/supabase'; // Se comenta o elimina si fetchCandidates también se va
+import { processJobMatches } from '../../services/matchingService';
+import { Button } from '../ui/button';
+import { useToast } from '../ui/use-toast';
+import { supabase } from '../../lib/supabase'; // Mantener por ahora para fetchCandidates
 
 // Componentes simples para la UI (puedes reemplazarlos con los tuyos de ShadCN/ui u otros)
 const Select = ({ value, onChange, options, placeholder, disabled }) => (
@@ -22,35 +23,20 @@ const Checkbox = ({ checked, onChange, label, id }) => (
 );
 
 
-export function AIAnalysisTab() {
-  const [jobs, setJobs] = useState([]);
+export function AIAnalysisTab({ jobs = [], isLoadingJobs = false }) { // Recibir jobs e isLoadingJobs como props
   const [selectedJobId, setSelectedJobId] = useState('');
   const [candidates, setCandidates] = useState([]);
   const [selectedCandidateIds, setSelectedCandidateIds] = useState(new Set());
   const [analysisResults, setAnalysisResults] = useState([]);
 
-  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  // const [isLoadingJobs, setIsLoadingJobs] = useState(false); // Se recibe de props
   const [isLoadingCandidates, setIsLoadingCandidates] = useState(false);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [error, setError] = useState('');
 
   const { toast } = useToast();
 
-  const fetchJobs = useCallback(async () => {
-    setIsLoadingJobs(true);
-    setError('');
-    try {
-      const { data, error } = await supabase.from('jobs').select('id, title').order('title');
-      if (error) throw error;
-      setJobs(data || []);
-    } catch (err) {
-      console.error("Error fetching jobs:", err);
-      setError('Error al cargar los puestos de trabajo.');
-      toast({ title: "Error", description: "No se pudieron cargar los puestos de trabajo.", variant: "destructive" });
-    } finally {
-      setIsLoadingJobs(false);
-    }
-  }, [toast]);
+  // fetchJobs ya no es necesario aquí, los jobs vienen de props
 
   const fetchCandidates = useCallback(async () => {
     setIsLoadingCandidates(true);
@@ -69,11 +55,11 @@ export function AIAnalysisTab() {
     }
   }, [toast]);
 
-  // Cargar datos iniciales
+  // Cargar datos iniciales de candidatos
   useEffect(() => {
-    fetchJobs();
+    // fetchJobs(); // Ya no se llama aquí
     fetchCandidates();
-  }, [fetchJobs, fetchCandidates]);
+  }, [fetchCandidates]); // fetchJobs eliminado de dependencias
 
   // Cargar resultados de análisis existentes cuando se selecciona un trabajo
   const fetchExistingMatchesForJob = useCallback(async (jobId) => {
@@ -198,7 +184,7 @@ export function AIAnalysisTab() {
             <h4 className="text-md font-medium mb-2">Seleccionar Candidatos</h4>
             {isLoadingCandidates ? <p>Cargando candidatos...</p> : (
               <>
-                {candidates.length > 0 ? (
+                {candidatesForSelection.length > 0 ? (
                   <div className="max-h-60 overflow-y-auto border rounded-md p-2 space-y-1">
                      <Checkbox
                         id="select-all-candidates"
@@ -206,7 +192,7 @@ export function AIAnalysisTab() {
                         onChange={handleSelectAllCandidates}
                         label="Seleccionar Todos / Deseleccionar Todos"
                       />
-                    {candidates.map(candidate => (
+                    {candidatesForSelection.map(candidate => (
                       <Checkbox
                         key={candidate.id}
                         id={`candidate-${candidate.id}`}
@@ -216,7 +202,7 @@ export function AIAnalysisTab() {
                       />
                     ))}
                   </div>
-                ) : <p>No hay candidatos disponibles.</p>}
+                ) : <p>No hay candidatos disponibles o CVs cargados.</p>}
               </>
             )}
           </div>
