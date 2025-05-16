@@ -72,6 +72,7 @@ export default async function handler(req, res) {
     }
   `;
 
+    console.log("[api/openai/compareCv] Enviando prompt a OpenAI para el puesto:", jobData.title, "Candidato:", cvData.name);
     const completion = await openai.chat.completions.create({
       model: "gpt-4o", // Modelo actualizado
       messages: [{ role: "user", content: prompt }],
@@ -80,13 +81,15 @@ export default async function handler(req, res) {
     });
 
     const responseContent = completion.choices[0].message.content;
+    console.log("[api/openai/compareCv] Respuesta cruda de OpenAI:", responseContent);
     
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(responseContent);
+      console.log("[api/openai/compareCv] Respuesta parseada de OpenAI:", parsedResponse); // LOG AÑADIDO AQUÍ
     } catch (parseError) {
-      console.error("Error al parsear respuesta de OpenAI como JSON:", parseError);
-      console.error("Respuesta cruda de OpenAI que falló el parseo:", responseContent);
+      console.error("[api/openai/compareCv] Error al parsear respuesta de OpenAI como JSON:", parseError);
+      console.error("[api/openai/compareCv] Respuesta cruda de OpenAI que falló el parseo:", responseContent);
       throw new Error("La respuesta de OpenAI no pudo ser interpretada como JSON válido.");
     }
 
@@ -95,7 +98,7 @@ export default async function handler(req, res) {
         typeof parsedResponse.summary === 'undefined' || 
         typeof parsedResponse.recommendation_reasoning === 'undefined' || 
         typeof parsedResponse.recommendation_decision === 'undefined') {
-      console.error("Respuesta de OpenAI no contiene todos los campos esperados:", parsedResponse);
+      console.error("[api/openai/compareCv] Respuesta de OpenAI no contiene todos los campos esperados:", parsedResponse);
       throw new Error("La respuesta de OpenAI no contiene todos los campos esperados (score, summary, recommendation_reasoning, recommendation_decision).");
     }
 
@@ -106,11 +109,11 @@ export default async function handler(req, res) {
       recommendation_decision: parsedResponse.recommendation_decision,
       recommendation: parsedResponse.recommendation_decision ? parsedResponse.recommendation_decision.toLowerCase() === 'sí' : false,
     };
-
+    console.log("[api/openai/compareCv] Objeto result final a enviar al cliente:", result);
     return res.status(200).json(result);
 
   } catch (error) {
-    console.error("Error al llamar a la API de OpenAI desde el backend (api/openai/compareCv.js):", error);
+    console.error("[api/openai/compareCv] Error en el handler:", error);
     let errorMessage = "Error al procesar la comparación con OpenAI en el servidor.";
     if (error.message) {
       errorMessage = error.message;

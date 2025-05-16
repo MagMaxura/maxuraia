@@ -153,6 +153,8 @@ export async function processJobMatches(jobId, candidateIds = []) {
         throw new Error(errorData.error || errorData.details || `Error del servidor: ${response.status}`);
       }
       comparisonResult = await response.json();
+      console.log(`[matchingService] comparisonResult desde API para candidato ${candidate.id}:`, comparisonResult);
+
 
     } catch (fetchOrApiError) {
       console.error(`Error al llamar a la API /api/openai/compareCv o procesar su respuesta para candidato ${candidate.id}:`, fetchOrApiError);
