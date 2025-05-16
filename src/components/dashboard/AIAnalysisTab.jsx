@@ -157,7 +157,7 @@ export function AIAnalysisTab({
     } else {
       setAnalysisResults([]);
     }
-  }, [selectedJobId, fetchExistingMatchesForJob]);
+  }, [selectedJobId]); // fetchExistingMatchesForJob ahora es estable, el efecto solo necesita depender de selectedJobId.
 
   const handleCandidateSelection = (candidateId) => {
     setSelectedCandidateIds(prev => {
