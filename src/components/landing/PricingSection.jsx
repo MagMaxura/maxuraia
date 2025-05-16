@@ -86,8 +86,7 @@ const pricingPlans = [
       "Integración con otras plataformas: Limitada (1 API)",
       "Personalización: Opcional con costo adicional",
       "Acceso a métricas e informes avanzados",
-      "Capacitación a equipos de RRHH: Opcional",
-      // "Prueba Gratuita: 7 días" // Eliminado según feedback
+            // "Prueba Gratuita: 7 días" // Eliminado según feedback
     ],
     cta: "Suscribirse Ahora", // Cambiado de "Comenzar Prueba"
     planId: "empresa_monthly", // ID para buscar en APP_PLANS
