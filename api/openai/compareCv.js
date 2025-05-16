@@ -35,8 +35,8 @@ export default async function handler(req, res) {
     const prompt = `
     Analiza la siguiente información de un candidato y un puesto de trabajo. Basándote en esta información, proporciona:
     1. Un score de compatibilidad del candidato con el puesto, de 0 a 100.
-    2. Un resumen explicativo conciso del análisis, destacando fortalezas y debilidades del candidato para el puesto.
-    3. Una recomendación clara sobre si se debería entrevistar al candidato para este puesto (responde únicamente "sí" o "no").
+    2. Un resumen explicativo conciso del análisis, destacando fortalezas y debilidades del candidato para el puesto, quiero que seas muy critico, porque de esto dependerá si tomamos buenas o malas desiciones futuras.
+    3. Una recomendación clara sobre si se debería entrevistar al candidato para este puesto (Resumen muy brevente si recomendas o no entrevistar y por qué).
 
     Información del Candidato:
     ---
@@ -67,7 +67,7 @@ export default async function handler(req, res) {
     {
       "score": <número entre 0 y 100>,
       "summary": "<resumen explicativo>",
-      "recommendation_text": "<'sí' o 'no'>"
+      "recommendation_text": "<resumen 'sí' o 'no'>"
     }
   `;
 

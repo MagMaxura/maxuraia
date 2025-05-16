@@ -97,7 +97,9 @@ export function AIAnalysisTab({
     } else {
       setAnalysisResults([]);
     }
-  }, [selectedJobId, fetchExistingMatchesForJob]); // Re-añadir fetchExistingMatchesForJob como dependencia es correcto si su propia definición es estable (lo es con useCallback y [toast])
+  }, [selectedJobId]); // fetchExistingMatchesForJob ahora es estable, por lo que no necesita ser una dependencia explícita
+                       // si el linter de hooks no lo exige. Si lo exige, se puede re-añadir.
+                       // Por ahora, se quita para asegurar que solo selectedJobId dispare el efecto.
 
   const handleCandidateSelection = (candidateId) => {
     setSelectedCandidateIds(prev => {
