@@ -38,7 +38,6 @@ export const APP_PLANS = {
       "Integración con otras plataformas: Limitada (1 API)",
       "Personalización: Opcional con costo adicional",
       "Acceso a métricas e informes avanzados",
-      "Capacitación a equipos de RRHH: Opcional",
     ],
   },
   // Si tienes planes anuales, puedes definirlos aquí de manera similar,

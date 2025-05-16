@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const LegalPage = () => {
   return (
@@ -13,7 +14,15 @@ const LegalPage = () => {
           En esta página encontrarás nuestros Términos y Condiciones de Uso, nuestra Política de Privacidad y nuestra Política de Reembolsos. Te recomendamos leerlos detenidamente.
         </p>
 
-        <section className="mb-12">
+        <nav className="mb-10">
+          <ul className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
+            <li><a href="#terminos-condiciones" className="text-blue-600 hover:underline">Términos y Condiciones</a></li>
+            <li><a href="#politica-privacidad" className="text-blue-600 hover:underline">Política de Privacidad</a></li>
+            <li><a href="#politica-reembolsos" className="text-blue-600 hover:underline">Política de Reembolsos</a></li>
+          </ul>
+        </nav>
+
+        <section id="terminos-condiciones" className="mb-12 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Términos y Condiciones de Uso</h2>
           <p className="mb-2 text-sm text-gray-600">Última actualización: 14 de mayo de 2025</p>
           <p className="mb-4">
@@ -73,7 +82,7 @@ const LegalPage = () => {
           </p>
         </section>
 
-        <section className="mb-12">
+        <section id="politica-privacidad" className="mb-12 scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Política de Privacidad</h2>
           <p className="mb-2 text-sm text-gray-600">Última actualización: 14 de mayo de 2025</p>
           <p className="mb-4">
@@ -137,7 +146,7 @@ const LegalPage = () => {
           </p>
         </section>
 
-        <section>
+        <section id="politica-reembolsos" className="scroll-mt-20">
           <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Política de Reembolsos</h2>
           <p className="mb-2 text-sm text-gray-600">Última actualización: 14 de mayo de 2025</p>
           <p className="mb-4">
@@ -181,6 +190,15 @@ const LegalPage = () => {
             Nos reservamos el derecho de modificar esta política de reembolsos en cualquier momento. Las modificaciones serán efectivas una vez publicadas en nuestro sitio web.
           </p>
         </section>
+
+        <div className="mt-12 text-center">
+          <Link
+            to="/"
+            className="inline-block bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition-colors duration-300"
+          >
+            Volver a la Página Principal
+          </Link>
+        </div>
       </div>
     </>
   );
