@@ -2,8 +2,9 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { processJobMatches } from '../../services/matchingService';
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
+import { supabase } from '../../lib/supabase'; // Asegurar que supabase esté importado
 
-// Componentes simples para la UI (puedes reemplazarlos con los tuyos de ShadCN/ui u otros)
+// Componentes simples para la UI
 const Select = ({ value, onChange, options, placeholder, disabled }) => (
   <select value={value} onChange={e => onChange(e.target.value)} disabled={disabled} className="border p-2 rounded">
     <option value="">{placeholder || 'Seleccionar...'}</option>
@@ -13,10 +14,10 @@ const Select = ({ value, onChange, options, placeholder, disabled }) => (
   </select>
 );
 
-const Checkbox = ({ checked, onChange, label, id }) => (
+const Checkbox = ({ checked, onChange, label, id, disabled }) => ( // Añadir prop disabled
   <div className="flex items-center">
-    <input type="checkbox" id={id} checked={checked} onChange={e => onChange(e.target.checked)} className="mr-2" />
-    <label htmlFor={id}>{label}</label>
+    <input type="checkbox" id={id} checked={checked} onChange={e => onChange(e.target.checked)} className="mr-2" disabled={disabled} />
+    <label htmlFor={id} className={disabled ? 'text-gray-500' : ''}>{label}</label>
   </div>
 );
 
@@ -75,8 +76,6 @@ export function AIAnalysisTab({
       const formattedResults = data.map(match => ({
         ...match,
         candidato_name: match.candidatos?.name || 'N/A',
-        // La recomendación ya debería estar en el objeto 'match' si `processJobMatches` la devuelve
-        // y la API de backend la incluye. Si no, se puede derivar aquí:
         recommendation: typeof match.recommendation === 'boolean' ? match.recommendation : (match.analysis && match.analysis.toLowerCase().includes("recomendación: sí"))
       })) || [];
       
@@ -86,11 +85,11 @@ export function AIAnalysisTab({
     } catch (err) {
       console.error("[AIAnalysisTab] Error in fetchExistingMatchesForJob:", err);
       toast({ title: "Error", description: "No se pudieron cargar los análisis existentes para este puesto.", variant: "destructive" });
-      setAnalysisResults([]); // Limpiar en caso de error
+      setAnalysisResults([]); 
     } finally {
       setIsLoadingAnalysis(false);
     }
-  }, [toast]); // supabase es una importación estable, no necesita ser dependencia de useCallback
+  }, [toast]); 
 
   useEffect(() => {
     if (selectedJobId) {
@@ -98,7 +97,7 @@ export function AIAnalysisTab({
     } else {
       setAnalysisResults([]);
     }
-  }, [selectedJobId]); // El useEffect ahora solo depende de selectedJobId.
+  }, [selectedJobId, fetchExistingMatchesForJob]); // Re-añadir fetchExistingMatchesForJob como dependencia es correcto si su propia definición es estable (lo es con useCallback y [toast])
 
   const handleCandidateSelection = (candidateId) => {
     setSelectedCandidateIds(prev => {
@@ -113,6 +112,8 @@ export function AIAnalysisTab({
   };
 
   const handleSelectAllCandidates = (isChecked) => {
+    // Solo seleccionar/deseleccionar candidatos que no estén ya analizados si se quiere evitar re-análisis
+    // Por ahora, selecciona todos los mostrados.
     if (isChecked) {
       setSelectedCandidateIds(new Set(candidatesForSelection.map(c => c.id)));
     } else {
@@ -125,28 +126,40 @@ export function AIAnalysisTab({
       toast({ title: "Advertencia", description: "Por favor, selecciona un puesto de trabajo.", variant: "default" });
       return;
     }
-    if (selectedCandidateIds.size === 0) {
-      toast({ title: "Advertencia", description: "Por favor, selecciona al menos un candidato.", variant: "default" });
+    
+    const candidatesToActuallyProcess = Array.from(selectedCandidateIds).filter(candidateId => 
+      !analysisResults.some(match => match.candidato_id === candidateId)
+    );
+
+    if (candidatesToActuallyProcess.length === 0 && selectedCandidateIds.size > 0) {
+      toast({ title: "Información", description: "Todos los candidatos seleccionados ya han sido analizados para este puesto.", variant: "default" });
+      // Opcionalmente, recargar los resultados existentes si no se hace automáticamente
+      // await fetchExistingMatchesForJob(selectedJobId); 
       return;
     }
+    
+    if (candidatesToActuallyProcess.length === 0) {
+       toast({ title: "Advertencia", description: "Por favor, selecciona al menos un candidato que no haya sido analizado.", variant: "default" });
+       return;
+    }
+
 
     setIsLoadingAnalysis(true);
     setError('');
 
     const currentJob = jobs.find(j => j.id === selectedJobId);
     const jobTitle = currentJob ? currentJob.title : `ID ${selectedJobId}`;
-    const candidateIdsToProcess = Array.from(selectedCandidateIds);
-
-    console.log(`[AIAnalysisTab] Iniciando análisis para el puesto "${jobTitle}" con ${candidateIdsToProcess.length} candidato(s) seleccionados.`);
     
-    candidateIdsToProcess.forEach(candidateId => {
+    console.log(`[AIAnalysisTab] Iniciando análisis para el puesto "${jobTitle}" con ${candidatesToActuallyProcess.length} candidato(s) (nuevos).`);
+    
+    candidatesToActuallyProcess.forEach(candidateId => {
       const candidate = candidatesForSelection.find(c => c.id === candidateId);
       const candidateName = candidate ? candidate.name : `ID ${candidateId}`;
       console.log(`[AIAnalysisTab] Candidato a procesar: ${candidateName} (ID: ${candidateId}) para el puesto: "${jobTitle}"`);
     });
 
     try {
-      const results = await processJobMatches(selectedJobId, candidateIdsToProcess);
+      const results = await processJobMatches(selectedJobId, candidatesToActuallyProcess);
       
       console.log(`[AIAnalysisTab] Resultados crudos de processJobMatches para el puesto "${jobTitle}":`, results);
 
@@ -155,8 +168,8 @@ export function AIAnalysisTab({
         const candidateName = candidate ? candidate.name : `ID ${result.candidato_id}`;
         if (result.error) {
           console.error(`[AIAnalysisTab] Error al procesar/guardar análisis para ${candidateName} (Puesto: "${jobTitle}"): ${result.saveError || result.analysis}`);
-        } else if (result.alreadyExisted) {
-          console.log(`[AIAnalysisTab] Análisis para ${candidateName} (Puesto: "${jobTitle}") ya existía. Score: ${result.match_score}.`);
+        } else if (result.alreadyExisted) { // Aunque filtramos, processJobMatches puede tener su propia lógica
+          console.log(`[AIAnalysisTab] Análisis para ${candidateName} (Puesto: "${jobTitle}") ya existía (según servicio). Score: ${result.match_score}.`);
         } else {
           console.log(`[AIAnalysisTab] Nuevo análisis guardado exitosamente para ${candidateName} (Puesto: "${jobTitle}"). Score: ${result.match_score}.`);
         }
@@ -178,6 +191,11 @@ export function AIAnalysisTab({
 
   const jobOptions = jobs.map(job => ({ value: job.id, label: job.title }));
   const allCandidatesSelected = candidatesForSelection.length > 0 && selectedCandidateIds.size === candidatesForSelection.length;
+  
+  const analyzedCandidateIds = useMemo(() => 
+    new Set(analysisResults.map(match => match.candidato_id)),
+    [analysisResults]
+  );
 
   return (
     <div className="p-4 space-y-6">
@@ -199,7 +217,10 @@ export function AIAnalysisTab({
               disabled={isLoadingJobs || isLoadingAnalysis}
             />
           </div>
-          <Button onClick={handleRunAnalysis} disabled={isLoadingAnalysis || !selectedJobId || selectedCandidateIds.size === 0}>
+          <Button 
+            onClick={handleRunAnalysis} 
+            disabled={isLoadingAnalysis || !selectedJobId || selectedCandidateIds.size === 0 || Array.from(selectedCandidateIds).every(id => analyzedCandidateIds.has(id))}
+          >
             {isLoadingAnalysis ? 'Analizando...' : 'Analizar Candidatos Seleccionados'}
           </Button>
         </div>
@@ -217,15 +238,19 @@ export function AIAnalysisTab({
                         onChange={handleSelectAllCandidates}
                         label="Seleccionar Todos / Deseleccionar Todos"
                       />
-                    {candidatesForSelection.map(candidate => (
-                      <Checkbox
-                        key={candidate.id}
-                        id={`candidate-${candidate.id}`}
-                        checked={selectedCandidateIds.has(candidate.id)}
-                        onChange={() => handleCandidateSelection(candidate.id)}
-                        label={candidate.name}
-                      />
-                    ))}
+                    {candidatesForSelection.map(candidate => {
+                      const isAnalyzed = analyzedCandidateIds.has(candidate.id);
+                      return (
+                        <Checkbox
+                          key={candidate.id}
+                          id={`candidate-${candidate.id}`}
+                          checked={selectedCandidateIds.has(candidate.id)}
+                          onChange={() => handleCandidateSelection(candidate.id)}
+                          label={`${candidate.name}${isAnalyzed ? ' (Analizado)' : ''}`}
+                          disabled={isAnalyzed} // Deshabilitar si ya está analizado
+                        />
+                      );
+                    })}
                   </div>
                 ) : <p>No hay candidatos disponibles o CVs cargados.</p>}
               </>
