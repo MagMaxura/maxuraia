@@ -24,7 +24,6 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Error de configuración del servidor de OpenAI: " + (apiKeyError || "Cliente no inicializado.") });
   }
 
-  // Para funciones serverless de Vercel, req.body ya está parseado si Content-Type es application/json
   const { cvData, jobData } = req.body;
 
   if (!cvData || !jobData) {
@@ -33,10 +32,11 @@ export default async function handler(req, res) {
 
   try {
     const prompt = `
-    Analiza la siguiente información de un candidato y un puesto de trabajo. Basándote en esta información, proporciona:
-    1. Un score de compatibilidad del candidato con el puesto, de 0 a 100.
-    2. Un resumen explicativo conciso del análisis, destacando fortalezas y debilidades del candidato para el puesto, quiero que seas muy critico, porque de esto dependerá si tomamos buenas o malas desiciones futuras.
-    3. Una recomendación clara sobre si se debería entrevistar al candidato para este puesto (Resumen muy brevente si recomendas o no entrevistar y por qué).
+    Analiza la siguiente información de un candidato y un puesto de trabajo. Basándote en esta información, proporciona estrictamente un objeto JSON con la siguiente estructura y campos:
+    1.  "score": Un número entero de compatibilidad del candidato con el puesto, de 0 a 100.
+    2.  "summary": Un resumen explicativo conciso del análisis, destacando fortalezas y debilidades generales del candidato para el puesto. Sé muy crítico, porque de esto dependerá si tomamos buenas o malas decisiones futuras.
+    3.  "recommendation_reasoning": Una breve explicación textual o los puntos clave de por qué se recomienda o no entrevistar al candidato.
+    4.  "recommendation_decision": Indica únicamente con la palabra "sí" o la palabra "no" si se debería entrevistar al candidato.
 
     Información del Candidato:
     ---
@@ -63,24 +63,24 @@ export default async function handler(req, res) {
     ${jobData.keywords ? (Array.isArray(jobData.keywords) ? jobData.keywords.join(', ') : jobData.keywords) : 'No especificadas'}
     ---
 
-    Respuesta esperada (estructura JSON):
+    Respuesta esperada (estructura JSON exacta):
     {
       "score": <número entre 0 y 100>,
-      "summary": "<resumen explicativo>",
-      "recommendation_text": "<resumen 'sí' o 'no'>"
+      "summary": "<resumen general de fortalezas y debilidades>",
+      "recommendation_reasoning": "<breve explicación de por qué sí/no recomendar>",
+      "recommendation_decision": "<'sí' o 'no' (únicamente una de estas dos palabras)>"
     }
   `;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o", // Modelo actualizado
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
-      // response_format: { type: "json_object" }, // Considerar para modelos más nuevos
+      response_format: { type: "json_object" }, // Asegurar respuesta JSON
     });
 
     const responseContent = completion.choices[0].message.content;
     
-    // Intentar parsear la respuesta, que se espera sea JSON
     let parsedResponse;
     try {
       parsedResponse = JSON.parse(responseContent);
@@ -90,12 +90,21 @@ export default async function handler(req, res) {
       throw new Error("La respuesta de OpenAI no pudo ser interpretada como JSON válido.");
     }
 
+    // Validar que los campos esperados existan en la respuesta parseada
+    if (typeof parsedResponse.score === 'undefined' || 
+        typeof parsedResponse.summary === 'undefined' || 
+        typeof parsedResponse.recommendation_reasoning === 'undefined' || 
+        typeof parsedResponse.recommendation_decision === 'undefined') {
+      console.error("Respuesta de OpenAI no contiene todos los campos esperados:", parsedResponse);
+      throw new Error("La respuesta de OpenAI no contiene todos los campos esperados (score, summary, recommendation_reasoning, recommendation_decision).");
+    }
+
     const result = {
       score: parseInt(parsedResponse.score, 10),
       summary: parsedResponse.summary,
       recommendation_reasoning: parsedResponse.recommendation_reasoning,
-      recommendation_decision: parsedResponse.recommendation_decision, // Este es el "sí" o "no" textual
-      recommendation: parsedResponse.recommendation_decision ? parsedResponse.recommendation_decision.toLowerCase() === 'sí' : false, // Booleano derivado
+      recommendation_decision: parsedResponse.recommendation_decision,
+      recommendation: parsedResponse.recommendation_decision ? parsedResponse.recommendation_decision.toLowerCase() === 'sí' : false,
     };
 
     return res.status(200).json(result);
@@ -103,7 +112,6 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("Error al llamar a la API de OpenAI desde el backend (api/openai/compareCv.js):", error);
     let errorMessage = "Error al procesar la comparación con OpenAI en el servidor.";
-    // No hay error.response.data en el cliente de OpenAI v4, el error mismo tiene detalles.
     if (error.message) {
       errorMessage = error.message;
     }
