@@ -80,6 +80,7 @@ export async function analyzeCV(textOrExtractionResult) {
   }
 
   try {
+    console.log("Texto extraído del CV (primeros 300 caracteres):", text.substring(0, 300));
     console.log("Intentando análisis con GPT...");
     const response = await fetch('/api/openai/analyzeCv', {
       method: 'POST',
@@ -101,7 +102,7 @@ export async function analyzeCV(textOrExtractionResult) {
   } catch (error) {
     console.error('Error en el análisis con GPT:', error);
     return {
-      nombre: 'No encontrado', edad: 'No encontrada', email: 'No encontrado', telefono: 'No encontrado', localidad: 'No encontrada',
+      nombre: 'No encontrado', edad: null, email: 'No encontrado', telefono: 'No encontrado', localidad: 'No encontrada',
       nivel_escolarizacion: 'No especificado',
       habilidades: { tecnicas: [], blandas: [] },
       resumen: 'Análisis no disponible debido a un error.', experiencia: 'Análisis no disponible debido a un error.',
