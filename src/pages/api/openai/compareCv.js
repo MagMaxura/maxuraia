@@ -12,7 +12,7 @@ if (!apiKey) {
   apiKeyError = "API Key de OpenAI no encontrada en el backend. Asegúrate de que OPENAI_API_KEY o VITO_OPENAI_API_KEY esté configurada en Vercel para el entorno de backend (sin prefijo VITE_).";
   console.error(apiKeyError);
 } else {
-  openai = new OpenAI({ apiKey });
+  //openai = new OpenAI({ apiKey });
 }
 
 export default async function handler(req, res) {

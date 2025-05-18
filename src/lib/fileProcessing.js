@@ -1,6 +1,6 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
-import { analyzeCVWithGPT } from './openai';
+//import { analyzeCVWithGPT } from './openai';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
@@ -81,17 +81,28 @@ export async function analyzeCV(textOrExtractionResult) {
 
   try {
     console.log("Intentando análisis con GPT...");
-    const gptAnalysis = await analyzeCVWithGPT(text);
+    const response = await fetch('/api/openai/analyzeCv', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Error desconocido en el servidor');
+    }
+
+    const gptAnalysis = await response.json();
     console.log("Análisis con GPT exitoso:", gptAnalysis);
     return {
       ...gptAnalysis, // Asume que gptAnalysis ya tiene todos los campos necesarios
-      textoCompleto: text 
+      textoCompleto: text
     };
   } catch (error) {
     console.error('Error en el análisis con GPT, recurriendo a basicAnalyzeCV:', error);
     const basicResult = basicAnalyzeCV(text);
     console.log("Resultado del basicAnalyzeCV:", basicResult);
-    return basicResult; 
+    return basicResult;
   }
 }
 
