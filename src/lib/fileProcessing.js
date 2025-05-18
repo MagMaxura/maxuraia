@@ -99,10 +99,16 @@ export async function analyzeCV(textOrExtractionResult) {
       textoCompleto: text
     };
   } catch (error) {
-    console.error('Error en el análisis con GPT, recurriendo a basicAnalyzeCV:', error);
-    const basicResult = basicAnalyzeCV(text);
-    console.log("Resultado del basicAnalyzeCV:", basicResult);
-    return basicResult;
+    console.error('Error en el análisis con GPT:', error);
+    return {
+      nombre: 'No encontrado', edad: 'No encontrada', email: 'No encontrado', telefono: 'No encontrado', localidad: 'No encontrada',
+      nivel_escolarizacion: 'No especificado',
+      habilidades: { tecnicas: [], blandas: [] },
+      resumen: 'Análisis no disponible debido a un error.', experiencia: 'Análisis no disponible debido a un error.',
+      textoCompleto: text,
+      extractionError: "gpt_analysis_failed",
+      extractionMessage: "No se pudo analizar el CV con la IA."
+    };
   }
 }
 
