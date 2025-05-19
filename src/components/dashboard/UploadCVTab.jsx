@@ -131,7 +131,14 @@ function UploadCVTab({
           type="file"
           accept=".pdf,.doc,.docx"
           multiple
-          onChange={handleFileUpload}
+          onChange={async (e) => {
+            handleFileUpload(e);
+            const file = e.target.files[0];
+            if (file) {
+              const text = await extractTextFromFile(file);
+              console.log("Texto extraído del CV:", text);
+            }
+          }}
           className="hidden"
           ref={fileInputRef}
           disabled={!canAnalyzeMore || isBulkProcessing || isProcessing}
