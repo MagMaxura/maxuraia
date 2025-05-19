@@ -1,4 +1,12 @@
 {
+  "routes": [
+    {
+      "src": "/api/openai/analyzeCv",
+      "methods": ["POST"],
+      "dest": "/api/openai/analyzeCv"
+    }
+    
+  ],
   "rewrites": [
     {
       "source": "/:path*",
