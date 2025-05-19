@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, StarFill } from 'lucide-react';
+import { Star } from 'lucide-react';
 
 const fadeInWhileInView = {
   initial: { opacity: 0, y: 20 },
