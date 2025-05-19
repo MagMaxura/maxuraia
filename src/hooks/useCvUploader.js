@@ -51,10 +51,15 @@ export function useCvUploader({
       return;
     }
 
+    console.log("useCvUploader: handleFileUpload - setIsBulkProcessing(true)");
     setIsBulkProcessing(true);
+    console.log("useCvUploader: handleFileUpload - setIsProcessing(true)");
     setIsProcessing(true);
+    console.log("useCvUploader: handleFileUpload - setTotalFilesToUpload(selectedFiles.length)");
     setTotalFilesToUpload(selectedFiles.length);
+    console.log("useCvUploader: handleFileUpload - setFilesUploadedCount(0)");
     setFilesUploadedCount(0);
+    console.log("useCvUploader: handleFileUpload - setCurrentFileProcessingName('')");
     setCurrentFileProcessingName("");
     let anyErrorOccurred = false;
     let CvsProcessedInThisBatch = 0;
@@ -62,7 +67,9 @@ export function useCvUploader({
 
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
+      console.log("useCvUploader: handleFileUpload - setCurrentFileProcessingName(file.name)", file.name);
       setCurrentFileProcessingName(file.name);
+      console.log("useCvUploader: handleFileUpload - setFilesUploadedCount(i)", i);
       setFilesUploadedCount(i);
 
       if (currentAnalysisCount >= analysisLimit) {
@@ -142,11 +149,11 @@ export function useCvUploader({
     
     console.log("useCvUploader: Calling setFilesUploadedCount with:", totalFilesToUpload);
     setFilesUploadedCount(totalFilesToUpload);
-    console.log("useCvUploader: Calling setIsBulkProcessing(false)");
+    console.log("useCvUploader: handleFileUpload - setIsBulkProcessing(false)");
     setIsBulkProcessing(false);
-    console.log("useCvUploader: Calling setIsProcessing(false)");
+    console.log("useCvUploader: handleFileUpload - setIsProcessing(false)");
     setIsProcessing(false);
-    console.log("useCvUploader: Calling setCurrentFileProcessingName('')");
+    console.log("useCvUploader: handleFileUpload - setCurrentFileProcessingName('')");
     setCurrentFileProcessingName("");
 
     if (fileInputRef.current) {
