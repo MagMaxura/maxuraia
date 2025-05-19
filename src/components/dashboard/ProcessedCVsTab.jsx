@@ -106,7 +106,7 @@ function ProcessedCVsTab({
               Análisis del CV: {cvFiles[selectedCV]?.name}
             </h2>
             <CVAnalysis
-              analysis={cvAnalysis}
+              analysis={cvFiles[selectedCV]?.analysis}
               userId={userId}
               originalFile={cvFiles[selectedCV]?.originalFile}
               cvDatabaseId={cvFiles[selectedCV]?.cv_database_id}
