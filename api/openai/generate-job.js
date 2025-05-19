@@ -31,11 +31,12 @@ export default async function handler(req, res) {
   const systemPrompt = `Eres un experto en redacción de ofertas laborales. A partir de una descripción libre del reclutador, genera una publicación de empleo profesional. Debes devolver un objeto JSON con la siguiente estructura y tipos de datos:
 {
   "title": "string", 
-  "description": "string", 
-  "requirements": {}, 
+  "description": "string",
+  "requirements": {},
   "keywords": []
 }
-Asegúrate de que el campo 'requirements' sea un objeto JSON válido y que 'keywords' sea un array de strings.
+Asegúrate de que el campo 'requirements' sea un objeto JSON válido y que tenga relación con el puesto que se está publicando. Ejemplo: Nivel de educación mínimio, edad, años de experiencia, título, habilidades, etc.
+Asegurate que 'keywords' sea un array de strings.
 La descripción debe ser profesional y atractiva para los candidatos. Los requisitos bien estructurados y específicos. Palabras clave relevantes y útiles para búsquedas.`;
 
   try {
