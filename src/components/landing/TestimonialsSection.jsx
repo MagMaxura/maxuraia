@@ -13,21 +13,21 @@ const fadeInWhileInView = {
 const testimonials = [
   {
     quote: "EmploySmart IA ha transformado nuestra forma de contratar. El análisis de CVs es increíblemente preciso y nos ahorra horas.",
-    name: "Ana García",
-    title: "Directora de RRHH, Tech Solutions",
-    avatar: "Woman smiling confidently"
+    name: "MBA & Ing. Uranga Maximiliano ",
+    title: "CEO, Eternal Provider LLC",
+    avatar: "Exitoso hombre de negocios en Miami y Argentina"
   },
   {
     quote: "La función de preselección automática es genial. Identifica a los mejores candidatos mucho más rápido que antes.",
-    name: "Carlos Martínez",
-    title: "Gerente de Talento, Innovate Corp",
+    name: "Willmott Daniel",
+    title: "Gerente de Talento, Potabilizar Solutions S.A",
     avatar: "Man in business attire smiling"
   },
   {
     quote: "Implementar esta herramienta fue sencillo y el soporte es excelente. ¡Altamente recomendado!",
-    name: "Sofía Rodríguez",
-    title: "Especialista en Reclutamiento, Global Enterprises",
-    avatar: "Professional woman looking at camera"
+    name: "Posgr. en RRHH Matias Garcia Conde",
+    title: "Especialista en Reclutamiento, Emplotecnia S.R.L",
+    avatar: "Professional man looking at camera"
   }
 ];
 
@@ -57,7 +57,6 @@ function TestimonialsSection() {
                 <p className="text-white/80 italic mt-3">"{testimonial.quote}"</p>
               </div>
               <div className="flex items-center mt-auto">
-                 <img  class="h-12 w-12 rounded-full mr-4 object-cover border-2 border-white/30" alt={testimonial.name} src="https://images.unsplash.com/photo-1697256200022-f61abccad430" />
                 <div>
                   <p className="font-semibold text-white">{testimonial.name}</p>
                   <p className="text-sm text-white/60">{testimonial.title}</p>
