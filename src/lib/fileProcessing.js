@@ -37,12 +37,14 @@ async function extractTextFromPDF(file) {
     fullText += pageText + '\n'; // Añadir salto de línea entre páginas
   }
 
+  console.log("Texto extraído del PDF:", fullText.substring(0, 300));
   return fullText;
 }
 
 async function extractTextFromDOCX(file) {
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.extractRawText({ arrayBuffer });
+  console.log("Texto extraído del DOCX:", result.value.substring(0, 300));
   return result.value;
 }
 
