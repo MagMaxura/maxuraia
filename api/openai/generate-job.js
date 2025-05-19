@@ -1,12 +1,12 @@
 // /api/generate-job.js  (o /api/openia/generate-job.js)
 
-const OpenAI = require('openai');
+import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-module.exports = async function (req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
