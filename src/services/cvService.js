@@ -70,6 +70,7 @@ export const cvService = {
     // Asegúrate de que los nombres de campo coincidan con tu tabla 'candidatos'
     const candidatePayload = {
       recruiter_id: recruiterId, // Asumiendo que candidatos también tiene recruiter_id
+      cv_id: candidateId,
       name: analysisData.nombre || analysisData.name,
       email: analysisData.email,
       phone: analysisData.telefono || analysisData.phone,
@@ -149,13 +150,17 @@ export const cvService = {
     let cvResult = null;
     const cvPayload = {
       recruiter_id: recruiterId,
-      candidate_id: candidateId,
       analysis_result: analysisData, // Guardar el objeto de análisis completo
       file_name: fileName,
       content: analysisData.textoCompleto || null, // El texto extraído del CV
       // file_path: filePathFromStorage, // Si se sube a Storage
       // file_url: fileUrlFromStorage,   // Si se sube a Storage
     };
+
+    // Eliminar candidate_id si no existe
+    if (candidateId) {
+      cvPayload.candidate_id = candidateId;
+    }
 
     // Filtrar propiedades undefined
     for (const key in cvPayload) {
