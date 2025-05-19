@@ -4,6 +4,7 @@ import { FileUp, AlertCircle, ArrowRightCircle } from 'lucide-react'; // Importa
 import { useAuth } from '@/contexts/AuthContext.jsx';
 import { Button } from '@/components/ui/button.jsx'; // Importar Button
 import { Link } from 'react-router-dom'; // Para el botón de actualizar plan
+import { extractTextFromFile } from "@/lib/fileProcessing";
 
 const PLAN_CV_ANALYSIS_LIMITS = {
   trial: 10,
