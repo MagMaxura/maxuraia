@@ -29,6 +29,7 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log("analyzeCv API: Recibido texto del CV:", text.substring(0, 300));
     const prompt = `Analiza el siguiente CV y extrae la información solicitada. Es muy importante que sigas estas instrucciones específicas y devuelvas un objeto JSON válido con la siguiente estructura:
 
 1.  **nombre**: (string) Nombre completo del candidato.

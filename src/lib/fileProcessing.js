@@ -5,10 +5,12 @@ import mammoth from 'mammoth';
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 export async function extractTextFromFile(file) {
+  console.log("extractTextFromFile: Iniciando extracción de texto del archivo:", file.name, file.type);
   try {
     if (file.type === 'application/pdf') {
+      console.log("extractTextFromFile: Extrayendo texto de PDF:", file.name);
       return await extractTextFromPDF(file);
-    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
                file.type === 'application/msword') {
       return await extractTextFromDOCX(file);
     }
@@ -37,19 +39,19 @@ async function extractTextFromPDF(file) {
     fullText += pageText + '\n'; // Añadir salto de línea entre páginas
   }
 
-  console.log("Texto extraído del PDF:", fullText.substring(0, 300));
+  console.log("extractTextFromPDF: Texto extraído del PDF:", fullText.substring(0, 300));
   return fullText;
 }
 
 async function extractTextFromDOCX(file) {
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.extractRawText({ arrayBuffer });
-  console.log("Texto extraído del DOCX:", result.value.substring(0, 300));
+  console.log("extractTextFromDOCX: Texto extraído del DOCX:", result.value.substring(0, 300));
   return result.value;
 }
 
 export async function analyzeCV(textOrExtractionResult) {
-  console.log("Iniciando analyzeCV...");
+  console.log("analyzeCV: Iniciando análisis del CV...");
 
   // Verificar si textOrExtractionResult es un objeto de error de la extracción
   if (typeof textOrExtractionResult === 'object' && textOrExtractionResult !== null && textOrExtractionResult.error) {
@@ -82,8 +84,8 @@ export async function analyzeCV(textOrExtractionResult) {
   }
 
   try {
-    console.log("Texto extraído del CV (primeros 300 caracteres):", text.substring(0, 300));
-    console.log("Intentando análisis con GPT...");
+    console.log("analyzeCV: Texto extraído del CV (primeros 300 caracteres):", text.substring(0, 300));
+    console.log("analyzeCV: Intentando análisis con GPT...");
     const response = await fetch('/api/openai/analyzeCv', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -96,7 +98,7 @@ export async function analyzeCV(textOrExtractionResult) {
     }
 
     const gptAnalysis = await response.json();
-    console.log("Análisis con GPT exitoso:", gptAnalysis);
+    console.log("analyzeCV: Análisis con GPT exitoso:", gptAnalysis);
     return {
       ...gptAnalysis, // Asume que gptAnalysis ya tiene todos los campos necesarios
       textoCompleto: text
