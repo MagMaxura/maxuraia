@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star } from 'lucide-react';
+import { Star, StarFill } from 'lucide-react';
 
 const fadeInWhileInView = {
   initial: { opacity: 0, y: 20 },
@@ -49,18 +49,16 @@ function TestimonialsSection() {
               className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20 shadow-lg flex flex-col"
             >
               <div className="flex-grow mb-4">
-                <Star className="h-5 w-5 text-yellow-400 inline mr-1" />
-                <Star className="h-5 w-5 text-yellow-400 inline mr-1" />
-                <Star className="h-5 w-5 text-yellow-400 inline mr-1" />
-                <Star className="h-5 w-5 text-yellow-400 inline mr-1" />
-                <Star className="h-5 w-5 text-yellow-400 inline" />
+                <StarFill className="h-5 w-5 text-yellow-400 inline mr-1" />
+                <StarFill className="h-5 w-5 text-yellow-400 inline mr-1" />
+                <StarFill className="h-5 w-5 text-yellow-400 inline mr-1" />
+                <StarFill className="h-5 w-5 text-yellow-400 inline mr-1" />
+                <StarFill className="h-5 w-5 text-yellow-400 inline" />
                 <p className="text-white/80 italic mt-3">"{testimonial.quote}"</p>
               </div>
-              <div className="flex items-center mt-auto">
-                <div>
-                  <p className="font-semibold text-white">{testimonial.name}</p>
-                  <p className="text-sm text-white/60">{testimonial.title}</p>
-                </div>
+              <div className="mt-auto">
+                <p className="font-semibold text-white">{testimonial.name}</p>
+                <p className="text-sm text-white/60">{testimonial.title}</p>
               </div>
             </motion.div>
           ))}
