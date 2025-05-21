@@ -78,7 +78,7 @@ export default async function handler(req, res) {
         resumable: false,
         metadata: { contentType: file.mimetype }
       });
-      console.log("OCR API: File uploaded to GCS successfully.");
+      console.log("OCR API: File uploaded to GCS successfully. Filename:", filename);
 
       const gcsUri = `gs://${bucketName}/${filename}`;
       console.log("OCR API: GCS URI:", gcsUri);
@@ -138,10 +138,10 @@ export default async function handler(req, res) {
 
       // Limpiar: eliminar archivo PDF y JSON de OCR del bucket
       console.log("OCR API: Cleaning up GCS bucket. Deleting PDF and JSON files.");
-      await storage.bucket(bucketName).file(filename).delete();
-      for (const resultFile of resultFiles) {
-        await resultFile.delete();
-      }
+      // await storage.bucket(bucketName).file(filename).delete();
+      // for (const resultFile of resultFiles) {
+      //   await resultFile.delete();
+      // }
       console.log("OCR API: GCS bucket cleanup completed.");
 
       res.status(200).json({ text: resultText });
