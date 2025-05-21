@@ -29,12 +29,15 @@ export default async function handler(req, res) {
   const form = new IncomingForm();
 
   form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ error: 'Error en upload' });
+    if (err) {
+      console.error("Formidable parse error:", err);
+      return res.status(500).json({ error: 'Error en upload (formidable)' });
+    }
     const file = files.file;
     if (!file) return res.status(400).json({ error: 'Archivo no enviado' });
 
     const filePath = file.filepath || file.path;
-    const filename = path.basename(file.originalFilename || file.name);
+    const filename = path.basename(file.originalFilename || file.name || 'unknown');
 
     const { storage, visionClient } = getGCloudClients();
     console.log("OCR API: Google Cloud clients initialized.");
