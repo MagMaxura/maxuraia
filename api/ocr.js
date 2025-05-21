@@ -15,10 +15,15 @@ const bucketName = 'orc-emplñoysmart';
 
 // Inicializar Google Storage y Vision con las credenciales del env
 function getGCloudClients() {
-  const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-  const storage = new Storage({ credentials });
-  const visionClient = new vision.v1.ImageAnnotatorClient({ credentials });
-  return { storage, visionClient };
+  try {
+    const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+    const storage = new Storage({ credentials });
+    const visionClient = new vision.v1.ImageAnnotatorClient({ credentials });
+    return { storage, visionClient };
+  } catch (e) {
+    console.error("Fallo al cargar credenciales de Google Cloud:", e);
+    throw new Error("Credenciales de Google Cloud inválidas o faltantes");
+  }
 }
 
 export default async function handler(req, res) {
@@ -33,24 +38,46 @@ export default async function handler(req, res) {
       console.error("Formidable parse error:", err);
       return res.status(500).json({ error: 'Error en upload (formidable)' });
     }
-    const file = files.file;
-    if (!file) return res.status(400).json({ error: 'Archivo no enviado' });
 
+    // Mostrar keys de los archivos recibidos para debug
+    const fileKeys = Object.keys(files);
+    console.log('FILES recibidos:', fileKeys);
+
+    // Agarra el primer archivo recibido sin importar el nombre del campo
+    const receivedFiles = Object.values(files);
+    if (!receivedFiles.length) {
+      console.error("No se recibió ningún archivo.");
+      return res.status(400).json({ error: 'Archivo no enviado' });
+    }
+    const file = receivedFiles[0];
+
+    // Chequea existencia de filepath/path
     const filePath = file.filepath || file.path;
-    const filename = path.basename(file.originalFilename || file.name || 'unknown');
+    if (!filePath) {
+      console.error("El archivo recibido no tiene ruta temporal:", file);
+      return res.status(400).json({ error: 'Archivo subido no tiene ruta temporal' });
+    }
 
-    const { storage, visionClient } = getGCloudClients();
-    console.log("OCR API: Google Cloud clients initialized.");
+    // Busca nombre, o pone uno default
+    const filename = path.basename(file.originalFilename || file.name || 'archivo.pdf');
+
+    let storage, visionClient;
+    try {
+      ({ storage, visionClient } = getGCloudClients());
+      console.log("OCR API: Google Cloud clients initialized.");
+    } catch (e) {
+      return res.status(500).json({ error: e.message });
+    }
 
     try {
       // Subir el archivo PDF a GCS
       console.log("OCR API: Uploading file to GCS bucket:", bucketName, " - Filename:", filename);
-      const uploadResponse = await storage.bucket(bucketName).upload(filePath, {
+      await storage.bucket(bucketName).upload(filePath, {
         destination: filename,
         resumable: false,
         metadata: { contentType: file.mimetype }
       });
-      console.log("OCR API: File uploaded to GCS successfully. Upload response:", uploadResponse);
+      console.log("OCR API: File uploaded to GCS successfully.");
 
       const gcsUri = `gs://${bucketName}/${filename}`;
       console.log("OCR API: GCS URI:", gcsUri);
@@ -126,7 +153,7 @@ export default async function handler(req, res) {
       if (filePath && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-      console.log("OCR API: Local temporary file cleanup completed. 1");
+      console.log("OCR API: Local temporary file cleanup completed.");
     }
   });
 }
