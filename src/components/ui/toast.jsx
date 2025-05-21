@@ -34,7 +34,7 @@ const toastVariants = cva(
 	},
 );
 
-const Toast = React.forwardRef(({ className, variant, ...props }, ref) => {
+const Toast = React.forwardRef(({ className, variant, nextPlan, ...props }, ref) => {
 	return (
 		<ToastPrimitives.Root
 			ref={ref}
@@ -72,24 +72,32 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
 
-const ToastTitle = React.forwardRef(({ className, ...props }, ref) => (
-	<ToastPrimitives.Title
-		ref={ref}
-		className={cn('text-sm font-semibold text-gray-950 group-[.destructive]:text-white', className)}
-		{...props}
-	/>
-));
+
+const ToastTitle = React.forwardRef(({ className, ...props }, ref) => {
+  return (
+    <ToastPrimitives.Title
+      ref={ref}
+      className={cn('text-sm font-semibold text-gray-950 group-[.destructive]:text-white', className)}
+      {...props}
+    >
+      {props.nextPlan ? props.nextPlan.name : 'No hay plan superior'}
+    </ToastPrimitives.Title>
+  );
+});
 ToastTitle.displayName = ToastPrimitives.Title.displayName;
 
-const ToastDescription = React.forwardRef(({ className, ...props }, ref) => (
-	<ToastPrimitives.Description
-		ref={ref}
-		className={cn('text-sm text-gray-950/90 group-[.destructive]:text-white/90', className)}
-		{...props}
-	/>
-));
+const ToastDescription = React.forwardRef(({ className, ...props }, ref) => {
+  return (
+    <ToastPrimitives.Description
+      ref={ref}
+      className={cn('text-sm text-gray-950/90 group-[.destructive]:text-white/90', className)}
+      {...props}
+    >
+      {props.nextPlan ? props.nextPlan.description : 'Contacta a soporte para más información.'}
+    </ToastPrimitives.Description>
+  );
+});
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
-
 export {
 	Toast,
 	ToastAction,

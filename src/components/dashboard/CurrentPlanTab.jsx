@@ -123,7 +123,7 @@ function CurrentPlanTab() {
         <p className="text-slate-500">No se pudo cargar la información de tu plan. Si el problema persiste, contacta a soporte.</p>
       )}
       <ToastProvider>
-        <Toast open={open} onOpenChange={setOpen}>
+        <Toast open={open} onOpenChange={setOpen} nextPlan={nextPlan}>
           <ToastTitle>{nextPlan ? nextPlan.name : 'No hay plan superior'}</ToastTitle>
           <ToastDescription>
             {nextPlan ? nextPlan.description : 'Contacta a soporte para más información.'}
