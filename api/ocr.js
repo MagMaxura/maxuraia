@@ -1,18 +1,17 @@
 // /api/ocr.js
-import formidable from 'formidable';
+import { IncomingForm } from 'formidable';
 import fs from 'fs';
 import { Storage } from '@google-cloud/storage';
 import vision from '@google-cloud/vision';
 import path from 'path';
 
-// Configurar formidable para manejar archivos
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
-const bucketName = 'orc-emplñoysmart'; 
+const bucketName = 'orc-emplñoysmart';
 
 // Inicializar Google Storage y Vision con las credenciales del env
 function getGCloudClients() {
@@ -23,15 +22,14 @@ function getGCloudClients() {
 }
 
 export default async function handler(req, res) {
-  // Solo POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  
-    const form = formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
-      if (err) return res.status(500).json({ error: 'Error en upload' });
+  const form = new IncomingForm();
+
+  form.parse(req, async (err, fields, files) => {
+    if (err) return res.status(500).json({ error: 'Error en upload' });
     const file = files.file;
     if (!file) return res.status(400).json({ error: 'Archivo no enviado' });
 
@@ -79,11 +77,11 @@ export default async function handler(req, res) {
       // Descargar el resultado de OCR desde el bucket
       console.log("OCR API: Downloading OCR results from GCS bucket:", bucketName);
       // Buscamos el archivo .json generado en /ocr_results/
-      const [files] = await storage.bucket(bucketName).getFiles({ prefix: 'ocr_results/' });
-      console.log("OCR API: Files found in GCS bucket:", files.map(f => f.name));
+      const [resultFiles] = await storage.bucket(bucketName).getFiles({ prefix: 'ocr_results/' });
+      console.log("OCR API: Files found in GCS bucket:", resultFiles.map(f => f.name));
       let resultText = '';
 
-      for (const resultFile of files) {
+      for (const resultFile of resultFiles) {
         if (resultFile.name.endsWith('.json')) {
           console.log("OCR API: Processing result file:", resultFile.name);
           try {
@@ -110,7 +108,7 @@ export default async function handler(req, res) {
       // Limpiar: eliminar archivo PDF y JSON de OCR del bucket
       console.log("OCR API: Cleaning up GCS bucket. Deleting PDF and JSON files.");
       await storage.bucket(bucketName).file(filename).delete();
-      for (const resultFile of files) {
+      for (const resultFile of resultFiles) {
         await resultFile.delete();
       }
       console.log("OCR API: GCS bucket cleanup completed.");
