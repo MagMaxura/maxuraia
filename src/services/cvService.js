@@ -70,7 +70,6 @@ export const cvService = {
     // Asegúrate de que los nombres de campo coincidan con tu tabla 'candidatos'
     const candidatePayload = {
       recruiter_id: recruiterId, // Asumiendo que candidatos también tiene recruiter_id
-      cv_id: candidateId,
       name: analysisData.nombre || analysisData.name,
       email: analysisData.email,
       phone: analysisData.telefono || analysisData.phone,
@@ -158,9 +157,9 @@ export const cvService = {
     };
 
     // Eliminar candidate_id si no existe
-    if (candidateId) {
-      cvPayload.candidate_id = candidateId;
-    }
+    // if (candidateId) {
+    //   cvPayload.candidate_id = candidateId;
+    // }
 
     // Filtrar propiedades undefined
     for (const key in cvPayload) {
@@ -197,6 +196,23 @@ export const cvService = {
       }
       cvResult = data;
       console.log("Nuevo CV creado:", cvResult);
+    }
+
+    // Actualizar el candidato con el cv_id
+    if (cvResult && candidateResult) {
+      const { data: updatedCandidate, error: updateError } = await supabase
+        .from('candidatos')
+        .update({ cv_id: cvResult.id })
+        .eq('id', candidateResult.id)
+        .select()
+        .single();
+
+      if (updateError) {
+        console.error("Error al actualizar el candidato con cv_id:", updateError);
+        // Considerar si lanzar el error o continuar
+      } else {
+        console.log("Candidato actualizado con cv_id:", updatedCandidate);
+      }
     }
     
     return { cv: cvResult, candidate: candidateResult };
