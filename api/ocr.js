@@ -37,6 +37,7 @@ export default async function handler(req, res) {
   });
 
   form.parse(req, async (err, fields, files) => {
+    console.log("OCR API: Archivos recibidos:", files);
     if (err) {
       console.error("Formidable parse error:", err);
       return res.status(500).json({ error: 'Error en upload (formidable)' });
@@ -56,6 +57,7 @@ export default async function handler(req, res) {
 
     // Chequea existencia de filepath/path
     let filePath = file.filepath || file.path;
+    console.log("OCR API: Ruta temporal del archivo:", filePath);
     if (!filePath) {
       console.error("El archivo recibido no tiene ruta temporal:", file);
       return res.status(400).json({ error: 'Archivo subido no tiene ruta temporal' });

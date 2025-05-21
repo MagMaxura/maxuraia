@@ -75,6 +75,7 @@ async function extractTextFromDOCX(file) {
  */
 async function extractTextFromPDFWithOCR(file) {
   try {
+    console.log("extractTextFromPDFWithOCR: Enviando archivo al backend OCR:", file);
     const formData = new FormData();
     formData.append('file', file);
     const response = await fetch('/api/ocr', {
@@ -82,6 +83,7 @@ async function extractTextFromPDFWithOCR(file) {
       body: formData
     });
     const data = await response.json();
+    console.log("extractTextFromPDFWithOCR: Respuesta del backend OCR:", data);
     if (response.ok && data.text && data.text.trim().length > 0) {
       console.log("extractTextFromPDFWithOCR: Texto extraído por OCR (primeros 300):", data.text.substring(0, 300));
       return data.text;

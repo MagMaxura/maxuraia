@@ -61,6 +61,7 @@ function UploadCV() {
       }
 
       const analysis = await analyzeCV(text);
+      console.log("UploadCV: Análisis del CV:", analysis);
 
       setCvAnalysis(analysis);
       setIsEditing(true);
