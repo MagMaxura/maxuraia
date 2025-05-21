@@ -125,7 +125,7 @@ export default async function handler(req, res) {
       if (filePath && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-      console.log("OCR API: Local temporary file cleanup completed.");
+      console.log("OCR API: Local temporary file cleanup completed. 1");
     }
   });
 }
