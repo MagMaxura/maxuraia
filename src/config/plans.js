@@ -1,5 +1,3 @@
-// src/config/plans.js
-
 /**
  * Define los planes de la aplicación y su mapeo con los IDs de producto y precio de Paddle.
  */
@@ -7,43 +5,56 @@ export const APP_PLANS = {
   busqueda_puntual: {
     id: 'busqueda_puntual',
     name: 'Employ Smart IA - Búsqueda Puntual',
-    paddleProductId: 'PROD_ID_BUSQUEDA_PUNTUAL', // REEMPLAZAR CON ID REAL DE PADDLE
-    paddlePriceId: 'PRICE_ID_BUSQUEDA_PUNTUAL',   // REEMPLAZAR CON ID REAL DE PADDLE
-    priceDisplay: 'ARS 18,000.00', // Pago único
-    periodicity: 'único por puesto', // Para mostrar en la UI si es necesario
+    paddleProductId: 'pro_01jvsnq9yztcy6ycqhxmh82ahb',
+    paddlePriceId: 'pri_01jvsnrta15svqgec4z0c948a',
+    priceDisplay: 'ARS 18,000.00',
+    priceNumeric: 18000,
+    type: 'one-time',
+    periodicity: 'único por puesto',
+    ctaLabel: 'Empezar ahora',
     description: 'Ideal para emprendedores y pequeñas empresas con necesidades de reclutamiento específicas y puntuales.',
+    cvLimit: 75,
     features: [
       "1 Puesto de trabajo activo",
-      "Análisis de CVs: Hasta 100",
+      "Análisis de CVs: Hasta 75",
+      "Macheo de candidatos (match IA): Hasta 75 CVs",
+      "Redacción de publicaciones con IA",
+      "Preselección por IA: Manual",
+      "Soporte: Email estándar"
+    ]
+  },
+  profesional_monthly: {
+    id: 'profesional_monthly',
+    name: 'Employ Smart IA - Plan Profesional',
+    paddleProductId: 'pro_01jvsmnsj3hhfnyt0y89rawyn4',
+    paddlePriceId: 'pri_01jvsn7rjbjv61l44k9ztfrscjr',
+    priceDisplay: 'ARS 12,500.00/month',
+    priceNumeric: 12500,
+    type: 'monthly',
+    ctaLabel: 'Comenzar ahora',
+    description: 'Cuota mensual para usar la mejor herramienta de reclutamiento.',
+    cvLimit: 100,
+    features: [
+      "Hasta 3 Puestos de trabajo activos",
+      "Análisis de CVs: Hasta 100/mes",
       "Macheo de candidatos (match IA): Hasta 100 CVs",
       "Redacción de publicaciones con IA",
       "Preselección por IA: Manual",
-      "Soporte: Email estándar",
-    ],
-  },
-  profesional_monthly: {
-    id: 'profesional_monthly', // Identificador interno de tu plan
-    name: 'Employ Smart IA - Plan Profesional',
-    paddleProductId: 'pro_01jv7ztgg7vfkfbdnqvfqddj3r', // ID del Producto en Paddle
-    paddlePriceId: 'pri_01jv7zzdtmfbvyref417p27tdv',   // ID del Precio en Paddle
-    priceDisplay: 'ARS 12,500.00/month',
-    description: 'Cuota mensual de usar la mejor herramienta para reclutamiento.',
-    features: [
-      "Hasta 3 Puestos de trabajo activos",
-      "Análisis de CVs: Hasta 50/mes",
-      "Macheo de candidatos (match IA): Hasta 50 CVs",
-      "Redacción de publicaciones con IA",
-      "Preselección por IA: Manual",
-      "Soporte: Email estándar",
-    ],
+      "Soporte: Email estándar"
+    ]
   },
   empresa_monthly: {
     id: 'empresa_monthly',
-    name: 'Employ Smart IA - Plan Business', // O "Plan Empresa"
-    paddleProductId: 'pro_01jv80cx5wsrdx08f6t7z7qndj', // ID del Producto en Paddle
-    paddlePriceId: 'pri_01jv80fpjkjsxt5x278zn93mbt',   // ID del Precio en Paddle
+    name: 'Employ Smart IA - Plan Business',
+    paddleProductId: 'pro_01jvsmjxcwypkdaxkcvas8q9mw',
+    paddlePriceId: 'pri_01jvsvmm8vm50zz6q025w5sxkns',
     priceDisplay: 'ARS 69,000.00/month',
-    description: 'Cuota mensual de usar la mejor herramienta para reclutamiento.',
+    priceNumeric: 69000,
+    type: 'monthly',
+    isRecommended: true,
+    ctaLabel: 'Elegir Business',
+    description: 'Automatizá tus procesos con IA y liberá a tu equipo de RRHH.',
+    cvLimit: 1000,
     features: [
       "Hasta 25 Puestos de trabajo activos",
       "Análisis de CVs: Hasta 1.000/mes",
@@ -52,18 +63,20 @@ export const APP_PLANS = {
       "Preselección por IA: Avanzada con ranking",
       "Chatbot para entrevistas automatizadas",
       "Soporte: Prioritario",
-      "Integración con otras plataformas: Limitada (1 API)",
-      "Personalización: Opcional con costo adicional",
-      "Acceso a métricas e informes avanzados",
-    ],
+      "Acceso a métricas e informes avanzados"
+    ]
   },
   enterprise_monthly: {
     id: 'enterprise_monthly',
     name: 'Employ Smart IA - Plan Enterprise',
-    paddleProductId: 'PROD_ID_ENTERPRISE_MONTHLY', // REEMPLAZAR CON ID REAL DE PADDLE
-    paddlePriceId: 'PRICE_ID_ENTERPRISE_MONTHLY',   // REEMPLAZAR CON ID REAL DE PADDLE
+    paddleProductId: 'pro_01jvsnkm4n8ry8h3p1an42ytv2',
+    paddlePriceId: 'pri_01jvsnm2gtv294yw4wz7ns21y',
     priceDisplay: 'ARS 300,000.00/month',
+    priceNumeric: 300000,
+    type: 'enterprise',
+    ctaLabel: 'Solicitar demo',
     description: 'Solución integral y personalizada para grandes empresas con necesidades avanzadas de reclutamiento.',
+    cvLimit: Infinity,
     features: [
       "Puestos de trabajo activos: Ilimitados",
       "Análisis de CVs: Ilimitados",
@@ -72,43 +85,31 @@ export const APP_PLANS = {
       "Preselección por IA: Avanzada con ranking y personalización de criterios",
       "Chatbot para entrevistas automatizadas: Con personalización avanzada de flujos",
       "Soporte: Dedicado 24/7 con Account Manager",
-      "Integración con otras plataformas: Completa (Múltiples APIs y sistemas)",
       "Personalización de la plataforma y reportes: Incluida",
       "Acceso a métricas e informes avanzados: Con consultoría y análisis personalizado",
-      "Acceso anticipado a nuevas funcionalidades Beta",
-
-    ],
-  },
-  // Si tienes planes anuales, puedes definirlos aquí de manera similar,
-  // asegurándote de usar los IDs de Producto y Precio correctos de Paddle.
-  // Ejemplo:
-  // profesional_yearly: {
-  //   id: 'profesional_yearly',
-  //   name: 'Employ Smart IA - Plan Profesional (Anual)',
-  //   paddleProductId: 'pro_ID_PRODUCTO_ANUAL_PROFESIONAL',
-  //   paddlePriceId: 'pri_ID_PRECIO_ANUAL_PROFESIONAL',
-  //   priceDisplay: 'ARS XXXXX/año',
-  //   description: 'Cuota anual con descuento.',
-  //   features: ['Característica Profesional 1', 'Característica Profesional 2'],
-  // },
+      "Acceso anticipado a nuevas funcionalidades Beta"
+    ]
+  }
 };
-// Límites de análisis de CV para la lógica de carga de CVs
-// Estos valores deben estar sincronizados con las 'features' de APP_PLANS
-// y considerar los fallbacks o planes por defecto usados en la aplicación.
+
+/**
+ * Límites de análisis de CV para validaciones internas.
+ * Estos valores están alineados con `cvLimit` de cada plan.
+ */
 export const PLAN_CV_ANALYSIS_LIMITS = {
-  trial: 10,        // Límite para el período de prueba
-  basico: 50,       // Límite para el plan básico (usado como fallback en Dashboard)
-  profesional_monthly: 50,
+  trial: 10,
+  basico: 50,
+  busqueda_puntual: 75,
+  profesional_monthly: 100,
   empresa_monthly: 1000,
-  enterprise_monthly: Infinity, // Corregido para coincidir con el id del plan enterprise
-  busqueda_puntual: 100,
-  enterprise: Infinity, // Mantener por si se usa 'enterprise' genérico en alguna parte
+  enterprise_monthly: Infinity,
+  enterprise: Infinity
 };
 
 /**
  * Función para obtener un plan por su ID interno.
- * @param {string} planId El ID interno del plan (ej. 'profesional_monthly').
- * @returns {object | undefined} El objeto del plan o undefined si no se encuentra.
+ * @param {string} planId
+ * @returns {object | undefined}
  */
 export const getPlanById = (planId) => {
   return APP_PLANS[planId];

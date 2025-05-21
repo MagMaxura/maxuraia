@@ -1,4 +1,4 @@
-import OpenAI from 'openai';
+
 
 const apiKey = process.env.OPENAI_API_KEY || process.env.VITO_OPENAI_API_KEY;
 

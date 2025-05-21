@@ -9,6 +9,7 @@ import { AlertCircle } from 'lucide-react'; // Para el icono de advertencia
 const PLAN_JOB_LIMITS = {
   trial: 1,
   basico: 3, // Anteriormente "Profesional"
+  busqueda_puntual: 1,
   business: 25,
   enterprise: Infinity,
   // Asegúrate de que estos plan_id coincidan con los de tu tabla 'suscripciones'

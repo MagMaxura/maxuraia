@@ -1,10 +1,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://srbfgiujtgizzpialqfh.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyYmZnaXVqdGdpenpwaWFscWZoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU0MDk5MzMsImV4cCI6MjA2MDk4NTkzM30.Zc2inTAl1hDb44o9fTYkrav5vOUl5vR6T5fsWSQvifU';
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
-const SITE_URL = 'https://employsmartia.com';
+const SITE_URL = process.env.VITE_SITE_URL;
 
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
