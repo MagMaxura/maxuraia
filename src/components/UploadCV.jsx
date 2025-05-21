@@ -7,6 +7,28 @@ import { useAuth } from "../contexts/AuthContext";
 import FileUploadZone from "./FileUploadZone";
 import EditableCV from "./EditableCV";
 
+// NUEVO: Función para enviar el archivo al backend para OCR
+async function extractTextFromPDFWithOCR(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch('/api/ocr', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let error = { error: "Error en OCR backend" };
+    try {
+      error = await response.json();
+    } catch (e) {}
+    throw new Error(error.error || 'Error en OCR backend');
+  }
+
+  const data = await response.json();
+  return data.text || '';
+}
+
 function UploadCV() {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -23,13 +45,26 @@ function UploadCV() {
     try {
       const file = files[0];
       setUploadedFile(file);
-      
-      const text = await extractTextFromFile(file);
+
+      // PRIMERO intenta extracción local (pdfjs/mammoth)
+      let text = "";
+      try {
+        text = await extractTextFromFile(file);
+      } catch (e) {
+        console.warn("Extracción local falló, se usará OCR backend.");
+        text = "";
+      }
+
+      // SI NO ENCUENTRA TEXTO, MANDA AL BACKEND OCR
+      if (!text || text.trim().length < 10) {
+        text = await extractTextFromPDFWithOCR(file); // Usa la función de arriba
+      }
+
       const analysis = await analyzeCV(text);
-      
+
       setCvAnalysis(analysis);
       setIsEditing(true);
-      
+
       toast({
         title: "CV procesado",
         description: "El CV ha sido analizado correctamente. Puedes editar los datos antes de guardar.",
@@ -53,11 +88,11 @@ function UploadCV() {
       }
 
       const result = await cvService.uploadCV(uploadedFile, user.id, editedAnalysis);
-      
+
       setCvAnalysis(editedAnalysis);
       setIsEditing(false);
       setUploadedFile(null);
-      
+
       toast({
         title: "CV guardado",
         description: "El CV ha sido guardado correctamente en la base de datos.",
