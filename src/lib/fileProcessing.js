@@ -146,6 +146,13 @@ export async function analyzeCV(textOrExtractionResult) {
 
     const gptAnalysis = await response.json();
     console.log("analyzeCV: Análisis con GPT exitoso:", gptAnalysis);
+
+    // Validar que los datos requeridos estén presentes
+    if (!gptAnalysis.nombre || !gptAnalysis.email || !gptAnalysis.telefono) {
+      console.warn("analyzeCV: Faltan datos requeridos en el análisis de GPT:", gptAnalysis);
+      return basicAnalyzeCV(text); // Usar análisis básico si faltan datos críticos
+    }
+
     return {
       ...gptAnalysis,
       textoCompleto: text

@@ -1,4 +1,4 @@
-
+import OpenAI from 'openai';
 
 const apiKey = process.env.OPENAI_API_KEY || process.env.VITO_OPENAI_API_KEY;
 
@@ -69,7 +69,7 @@ ${text}`;
         .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
         .join('\n');
     }
-    
+
     // Asegurar que las habilidades sean arrays de strings
     if (!parsedResponse.habilidades || typeof parsedResponse.habilidades !== 'object') {
         parsedResponse.habilidades = { tecnicas: [], blandas: [] };
@@ -81,7 +81,7 @@ ${text}`;
             ? parsedResponse.habilidades.blandas.map(String)
             : [];
     }
-    
+
     // Asegurar que nivel_escolarizacion sea un string
     if (typeof parsedResponse.nivel_escolarizacion !== 'string') {
         parsedResponse.nivel_escolarizacion = parsedResponse.nivel_escolarizacion ? String(parsedResponse.nivel_escolarizacion) : "No especificado";
@@ -92,13 +92,24 @@ ${text}`;
   } catch (error) {
     console.error("Error al llamar a la API de OpenAI desde el backend:", error);
     let errorMessage = "Error al procesar la comparación con OpenAI en el servidor.";
+
+    if (error instanceof OpenAI.APIError) {
+      console.error("Error de la API de OpenAI:", error.status, error.message, error.code);
+      errorMessage = `Error de OpenAI: ${error.message} (Code: ${error.code || 'N/A'}, Status: ${error.status})`;
+      return res.status(500).json({ error: errorMessage, details: error.message, code: error.code, status: error.status });
+    } else if (error instanceof SyntaxError) {
+      console.error("Error al parsear la respuesta JSON de OpenAI:", error);
+      errorMessage = "Error al procesar la respuesta de OpenAI (JSON inválido).";
+      return res.status(500).json({ error: errorMessage, details: error.message });
+    }
+    
     if (error.response) {
       console.error("Detalles del error de OpenAI:", error.response.data);
       errorMessage = error.response.data.error?.message || errorMessage;
     } else if (error.message) {
       errorMessage = error.message;
     }
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: errorMessage,
       details: error.message
     });
