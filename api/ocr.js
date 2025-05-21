@@ -28,10 +28,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const form = new formidable.IncomingForm();
-  form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ error: 'Error en upload' });
-
+  
+    const form = formidable.IncomingForm();
+    form.parse(req, async (err, fields, files) => {
+      if (err) return res.status(500).json({ error: 'Error en upload' });
     const file = files.file;
     if (!file) return res.status(400).json({ error: 'Archivo no enviado' });
 
