@@ -11,7 +11,7 @@ export const config = {
   },
 };
 
-const bucketName = 'orc-emplñoysmart';
+const bucketName = 'orc-employsmart';
 
 // Inicializar Google Storage y Vision con las credenciales del env
 function getGCloudClients() {
