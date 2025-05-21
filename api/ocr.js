@@ -1,5 +1,5 @@
 // /api/ocr.js
-import { IncomingForm } from 'formidable';
+import multer from 'multer';
 import fs from 'fs';
 import { Storage } from '@google-cloud/storage';
 import vision from '@google-cloud/vision';
@@ -26,59 +26,41 @@ function getGCloudClients() {
   }
 }
 
+const tempDir = process.env.VERCEL_TMP_DIR || '/tmp';
+const upload = multer({ dest: tempDir });
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const form = new IncomingForm({
-    uploadDir: '/tmp',
-    keepExtensions: true,
-  });
-
-  form.parse(req, async (err, fields, files) => {
-    console.log("OCR API: Archivos recibidos:", files);
-    if (err) {
-      console.error("Formidable parse error:", err);
-      return res.status(500).json({ error: 'Error en upload (formidable)' });
+  upload.single('file')(req, res, async (err) => {
+    console.log("OCR API: Request received", req);
+    if (err instanceof multer.MulterError) {
+      console.error("Multer error:", err);
+      return res.status(500).json({ error: 'Error en upload (multer)' });
+    } else if (err) {
+      console.error("Unknown error:", err);
+      return res.status(500).json({ error: 'Error desconocido en upload' });
     }
 
-    // Mostrar keys de los archivos recibidos para debug
-    const fileKeys = Object.keys(files);
-    console.log('FILES recibidos:', fileKeys);
+    console.log("OCR API: Archivo recibido:", req.file);
 
-    // Agarra el primer archivo recibido sin importar el nombre del campo
-    const receivedFiles = Object.values(files);
-    if (!receivedFiles.length) {
+    if (!req.file) {
       console.error("No se recibió ningún archivo.");
       return res.status(400).json({ error: 'Archivo no enviado' });
     }
-    const file = receivedFiles[0];
 
-    // Chequea existencia de filepath/path
-    let filePath = file.filepath || file.path;
+    const file = req.file;
+    const filePath = file.path;
     console.log("OCR API: Ruta temporal del archivo:", filePath);
+
     if (!filePath) {
       console.error("El archivo recibido no tiene ruta temporal:", file);
       return res.status(400).json({ error: 'Archivo subido no tiene ruta temporal' });
     }
 
-    // Ensure the file is saved to disk
-    if (!fs.existsSync(filePath)) {
-      console.log("File not found at original path, attempting to move it.");
-      const newFilePath = path.join('/tmp', file.originalFilename || file.name || 'temp_file.pdf');
-      try {
-        fs.renameSync(filePath, newFilePath);
-        filePath = newFilePath;
-        console.log("File moved successfully to:", filePath);
-      } catch (moveError) {
-        console.error("Error moving file:", moveError);
-        return res.status(500).json({ error: 'Error al mover el archivo temporal' });
-      }
-    }
-
-    // Busca nombre, o pone uno default
-    const filename = path.basename(file.originalFilename || file.name || 'archivo.pdf');
+    const filename = path.basename(file.originalname || file.filename || 'archivo.pdf');
 
     let storage, visionClient;
     try {

@@ -33,6 +33,7 @@
     "framer-motion": "^10.16.4",
     "lucide-react": "^0.285.0",
     "mammoth": "^1.6.0",
+    "multer": "^2.0.0",
     "openai": "^4.24.1",
     "pdfjs-dist": "^3.11.174",
     "react": "^18.2.0",
