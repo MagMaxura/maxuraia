@@ -31,7 +31,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Método no permitido' });
   }
 
-  const form = new IncomingForm();
+  const form = new IncomingForm({
+    uploadDir: '/tmp',
+    keepExtensions: true,
+  });
 
   form.parse(req, async (err, fields, files) => {
     if (err) {
