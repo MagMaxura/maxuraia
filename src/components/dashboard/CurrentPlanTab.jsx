@@ -21,10 +21,16 @@ function CurrentPlanTab() {
     const plans = Object.keys(APP_PLANS);
     const currentPlanIndex = plans.indexOf(currentPlanId);
     if (currentPlanIndex < plans.length - 1) {
-      return APP_PLANS[plans[currentPlanIndex + 1]];
+      const nextPlan = APP_PLANS[plans[currentPlanIndex + 1]];
+      console.log('getNextPlan - nextPlan:', nextPlan);
+      return nextPlan;
     }
+    console.log('getNextPlan - No next plan found');
     return null;
   };
+  const nextPlan = user?.suscripcion?.plan_id ? getNextPlan(user.suscripcion.plan_id) : null;
+  console.log('CurrentPlanTab - nextPlan:', nextPlan);
+
   const handleCheckout = async () => {
     if (!window.Paddle) {
       toast({ title: "Error", description: "El sistema de pagos no está disponible.", variant: "destructive" });
