@@ -72,7 +72,6 @@ const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
 
-
 const ToastTitle = React.forwardRef(({ className, ...props }, ref) => {
   return (
     <ToastPrimitives.Title
@@ -98,6 +97,7 @@ const ToastDescription = React.forwardRef(({ className, ...props }, ref) => {
   );
 });
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
+
 export {
 	Toast,
 	ToastAction,
