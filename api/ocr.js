@@ -52,10 +52,24 @@ export default async function handler(req, res) {
     const file = receivedFiles[0];
 
     // Chequea existencia de filepath/path
-    const filePath = file.filepath || file.path;
+    let filePath = file.filepath || file.path;
     if (!filePath) {
       console.error("El archivo recibido no tiene ruta temporal:", file);
       return res.status(400).json({ error: 'Archivo subido no tiene ruta temporal' });
+    }
+
+    // Ensure the file is saved to disk
+    if (!fs.existsSync(filePath)) {
+      console.log("File not found at original path, attempting to move it.");
+      const newFilePath = path.join('/tmp', file.originalFilename || file.name || 'temp_file.pdf');
+      try {
+        fs.renameSync(filePath, newFilePath);
+        filePath = newFilePath;
+        console.log("File moved successfully to:", filePath);
+      } catch (moveError) {
+        console.error("Error moving file:", moveError);
+        return res.status(500).json({ error: 'Error al mover el archivo temporal' });
+      }
     }
 
     // Busca nombre, o pone uno default
