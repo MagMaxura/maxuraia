@@ -17,15 +17,14 @@ function CurrentPlanTab() {
   const [open, setOpen] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
 
-  
-    const getNextPlan = (currentPlanId) => {
-      const plans = Object.keys(APP_PLANS);
-      const currentPlanIndex = plans.indexOf(currentPlanId);
-      if (currentPlanIndex < plans.length - 1) {
-        return APP_PLANS[plans[currentPlanIndex + 1]];
-      }
-      return null;
-    };
+  const getNextPlan = (currentPlanId) => {
+    const plans = Object.keys(APP_PLANS);
+    const currentPlanIndex = plans.indexOf(currentPlanId);
+    if (currentPlanIndex < plans.length - 1) {
+      return APP_PLANS[plans[currentPlanIndex + 1]];
+    }
+    return null;
+  };
   const handleCheckout = async () => {
     if (!window.Paddle) {
       toast({ title: "Error", description: "El sistema de pagos no está disponible.", variant: "destructive" });
@@ -138,3 +137,7 @@ function CurrentPlanTab() {
         <ToastViewport />
       </ToastProvider>
     </motion.div>
+  );
+}
+
+export default CurrentPlanTab;
