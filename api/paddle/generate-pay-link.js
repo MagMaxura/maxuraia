@@ -29,16 +29,18 @@ export default async function handler(req, res) {
     const transactionRequest = {
       items: [{ price_id: priceId, quantity: 1 }],
       custom_data: { user_id: userId },
-       checkout: {
+      checkout: {
         settings: {
           success_url: successUrl || `${req.headers.origin}/payment-success`,
           cancel_url: cancelUrl || `${req.headers.origin}/payment-cancelled`,
         },
       },
     };
+    console.log('generate-pay-link - transactionRequest:', transactionRequest);
 
     if (userEmail) {
       transactionRequest.customer = { email: userEmail };
+      console.log('generate-pay-link - transactionRequest with customer:', transactionRequest);
     }
 const transaction = await paddle.transactions.create(transactionRequest);
 console.log('generate-pay-link - transaction:', transaction);
