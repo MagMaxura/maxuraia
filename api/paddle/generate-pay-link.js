@@ -27,9 +27,9 @@ export default async function handler(req, res) {
 
   try {
     const transactionRequest = {
-      items: [{ price_id: priceId, quantity: 1 }],
+      items: [{ priceId: priceId, quantity: 1 }],
       custom_data: { user_id: userId },
-      checkout: {
+       checkout: {
         settings: {
           success_url: successUrl || `${req.headers.origin}/payment-success`,
           cancel_url: cancelUrl || `${req.headers.origin}/payment-cancelled`,
