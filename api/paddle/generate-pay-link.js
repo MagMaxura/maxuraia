@@ -23,7 +23,6 @@ export default async function handler(req, res) {
   try {
     const transactionRequest = {
       items: [{ price_id: priceId, quantity: 1 }],
-      custom_data: { user_id: userId },
       checkout: {
         settings: {
           success_url: successUrl || `${req.headers.origin}/payment-success`,
@@ -36,7 +35,9 @@ export default async function handler(req, res) {
       transactionRequest.customer = { email: userEmail };
     }
 
+    console.log("Transaction Request:", transactionRequest);
     const transaction = await paddle.transactions.create(transactionRequest);
+    console.log("Transaction Response:", transaction);
 
     const checkoutUrl = transaction.checkout?.url;
     if (!checkoutUrl) {
