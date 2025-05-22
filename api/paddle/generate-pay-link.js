@@ -3,6 +3,7 @@ import { Paddle, Environment } from '@paddle/paddle-node-sdk';
 const PADDLE_API_KEY = process.env.PADDLE_API_KEY;
 const PADDLE_ENV = process.env.PADDLE_ENV === 'production' ? Environment.production : Environment.sandbox;
 
+console.log("PADDLE_API_KEY:", PADDLE_API_KEY);
 const paddle = new Paddle(PADDLE_API_KEY, {
   environment: PADDLE_ENV,
 });
