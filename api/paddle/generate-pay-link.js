@@ -27,7 +27,7 @@ export default async function handler(req, res) {
 
   try {
     const transactionRequest = {
-      items: [{ priceId: priceId, quantity: 1 }],
+      items: [{ price_id: priceId, quantity: 1 }],
       custom_data: { user_id: userId },
        checkout: {
         settings: {
