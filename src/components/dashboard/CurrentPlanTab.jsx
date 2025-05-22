@@ -18,19 +18,9 @@ function CurrentPlanTab() {
   const [open, setOpen] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState(false);
 
-  const getNextPlan = (currentPlanId) => {
-    const plans = Object.keys(APP_PLANS);
-    const currentPlanIndex = plans.indexOf(currentPlanId);
-    if (plans.length > 0) {
-      const nextPlanIndex = (currentPlanIndex + 1) % plans.length;
-      const nextPlan = APP_PLANS[plans[nextPlanIndex]];
-      console.log('getNextPlan - nextPlan:', nextPlan);
-      return nextPlan;
-    }
-    console.log('getNextPlan - No next plan found');
-    return null;
-  };
-  const nextPlan = user?.suscripcion?.plan_id ? getNextPlan(user.suscripcion.plan_id) : null;
+  // Eliminar la lógica de nextPlan por ahora
+  //const nextPlan = user?.suscripcion?.plan_id ? getNextPlan(user.suscripcion.plan_id) : null;
+  const nextPlan = APP_PLANS['profesional_monthly'];
   console.log('CurrentPlanTab - nextPlan:', nextPlan);
 
   const handleCheckout = async () => {
