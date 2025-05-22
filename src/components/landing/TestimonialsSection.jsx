@@ -30,7 +30,7 @@ const testimonials = [
 function TestimonialsSection() {
   return (
     <section className="bg-white/5 backdrop-blur-lg py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto">
+      <div className="mx-auto">
         <motion.h2 {...fadeInWhileInView} className="text-3xl sm:text-4xl font-bold text-center text-white mb-12">
           Lo que dicen nuestros clientes
         </motion.h2>
