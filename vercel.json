@@ -15,5 +15,16 @@
       "destination": "/legal",
       "permanent": true
     }
+  ],
+  "headers": [
+    {
+      "source": "/api/paddle/generate-pay-link",
+      "headers": [
+        {
+          "key": "Allow",
+          "value": "POST"
+        }
+      ]
+    }
   ]
 }
