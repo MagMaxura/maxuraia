@@ -72,7 +72,7 @@ function CurrentPlanTab() {
         throw new Error('No se pudo iniciar el checkout');
       }
     } catch (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Error", description: error?.message || 'Error al generar link de pago', variant: "destructive" });
     } finally {
       setLoadingCheckout(false);
     }
