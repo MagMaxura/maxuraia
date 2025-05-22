@@ -60,10 +60,10 @@ function CurrentPlanTab() {
     if (!response.ok) throw new Error(data.message);
 
     if (data.transactionId) {
-      window.Paddle.Checkout.open({ transactionId: data.transactionId });
+      window.location.href = `/PaymentSuccess?_ptxn=${data.transactionId}`;
     }
     setLoadingCheckout(false);
-};
+  };
 
   return (
     <motion.div

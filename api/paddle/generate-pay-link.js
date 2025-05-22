@@ -54,10 +54,10 @@ if (!checkoutUrl) {
   return res.status(500).json({ message: 'Failed to generate checkout URL.' });
 }
 
-
-    return res.status(200).json({ transactionId, checkoutUrl });
+    return res.status(200).json({ transactionId });
   } catch (error) {
     console.error('Error creating transaction:', error);
+
 
     if (error instanceof Paddle.PaddleError) {
       // Handle Paddle API errors
