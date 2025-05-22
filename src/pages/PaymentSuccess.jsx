@@ -7,7 +7,9 @@ export default function PaymentSuccessPage() {
     const transactionId = params.get('_ptxn');
     if (window.Paddle && transactionId) {
       window.Paddle.Setup({ environment: 'production' }); // Cambia a 'sandbox' si usás test
-      window.Paddle.Checkout.open({ transactionId });
+      setTimeout(() => {
+        window.Paddle.Checkout.open({ transactionId });
+      }, 500);
     }
   }, []);
 
