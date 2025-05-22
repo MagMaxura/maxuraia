@@ -63,7 +63,7 @@ export default async function handler(req, res) {
     } else {
       // Handle other errors
       console.error('Internal server error:', error);
-      return res.status(500).json({ message: 'Internal server error while generating the payment link.', error: error.message });
+      return res.status(500).json({ message: 'Internal server error while generating the payment link.'});
     }
   }
 }
