@@ -41,38 +41,29 @@ function CurrentPlanTab() {
 
     setLoadingCheckout(true);
 
-    try {
-      console.log('handleCheckout - Llamando a /api/paddle/generate-pay-link');
-      const response = await fetch('/api/paddle/generate-pay-link', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          priceId: nextPlan.paddlePriceId,
-          userId: user?.id,
-          userEmail: user?.email
-        })
-      });
+    
+    console.log('handleCheckout - Llamando a /api/paddle/generate-pay-link');
+    const response = await fetch('/api/paddle/generate-pay-link', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        priceId: nextPlan.paddlePriceId,
+        userId: user?.id,
+        userEmail: user?.email
+      })
+    });
 
-      const data = await response.json();
-      console.log('handleCheckout - Respuesta de /api/paddle/generate-pay-link:', data);
-      if (!response.ok) throw new Error(data.message);
+    const data = await response.json();
+    console.log('handleCheckout - Respuesta de /api/paddle/generate-pay-link:', data);
+    if (!response.ok) throw new Error(data.message);
 
-      if (data.transactionId) {
-        window.Paddle.Checkout.open({ transactionId: data.transactionId });
-      } else if (data.checkoutUrl) {
-        window.Paddle.Checkout.open({ override: data.checkoutUrl });
-      } else {
-        throw new Error('No se pudo iniciar el checkout');
-      }
-    } catch (error) {
-      console.error('handleCheckout - Error al generar link de pago:', error);
-      toast({ title: "Error", description: error?.message || 'Error al generar link de pago', variant: "destructive" });
-    } finally {
-      setLoadingCheckout(false);
+    if (data.transactionId) {
+      window.Paddle.Checkout.open({ transactionId: data.transactionId });
     }
-  };
+    setLoadingCheckout(false);
+};
 
   return (
     <motion.div
