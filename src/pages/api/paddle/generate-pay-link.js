@@ -1,7 +1,6 @@
 // src/pages/api/paddle/generate-pay-link.js
 
 import { Paddle, Environment } from '@paddle/paddle-node-sdk';
-import { useToast } from '@/components/ui/use-toast';
 
 const PADDLE_API_KEY = process.env.PADDLE_API_KEY;
 const PADDLE_ENV = process.env.PADDLE_ENV === 'production' ? Environment.production : Environment.sandbox;
@@ -51,7 +50,6 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ transactionId, checkoutUrl });
   } catch (error) {
-    const { toast } = useToast();
     console.error('Error creating transaction:', error);
 
     if (error instanceof Paddle.PaddleError) {
@@ -65,7 +63,7 @@ export default async function handler(req, res) {
     } else {
       // Handle other errors
       console.error('Internal server error:', error);
-      return res.status(500).json({ message: 'Internal server error while generating the payment link.' });
+      return res.status(500).json({ message: 'Internal server error while generating the payment link.', error: error.message });
     }
   }
 }
