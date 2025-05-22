@@ -11,6 +11,7 @@ const paddle = new Paddle(PADDLE_API_KEY, {
 });
 
 export default async function handler(req, res) {
+  console.log('generate-pay-link - handler called');
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ message: 'Method Not Allowed' });
@@ -50,6 +51,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ transactionId, checkoutUrl });
   } catch (error) {
+    const { toast } = useToast();
     console.error('Error creating transaction:', error);
 
     if (error instanceof Paddle.PaddleError) {
@@ -60,7 +62,7 @@ export default async function handler(req, res) {
       // Handle validation errors
       console.error('Validation error:', error.message);
       return res.status(400).json({ message: `Validation error: ${error.message}` });
-    }  else {
+    } else {
       // Handle other errors
       console.error('Internal server error:', error);
       return res.status(500).json({ message: 'Internal server error while generating the payment link.' });

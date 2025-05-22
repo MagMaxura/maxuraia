@@ -21,8 +21,9 @@ function CurrentPlanTab() {
   const getNextPlan = (currentPlanId) => {
     const plans = Object.keys(APP_PLANS);
     const currentPlanIndex = plans.indexOf(currentPlanId);
-    if (currentPlanIndex < plans.length - 1) {
-      const nextPlan = APP_PLANS[plans[currentPlanIndex + 1]];
+    if (plans.length > 0) {
+      const nextPlanIndex = (currentPlanIndex + 1) % plans.length;
+      const nextPlan = APP_PLANS[plans[nextPlanIndex]];
       console.log('getNextPlan - nextPlan:', nextPlan);
       return nextPlan;
     }
@@ -38,6 +39,8 @@ function CurrentPlanTab() {
       return;
     }
 
+    console.log('handleCheckout - nextPlan:', nextPlan);
+    console.log('handleCheckout - nextPlan.paddlePriceId:', nextPlan?.paddlePriceId);
     if (!nextPlan || !nextPlan.paddlePriceId) {
       toast({ title: "Error", description: "Este plan no está disponible para pago online.", variant: "destructive" });
       return;
@@ -48,7 +51,9 @@ function CurrentPlanTab() {
     try {
       const response = await fetch('/api/paddle/generate-pay-link', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           priceId: nextPlan.paddlePriceId,
           userId: user?.id,
