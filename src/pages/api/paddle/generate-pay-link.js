@@ -55,15 +55,15 @@ export default async function handler(req, res) {
     if (error instanceof Paddle.PaddleError) {
       // Handle Paddle API errors
       console.error('Paddle API error:', error.message);
-      return res.status(500).json({ message: `Paddle API error: ${error.message}` });
+      return res.status(500).json({ message: `Paddle API error: ${error.message}`, error: true });
     } else if (error instanceof ValidationError) {
       // Handle validation errors
       console.error('Validation error:', error.message);
-      return res.status(400).json({ message: `Validation error: ${error.message}` });
+      return res.status(400).json({ message: `Validation error: ${error.message}`, error: true });
     } else {
       // Handle other errors
       console.error('Internal server error:', error);
-      return res.status(500).json({ message: 'Internal server error while generating the payment link.'});
+      return res.status(500).json({ message: 'Internal server error while generating the payment link.', error: true });
     }
   }
 }
