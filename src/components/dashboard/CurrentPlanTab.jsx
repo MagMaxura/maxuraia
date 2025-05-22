@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { getPlanById, APP_PLANS } from '@/config/plans';
+import { Loader2 } from 'lucide-react';
 import {
   Toast,
   ToastClose,
