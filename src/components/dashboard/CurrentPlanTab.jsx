@@ -24,8 +24,10 @@ function CurrentPlanTab() {
   console.log('CurrentPlanTab - nextPlan:', nextPlan);
 
   const handleCheckout = async () => {
+    console.log('handleCheckout - Inicio');
     if (!window.Paddle) {
       toast({ title: "Error", description: "El sistema de pagos no está disponible.", variant: "destructive" });
+      console.log('handleCheckout - Paddle no está disponible');
       return;
     }
 
@@ -33,12 +35,14 @@ function CurrentPlanTab() {
     console.log('handleCheckout - nextPlan.paddlePriceId:', nextPlan?.paddlePriceId);
     if (!nextPlan || !nextPlan.paddlePriceId) {
       toast({ title: "Error", description: "Este plan no está disponible para pago online.", variant: "destructive" });
+      console.log('handleCheckout - nextPlan o nextPlan.paddlePriceId no están definidos');
       return;
     }
 
     setLoadingCheckout(true);
 
     try {
+      console.log('handleCheckout - Llamando a /api/paddle/generate-pay-link');
       const response = await fetch('/api/paddle/generate-pay-link', {
         method: 'POST',
         headers: {
@@ -52,6 +56,7 @@ function CurrentPlanTab() {
       });
 
       const data = await response.json();
+      console.log('handleCheckout - Respuesta de /api/paddle/generate-pay-link:', data);
       if (!response.ok) throw new Error(data.message);
 
       if (data.transactionId) {
@@ -62,6 +67,7 @@ function CurrentPlanTab() {
         throw new Error('No se pudo iniciar el checkout');
       }
     } catch (error) {
+      console.error('handleCheckout - Error al generar link de pago:', error);
       toast({ title: "Error", description: error?.message || 'Error al generar link de pago', variant: "destructive" });
     } finally {
       setLoadingCheckout(false);

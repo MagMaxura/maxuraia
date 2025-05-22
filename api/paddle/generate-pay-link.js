@@ -8,17 +8,20 @@ const PADDLE_ENV = process.env.PADDLE_ENV === 'production' ? Environment.product
 const paddle = new Paddle(PADDLE_API_KEY, {
   environment: PADDLE_ENV,
 });
-
+console.log('generate-pay-link - PADDLE_API_KEY:', PADDLE_API_KEY);
 export default async function handler(req, res) {
-  console.log('generate-pay-link - handler called');
+  console.log('generate-pay-link - handler called', {req});
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
+    console.log('generate-pay-link - Method Not Allowed');
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
   const { priceId, userId, userEmail, successUrl, cancelUrl } = req.body;
-
+  console.log('generate-pay-link - req.body:', req.body);
+  console.log('generate-pay-link - priceId from req.body:', priceId);
   if (!priceId) {
+    console.log('generate-pay-link - Price ID is required');
     return res.status(400).json({ message: 'Price ID is required' });
   }
 
@@ -37,16 +40,18 @@ export default async function handler(req, res) {
     if (userEmail) {
       transactionRequest.customer = { email: userEmail };
     }
+const transaction = await paddle.transactions.create(transactionRequest);
+console.log('generate-pay-link - transaction:', transaction);
 
-    const transaction = await paddle.transactions.create(transactionRequest);
+const transactionId = transaction.id;
+const checkoutUrl = transaction.checkout?.url;
 
-    const transactionId = transaction.id;
-    const checkoutUrl = transaction.checkout?.url;
+if (!checkoutUrl) {
+  console.error('No checkout URL returned by Paddle.');
+  console.log('generate-pay-link - No checkout URL returned by Paddle.');
+  return res.status(500).json({ message: 'Failed to generate checkout URL.' });
+}
 
-    if (!checkoutUrl) {
-      console.error('No checkout URL returned by Paddle.');
-      return res.status(500).json({ message: 'Failed to generate checkout URL.' });
-    }
 
     return res.status(200).json({ transactionId, checkoutUrl });
   } catch (error) {

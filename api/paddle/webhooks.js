@@ -28,8 +28,10 @@ async function buffer(readable) {
 }
 
 export default async function handler(req, res) {
+  console.log('webhooks - handler called', {req});
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
+    console.log('webhooks - Method Not Allowed');
     return res.status(405).json({ message: 'Método no permitido' });
   }
 
@@ -38,7 +40,8 @@ export default async function handler(req, res) {
   const signature = req.headers['paddle-signature'];
 
   if (!signature || !PADDLE_WEBHOOK_SECRET) {
-    console.warn('Firma de Webhook o secreto no encontrados. Procede sin verificación (NO RECOMENDADO PARA PRODUCCIÓN).');
+    console.warn('webhooks - Firma de Webhook o secreto no encontrados. Procede sin verificación (NO RECOMENDADO PARA PRODUCCIÓN).');
+    console.log('webhooks - Falta la firma del webhook o el secreto');
     return res.status(400).json({ message: 'Falta la firma del webhook o el secreto' });
   }
 
@@ -46,9 +49,9 @@ export default async function handler(req, res) {
   try {
     // Verificar la firma del webhook
     event = await paddle.webhooks.unmarshal(bodyString, PADDLE_WEBHOOK_SECRET, signature);
-    console.log('Evento de Paddle verificado:', event.eventType);
+    console.log('webhooks - Evento de Paddle verificado:', event.eventType);
   } catch (err) {
-    console.error('Error al verificar la firma del webhook:', err.message);
+    console.error('webhooks - Error al verificar la firma del webhook:', err.message);
     return res.status(400).json({ message: `Error de verificación de Webhook: ${err.message}` });
   }
 
@@ -56,7 +59,7 @@ export default async function handler(req, res) {
   try {
     switch (event.eventType) {
       case 'transaction.completed':
-        console.log('Transacción completada:', event.data.id);
+        console.log('webhooks - Transacción completada:', event.data);
         // Lógica para activar servicios, actualizar estado de suscripción, etc.
         // Obtener el ID del reclutador y el ID del plan de los datos del evento
         const recruiterIdTransaction = event.data.custom_data.recruiter_id;
@@ -64,6 +67,7 @@ export default async function handler(req, res) {
 
         // Actualizar la base de datos de Supabase para reflejar la nueva transacción
         try {
+          console.log('webhooks - Actualizando la base de datos de Supabase (transacción)');
           const { data: transactionData, error: transactionError } = await supabase
             .from('suscripciones')
             .update({
@@ -72,9 +76,9 @@ export default async function handler(req, res) {
             .eq('recruiter_id', recruiterIdTransaction);
 
           if (transactionError) {
-            console.error('Error al actualizar la base de datos de Supabase (transacción):', transactionError, { event });
+            console.error('webhooks - Error al actualizar la base de datos de Supabase (transacción):', transactionError, { event });
           } else {
-            console.log('Base de datos de Supabase actualizada correctamente (transacción):', transactionData, { event });
+            console.log('webhooks - Base de datos de Supabase actualizada correctamente (transacción):', transactionData, { event });
           }
         } catch (error) {
           console.error('Error al interactuar con Supabase (transacción):', error, { event });
