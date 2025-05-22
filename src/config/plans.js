@@ -1,5 +1,6 @@
 /**
  * Define los planes de la aplicación y su mapeo con los IDs de producto y precio de Paddle.
+ * ¡Verifica que paddlePriceId coincida con tu dashboard de Paddle!
  */
 export const APP_PLANS = {
   busqueda_puntual: {
@@ -27,7 +28,7 @@ export const APP_PLANS = {
     id: 'profesional_monthly',
     name: 'Employ Smart IA - Plan Profesional',
     paddleProductId: 'pro_01jvsmnsj3hhfnyt0y89rawyn4',
-    paddlePriceId: 'pri_01jvsn7rjbv61144k9ztfrscjr',
+    paddlePriceId: 'pri_01jvsn7rjbjv61l44k9ztfrscjr', // <--- Corrige aquí tu priceId exacto de Paddle
     priceDisplay: 'ARS 12,500.00/month',
     priceNumeric: 12500,
     type: 'monthly',
@@ -47,7 +48,7 @@ export const APP_PLANS = {
     id: 'empresa_monthly',
     name: 'Employ Smart IA - Plan Business',
     paddleProductId: 'pro_01jvsmjxcwypkdaxkcvas8q9mw',
-    paddlePriceId: 'pro_01jvsmjxcwypkdaxkcvas8q9mw',
+    paddlePriceId: 'pri_01jvsvmm8vm50zz6q025w5sxkns', // <--- Corrige aquí tu priceId exacto de Paddle
     priceDisplay: 'ARS 69,000.00/month',
     priceNumeric: 69000,
     type: 'monthly',
@@ -70,7 +71,7 @@ export const APP_PLANS = {
     id: 'enterprise_monthly',
     name: 'Employ Smart IA - Plan Enterprise',
     paddleProductId: 'pro_01jvsnkm4n8ry8h3p1an42ytv2',
-    paddlePriceId: 'pri_01jvsnnm2gtv294yv4wz7ns21y',
+    paddlePriceId: 'pri_01jvsnm2gtv294yw4wz7ns21y', // <--- Corrige aquí tu priceId exacto de Paddle
     priceDisplay: 'ARS 300,000.00/month',
     priceNumeric: 300000,
     type: 'enterprise',
@@ -92,10 +93,6 @@ export const APP_PLANS = {
   }
 };
 
-/**
- * Límites de análisis de CV para validaciones internas.
- * Estos valores están alineados con `cvLimit` de cada plan.
- */
 export const PLAN_CV_ANALYSIS_LIMITS = {
   trial: 10,
   basico: 50,
@@ -106,19 +103,10 @@ export const PLAN_CV_ANALYSIS_LIMITS = {
   enterprise: Infinity
 };
 
-/**
- * Función para obtener un plan por su ID interno.
- * @param {string} planId
- * @returns {object | undefined}
- */
 export const getPlanById = (planId) => {
   return APP_PLANS[planId];
 };
 
-/**
- * Devuelve un array con todos los planes disponibles.
- * @returns {Array<object>}
- */
 export const getAllPlans = () => {
   return Object.values(APP_PLANS);
 };

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { getPlanById, APP_PLANS } from '@/config/plans';
+import { APP_PLANS } from '@/config/plans';
 import { Loader2 } from 'lucide-react';
+import { usePayment } from '@/hooks/usePayment';
 import {
   Toast,
   ToastClose,
@@ -16,59 +17,13 @@ import {
 function CurrentPlanTab() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const [loadingCheckout, setLoadingCheckout] = useState(false);
-
-  // Eliminar la lógica de nextPlan por ahora
-  //const nextPlan = user?.suscripcion?.plan_id ? getNextPlan(user.suscripcion.plan_id) : null;
   const nextPlan = APP_PLANS['profesional_monthly'];
-  console.log('CurrentPlanTab - nextPlan:', nextPlan);
-
-  const handleCheckout = async () => {
-    console.log('handleCheckout - Inicio');
-    if (!window.Paddle) {
-      toast({ title: "Error", description: "El sistema de pagos no está disponible.", variant: "destructive" });
-      console.log('handleCheckout - Paddle no está disponible');
-      return;
-    }
-
-    console.log('handleCheckout - nextPlan:', nextPlan);
-    console.log('handleCheckout - nextPlan.paddlePriceId:', nextPlan?.paddlePriceId);
-    if (!nextPlan || !nextPlan.paddlePriceId) {
-      toast({ title: "Error", description: "Este plan no está disponible para pago online.", variant: "destructive" });
-      console.log('handleCheckout - nextPlan o nextPlan.paddlePriceId no están definidos');
-      return;
-    }
-
-    setLoadingCheckout(true);
-
-    
-    console.log('handleCheckout - Llamando a /api/paddle/generate-pay-link');
-    const response = await fetch('/api/paddle/generate-pay-link', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        priceId: nextPlan.paddlePriceId,
-        userId: user?.id,
-        userEmail: user?.email
-      })
-    });
-
-    const data = await response.json();
-    console.log('handleCheckout - Respuesta de /api/paddle/generate-pay-link:', data);
-    if (!response.ok) throw new Error(data.message);
-
-    if (data.transactionId) {
-      window.location.href = `/PaymentSuccess?_ptxn=${data.transactionId}`;
-    }
-    setLoadingCheckout(false);
-  };
+  const { loadingCheckout, handleCheckout } = usePayment();
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }} 
+      animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       className="bg-white p-6 md:p-8 rounded-xl shadow-xl"
     >
@@ -88,35 +43,30 @@ function CurrentPlanTab() {
             <p className="text-sm font-medium text-slate-500">Estado:</p>
             <p className="text-lg capitalize">{user.suscripcion.status || "No disponible"}</p>
           </div>
-          
           {user.suscripcion.status === 'trialing' && user.suscripcion.trial_ends_at && (
             <div>
               <p className="text-sm font-medium text-slate-500">Tu prueba gratuita finaliza el:</p>
               <p className="text-lg">{new Date(user.suscripcion.trial_ends_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           )}
-
           {user.suscripcion.status === 'active' && user.suscripcion.current_period_start && (
-             <div>
+            <div>
               <p className="text-sm font-medium text-slate-500">Período actual desde:</p>
               <p className="text-lg">{new Date(user.suscripcion.current_period_start).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           )}
-
           {user.suscripcion.status === 'active' && user.suscripcion.current_period_end && (
-             <div>
+            <div>
               <p className="text-sm font-medium text-slate-500">Próxima fecha de renovación:</p>
               <p className="text-lg">{new Date(user.suscripcion.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           )}
-          
-           {user.suscripcion.created_at && (
+          {user.suscripcion.created_at && (
             <div>
               <p className="text-sm font-medium text-slate-500">Suscripción (o prueba) iniciada el:</p>
               <p className="text-lg">{new Date(user.suscripcion.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
-           )}
-
+          )}
         </div>
       ) : (
         <p className="text-slate-500">No se pudo cargar la información de tu plan. Si el problema persiste, contacta a soporte.</p>
@@ -127,7 +77,10 @@ function CurrentPlanTab() {
           <ToastDescription>
             {nextPlan ? nextPlan.description : 'Contacta a soporte para más información.'}
           </ToastDescription>
-          <Button onClick={handleCheckout} disabled={loadingCheckout}>
+          <Button
+            onClick={() => handleCheckout(nextPlan, user)}
+            disabled={loadingCheckout}
+          >
             {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Comprar Plan
           </Button>
