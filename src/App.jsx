@@ -33,6 +33,8 @@ function App() {
             <Route path="/legal" element={<LegalPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
             <Route
               path="/complete-profile"
               element={
@@ -57,8 +59,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+
           </Routes>
           <Toaster />
         </div>
