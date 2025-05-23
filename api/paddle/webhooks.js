@@ -46,6 +46,7 @@ export default async function handler(req, res) {
     console.log('webhooks - Evento de Paddle verificado:', event.eventType);
   } catch (err) {
     console.error('webhooks - Error al verificar la firma del webhook:', err.message);
+    console.error("webhooks - Request body:", bodyString);
     return res.status(400).json({ message: `Error de verificación de Webhook: ${err.message}` });
   }
 
@@ -192,6 +193,8 @@ export default async function handler(req, res) {
     res.status(200).json({ received: true });
   } catch (err) {
     console.error('Error al procesar el evento del webhook:', err.message);
+    console.error('Error al procesar el evento del webhook:', err.message);
+    console.error("webhooks - Event data:", event);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 }

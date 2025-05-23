@@ -15,6 +15,7 @@ export default async function handler(req, res) {
   }
 
   const { priceId, userId, userEmail, successUrl, cancelUrl } = req.body;
+  console.log("generate-pay-link - Request received:", { priceId, userId, userEmail, successUrl, cancelUrl });
 
   if (!priceId) {
     return res.status(400).json({ message: 'Price ID is required' });
@@ -46,6 +47,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ checkoutUrl, transactionId: transaction.id });
   } catch (error) {
+    console.error("generate-pay-link - Error:", error);
     return res.status(500).json({ message: 'Internal server error while generating the payment link.', error: true });
   }
 }
