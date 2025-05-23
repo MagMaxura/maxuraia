@@ -1,6 +1,4 @@
 import React from 'react';
-
-import React from 'react';
 import { getPricePreview } from '@/lib/paddleUtils';
 
 const PaddleButton = ({ priceId, email, recruiterId, ctaLabel = 'Comprar ahora', successUrl = 'https://www.employsmartia.com/paymentsuccess', cancelUrl = 'https://www.employsmartia.com/paymentcancelled' }) => {
