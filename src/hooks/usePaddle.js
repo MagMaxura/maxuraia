@@ -1,23 +1,21 @@
+// hooks/usePaddle.js
 import { useState, useEffect } from 'react';
 
-const usePaddle = () => {
+export default function usePaddle() {
   const [isPaddleReady, setIsPaddleReady] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.Paddle) {
-      setIsPaddleReady(true);
-    } else {
-      const intervalId = setInterval(() => {
-        if (typeof window !== 'undefined' && window.Paddle) {
-          setIsPaddleReady(true);
-          clearInterval(intervalId);
-        }
-      }, 50); // Check every 50ms
-      return () => clearInterval(intervalId);
-    }
+    const checkPaddle = () => {
+      if (typeof window !== 'undefined' && window.Paddle) {
+        setIsPaddleReady(true);
+      } else {
+        // Reintentar después de un tiempo si Paddle no está listo
+        setTimeout(checkPaddle, 100);
+      }
+    };
+
+    checkPaddle();
   }, []);
 
   return isPaddleReady;
-};
-
-export default usePaddle;
+}
