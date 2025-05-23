@@ -26,9 +26,8 @@ const PaddleButton = ({ priceId, ctaLabel = 'Comprar ahora', successUrl = 'https
  //       settings: {
  //         successUrl: successUrl,
  //         cancelUrl: cancelUrl,
-        },
+        };
      // };
-
       console.log("PaddleButton - Paddle.Checkout.open params:", paddleParams);
       window.Paddle.Checkout.open(paddleParams);
       console.log("PaddleButton - Paddle.Checkout.open called successfully");
