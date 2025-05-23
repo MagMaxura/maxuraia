@@ -11,6 +11,8 @@ import CompleteProfile from "./pages/CompleteProfile"; // Importar la nueva pág
 import LegalPage from "./pages/LegalPage"; // Importar página de términos y políticas
 import PrivacyPage from "./pages/PrivacyPage"; // Importar página de privacidad
 import TermsPage from "./pages/TermsPage"; // Importar página de términos
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancelled from "./pages/PaymentCancelled";
 // import SupabaseTestPage from "./pages/SupabaseTestPage"; // Ya no se importa
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
