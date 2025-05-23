@@ -7,8 +7,8 @@ const PaddleButton = ({
   email,
   recruiterId,
   ctaLabel = 'Comprar ahora',
-  successUrl = 'https://www.employsmartia.com/payment-success',
-  cancelUrl = 'https://www.employsmartia.com/payment-cancelled'
+  successUrl = 'employsmartia.com/payment-success',
+  cancelUrl = 'employsmartia.com/payment-cancelled'
 }) => {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
