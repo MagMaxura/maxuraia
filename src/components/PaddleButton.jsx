@@ -10,11 +10,23 @@ const PaddleButton = ({
   successUrl = 'https://www.employsmartia.com/paymentsuccess',
   cancelUrl = 'https://www.employsmartia.com/paymentcancelled'
 }) => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
+
+  const handleRefreshUser = async () => {
+    try {
+      await refreshUser();
+    } catch (error) {
+      console.error("PaddleButton - Error al refrescar el usuario:", error);
+    }
+  };
 
   const handleClick = async () => {
     console.log("PaddleButton - Clicked:", { priceId, user, successUrl, cancelUrl });
+    console.log("PaddleButton - Variables de entorno:", {
+      VITE_PADDLE_ENV: import.meta.env.VITE_PADDLE_ENV,
+      VITE_PADDLE_CLIENT_TOKEN: import.meta.env.VITE_PADDLE_CLIENT_TOKEN
+    });
 
     if (!user) {
       console.warn("PaddleButton - Usuario no autenticado. Redirigiendo a /register");
@@ -22,11 +34,7 @@ const PaddleButton = ({
       return;
     }
 
-    if (!user.email_verified) {
-      console.warn("PaddleButton - Email no verificado. Redirigiendo a /register-confirmation");
-      navigate('/register-confirmation');
-      return;
-    }
+    await handleRefreshUser();
 
     if (typeof window !== 'undefined' && window.Paddle) {
       if (!window.Paddle.Initialized) {

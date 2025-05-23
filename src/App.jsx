@@ -55,6 +55,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
           </Routes>
           <Toaster />
         </div>
