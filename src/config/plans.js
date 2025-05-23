@@ -28,7 +28,7 @@ export const APP_PLANS = {
     id: 'profesional_monthly',
     name: 'Employ Smart IA - Plan Profesional',
     paddleProductId: 'pro_01jvsmnsj3hhfnyt0y89rawyn4',
-    paddlePriceId: 'pri_01jvsn7rjbjv61l44k9ztfrscjr', // <--- Corrige aquí tu priceId exacto de Paddle
+    paddlePriceId: 'pri_01jvsn7rjbv61144k9ztfrscjr', // <--- Corrige aquí tu priceId exacto de Paddle
     priceDisplay: 'ARS 12,500.00/month',
     priceNumeric: 12500,
     type: 'monthly',
@@ -48,7 +48,7 @@ export const APP_PLANS = {
     id: 'empresa_monthly',
     name: 'Employ Smart IA - Plan Business',
     paddleProductId: 'pro_01jvsmjxcwypkdaxkcvas8q9mw',
-    paddlePriceId: 'pri_01jvsvmm8vm50zz6q025w5sxkns', // <--- Corrige aquí tu priceId exacto de Paddle
+    paddlePriceId: 'pri_01jvsmm8vm50zz6q025w5sxkns', // <--- Corrige aquí tu priceId exacto de Paddle
     priceDisplay: 'ARS 69,000.00/month',
     priceNumeric: 69000,
     type: 'monthly',
@@ -71,7 +71,7 @@ export const APP_PLANS = {
     id: 'enterprise_monthly',
     name: 'Employ Smart IA - Plan Enterprise',
     paddleProductId: 'pro_01jvsnkm4n8ry8h3p1an42ytv2',
-    paddlePriceId: 'pri_01jvsnm2gtv294yw4wz7ns21y', // <--- Corrige aquí tu priceId exacto de Paddle
+    paddlePriceId: 'pri_01jvsnnm2gtv294yv4wz7ns21y', // <--- Corrige aquí tu priceId exacto de Paddle
     priceDisplay: 'ARS 300,000.00/month',
     priceNumeric: 300000,
     type: 'enterprise',
