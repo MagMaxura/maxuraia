@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
   try {
     const transactionRequest = {
-      items: [{ price_id: priceId, quantity: 1 }],
+      items: [{ priceId: priceId, quantity: 1 }],
       checkout: {
         settings: {
           success_url: successUrl || `${req.headers.origin}/payment-success`,

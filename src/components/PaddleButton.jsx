@@ -1,6 +1,6 @@
 import React from 'react';
 
-const PaddleButton = ({ priceId, email, recruiterId, ctaLabel = 'Comprar ahora', successUrl = 'https://www.employsmartia.com/payment-success', cancelUrl = 'https://www.employsmartia.com/payment-cancelled' }) => {
+const PaddleButton = ({ priceId, email, recruiterId, ctaLabel = 'Comprar ahora', successUrl = 'https://www.employsmartia.com/paymentsuccess', cancelUrl = 'https://www.employsmartia.com/paymentcancelled' }) => {
   const handleClick = () => {
     console.log("PaddleButton - Clicked:", { priceId, email, recruiterId, successUrl, cancelUrl });
     if (typeof window !== 'undefined' && window.Paddle) {
