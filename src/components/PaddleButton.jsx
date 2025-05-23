@@ -48,6 +48,7 @@ const PaddleButton = ({ priceId, ctaLabel = 'Comprar ahora', successUrl = 'https
       {ctaLabel}
     </button>
   );
+  console.log("PaddleButton - Paddle.Checkout.open called successfully");
 };
 
 export default PaddleButton;
