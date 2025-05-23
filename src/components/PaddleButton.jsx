@@ -9,19 +9,8 @@ const PaddleButton = ({ priceId, ctaLabel = 'Comprar ahora', successUrl = 'https
 
   const handleClick = async () => {
     console.log("PaddleButton - Clicked:", { priceId, user, successUrl, cancelUrl });
-    if (!user) {
-      navigate('/register');
-      return;
-    }
-
-    if (!user.email_verified) {
-      navigate('/register-confirmation');
-      return;
-    }
-
-    if (typeof window !== 'undefined' && window.Paddle) {
       try {
-        const price = await getPricePreview(priceId, 'US'); // Assuming US as default country
+        const price = await getPricePreview(priceId, 'AR'); // Assuming US as default country
         console.log("PaddleButton - Price Preview:", price);
 
         const paddleParams = {
@@ -43,9 +32,6 @@ const PaddleButton = ({ priceId, ctaLabel = 'Comprar ahora', successUrl = 'https
       } catch (error) {
         console.error("PaddleButton - Error fetching price preview:", error);
       }
-    } else {
-      console.error('Paddle no está disponible en window.');
-    }
   };
 
   return (
