@@ -9,29 +9,26 @@ const PaddleButton = ({ priceId, ctaLabel = 'Comprar ahora', successUrl = 'https
 
   const handleClick = async () => {
     console.log("PaddleButton - Clicked:", { priceId, user, successUrl, cancelUrl });
-      try {
-        const price = await getPricePreview(priceId, 'AR'); // Assuming US as default country
-        console.log("PaddleButton - Price Preview:", price);
-
-        const paddleParams = {
+      
+        var paddleParams = {
           items: [{ priceId: String(priceId), quantity: 1 }],
-          customer: { email: user.email },
-          customData: { recruiter_id: user.id },
-          settings: {
-            successUrl: successUrl,
-            cancelUrl: cancelUrl,
+ //         customer: { email: user.email },
+ //         customData: { recruiter_id: user.id },
+ //         settings: {
+ //           successUrl: successUrl,
+ //           cancelUrl: cancelUrl,
           },
         };
+
         console.log("PaddleButton - Paddle.Checkout.open params:", paddleParams);
-        if (price) {
-          window.Paddle.Checkout.open(paddleParams);
-          console.log("PaddleButton - Paddle.Checkout.open called successfully");
-        } else {
-          console.error("PaddleButton - Price is null, not opening checkout");
-        }
-      } catch (error) {
-        console.error("PaddleButton - Error fetching price preview:", error);
-      }
+        window.Paddle.Checkout.open({
+          setting:{    
+            displayMode: "overlay",
+            theme: "light",
+            locale: "en"}
+        },
+          paddleParams);
+        console.log("PaddleButton - Paddle.Checkout.open called successfully");
   };
 
   return (
