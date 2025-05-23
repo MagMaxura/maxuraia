@@ -8,9 +8,9 @@ if (typeof window !== 'undefined' && window.Paddle) {
   const paddleClientToken = import.meta.env.PADDLE_CLIENT_TOKEN;
   const paddleEnvironment = import.meta.env.PADDLE_ENV || 'sandbox'; // 'sandbox' o 'live'
 
-  if (paddleClientToken) {
+  if (import.meta.env.PADDLE_CLIENT_TOKEN) {
     window.Paddle.Initialize({
-      token: paddleClientToken,
+      token: import.meta.env.PADDLE_CLIENT_TOKEN,
       environment: paddleEnvironment,
       eventCallback: function(data) {
         // Opcional: manejar eventos de Paddle directamente en el frontend si es necesario
