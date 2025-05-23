@@ -1,5 +1,6 @@
 // Requiere: framer-motion, lucide-react, APP_PLANS, AuthContext, useToast, Button
 import React, { useState } from 'react';
+import usePaddle from '@/hooks/usePaddle';
 import PaddleButton from '@/components/PaddleButton';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -31,7 +32,7 @@ const keyFeatures = [
 function PricingSection() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [loadingPlan, setLoadingPlan] = useState(null);
+  const isPaddleReady = usePaddle();
 
   return (
     <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
@@ -78,14 +79,18 @@ function PricingSection() {
                   </Button>
                 </a>
               ) : (
-                <PaddleButton
-                  priceId={plan.paddlePriceId}
-                  email={user?.email}
-                  recruiterId={user?.id}
-                  ctaLabel={plan.ctaLabel || 'Elegir'}
-                  successUrl="https://www.employsmartia.com/payment-success"
-                  cancelUrl="https://www.employsmartia.com/payment-cancelled"
-                />
+                isPaddleReady ? (
+                  <PaddleButton
+                    priceId={plan.paddlePriceId}
+                    email={user?.email}
+                    recruiterId={user?.id}
+                    ctaLabel={plan.ctaLabel || 'Elegir'}
+                    successUrl="https://www.employsmartia.com/payment-success"
+                    cancelUrl="https://www.employsmartia.com/payment-cancelled"
+                  />
+                ) : (
+                  <div>Cargando...</div>
+                )
               )}
             </motion.div>
           ))}
