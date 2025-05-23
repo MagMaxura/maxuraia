@@ -49,22 +49,10 @@ function CurrentPlanTab() {
               <p className="text-lg">{new Date(user.suscripcion.trial_ends_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           )}
-          {user.suscripcion.status === 'active' && user.suscripcion.current_period_start && (
-            <div>
-              <p className="text-sm font-medium text-slate-500">Período actual desde:</p>
-              <p className="text-lg">{new Date(user.suscripcion.current_period_start).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
-          )}
           {user.suscripcion.status === 'active' && user.suscripcion.current_period_end && (
             <div>
               <p className="text-sm font-medium text-slate-500">Próxima fecha de renovación:</p>
               <p className="text-lg">{new Date(user.suscripcion.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
-          )}
-          {user.suscripcion.created_at && (
-            <div>
-              <p className="text-sm font-medium text-slate-500">Suscripción (o prueba) iniciada el:</p>
-              <p className="text-lg">{new Date(user.suscripcion.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
           )}
         </div>

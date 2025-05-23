@@ -1,17 +1,14 @@
 import { useEffect } from "react";
 
 export default function PaymentSuccessPage() {
+  // Extraer transactionId fuera del useEffect
+  const params = new URLSearchParams(window.location.search);
+  const transactionId = params.get('_ptxn');
+
   useEffect(() => {
-    // Verifica si existe el parámetro _ptxn
-    const params = new URLSearchParams(window.location.search);
-    const transactionId = params.get('_ptxn');
-    if (window.Paddle && transactionId) {
-      window.Paddle.Setup({ environment: 'production' }); // Cambia a 'sandbox' si usás test
-      setTimeout(() => {
-        window.Paddle.Checkout.open({ transactionId });
-      }, 500);
-    }
-  }, []);
+    // Aquí podrías agregar lógica para verificar el estado de la suscripción en Supabase
+    // y mostrar un mensaje de confirmación al usuario.
+  }, []);src/components/ui/avatar
 
   return (
     <div

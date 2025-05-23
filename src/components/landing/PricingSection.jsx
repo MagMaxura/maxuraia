@@ -1,5 +1,6 @@
 // Requiere: framer-motion, lucide-react, APP_PLANS, AuthContext, useToast, Button
 import React, { useState } from 'react';
+import PaddleButton from '@/components/PaddleButton';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Loader2, CheckCircle, XCircle } from 'lucide-react';
@@ -31,48 +32,6 @@ function PricingSection() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [loadingPlan, setLoadingPlan] = useState(null);
-
-  const handleSubscription = async (planId) => {
-    if (!window.Paddle) {
-      toast({ title: "Error", description: "El sistema de pagos no está disponible.", variant: "destructive" });
-      return;
-    }
-
-    const selectedPlan = APP_PLANS[planId];
-    if (!selectedPlan || !selectedPlan.paddlePriceId) {
-      toast({ title: "Error", description: "Este plan no está disponible para pago online.", variant: "destructive" });
-      return;
-    }
-
-    setLoadingPlan(planId);
-
-    try {
-      const response = await fetch('/api/paddle/generate-pay-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          priceId: selectedPlan.paddlePriceId,
-          userId: user?.id,
-          userEmail: user?.email
-        })
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-
-      if (data.transactionId) {
-        window.Paddle.Checkout.open({ transactionId: data.transactionId });
-      } else if (data.checkoutUrl) {
-        window.Paddle.Checkout.open({ override: data.checkoutUrl });
-      } else {
-        throw new Error('No se pudo iniciar el checkout');
-      }
-    } catch (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-    } finally {
-      setLoadingPlan(null);
-    }
-  };
 
   return (
     <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
@@ -119,17 +78,14 @@ function PricingSection() {
                   </Button>
                 </a>
               ) : (
-                <Button
-                  size="lg"
-                  className={`w-full mt-auto ${
-                    plan.isRecommended ? 'bg-yellow-400 hover:bg-yellow-300 text-black' : 'bg-white text-blue-700 hover:bg-gray-100'
-                  }`}
-                  onClick={() => handleSubscription(plan.id)}
-                  disabled={loadingPlan === plan.id}
-                >
-                  {loadingPlan === plan.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {plan.ctaLabel || 'Elegir'}
-                </Button>
+                <PaddleButton
+                  priceId={plan.paddlePriceId}
+                  email={user?.email}
+                  recruiterId={user?.id}
+                  ctaLabel={plan.ctaLabel || 'Elegir'}
+                  successUrl="https://www.employsmartia.com/payment-success"
+                  cancelUrl="https://www.employsmartia.com/payment-cancelled"
+                />
               )}
             </motion.div>
           ))}
