@@ -18,23 +18,23 @@ const PaddleButton = ({ priceId, ctaLabel = 'Comprar ahora', successUrl = 'https
     //  return;
     //}
 
-    if (typeof window !== 'undefined' && window.Paddle) {
+    //if (typeof window !== 'undefined' && window.Paddle) {
       var paddleParams = {
         items: [{ priceId: String(priceId), quantity: 1 }],
-        customer: { email: user.email },
-        customData: { recruiter_id: user.id },
-        settings: {
-          successUrl: successUrl,
-          cancelUrl: cancelUrl,
+ //       customer: { email: user.email },
+ //       customData: { recruiter_id: user.id },
+ //       settings: {
+ //         successUrl: successUrl,
+ //         cancelUrl: cancelUrl,
         },
-      };
+     // };
 
       console.log("PaddleButton - Paddle.Checkout.open params:", paddleParams);
       window.Paddle.Checkout.open(paddleParams);
       console.log("PaddleButton - Paddle.Checkout.open called successfully");
-    } else {
-      console.error('Paddle no está disponible en window.');
-    }
+    //} else {
+    //  console.error('Paddle no está disponible en window.');
+    //}
   };
 
   return (
