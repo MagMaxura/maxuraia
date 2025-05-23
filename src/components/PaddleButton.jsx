@@ -34,7 +34,12 @@ const PaddleButton = ({ priceId, ctaLabel = 'Comprar ahora', successUrl = 'https
           },
         };
         console.log("PaddleButton - Paddle.Checkout.open params:", paddleParams);
-        window.Paddle.Checkout.open(paddleParams);
+        if (price) {
+          window.Paddle.Checkout.open(paddleParams);
+          console.log("PaddleButton - Paddle.Checkout.open called successfully");
+        } else {
+          console.error("PaddleButton - Price is null, not opening checkout");
+        }
       } catch (error) {
         console.error("PaddleButton - Error fetching price preview:", error);
       }
