@@ -174,5 +174,6 @@ export function useAuthService() {
     register,
     resetPassword,
     isAuthenticated: !!user, // Basado en el estado user
+    refreshUser: () => handleAuthChange("REFRESH", session), // Añadir la función refreshUser
   };
 }

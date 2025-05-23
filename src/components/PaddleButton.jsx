@@ -48,18 +48,23 @@ const PaddleButton = ({
 
       const paddleParams = {
         items: [{ 
-          priceId: String(priceId), 
+        //  priceId: String(priceId),
+          price_id: String(priceId), 
           quantity: 1 
         }],
         customer: { 
           email: email || user.email 
         },
-        customData: { 
+        //customData: 
+        custom_data:
+        { 
           recruiter_id: recruiterId || user.id 
         },
         settings: {
-          successUrl: successUrl,
-          cancelUrl: cancelUrl
+          //successUrl: successUrl,
+          success_url: successUrl,
+          //cancelUrl: cancelUrl
+          cancel_url: cancelUrl
         }
       };
 
