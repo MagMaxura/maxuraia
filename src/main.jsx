@@ -5,8 +5,8 @@ import '@/index.css';
 
 // Inicialización de Paddle.js
 if (typeof window !== 'undefined' && window.Paddle) {
-  const paddleClientToken = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
-  const paddleEnvironment = import.meta.env.VITE_PADDLE_ENVIRONMENT || 'sandbox'; // 'sandbox' o 'live'
+  const paddleClientToken = import.meta.env.PADDLE_CLIENT_TOKEN;
+  const paddleEnvironment = import.meta.env.PADDLE_ENV || 'sandbox'; // 'sandbox' o 'live'
 
   if (paddleClientToken) {
     window.Paddle.Initialize({
