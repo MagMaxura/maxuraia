@@ -2,31 +2,42 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const PaddleButton = ({ 
-  priceId, 
+const PaddleButton = ({
+  priceId,
   email,
   recruiterId,
-  ctaLabel = 'Comprar ahora', 
-  successUrl = 'https://www.employsmartia.com/paymentsuccess', 
-  cancelUrl = 'https://www.employsmartia.com/paymentcancelled' 
+  ctaLabel = 'Comprar ahora',
+  successUrl = 'https://www.employsmartia.com/paymentsuccess',
+  cancelUrl = 'https://www.employsmartia.com/paymentcancelled'
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const handleClick = async () => {
     console.log("PaddleButton - Clicked:", { priceId, user, successUrl, cancelUrl });
-    
+
     if (!user) {
+      console.warn("PaddleButton - Usuario no autenticado. Redirigiendo a /register");
       navigate('/register');
       return;
     }
 
     if (!user.email_verified) {
+      console.warn("PaddleButton - Email no verificado. Redirigiendo a /register-confirmation");
       navigate('/register-confirmation');
       return;
     }
 
     if (typeof window !== 'undefined' && window.Paddle) {
+      if (!window.Paddle.Initialized) {
+        console.warn("PaddleButton - Paddle no ha sido inicializado correctamente.");
+        return;
+      }
+
+      console.log("PaddleButton - Paddle está inicializado.");
+      console.log("PaddleButton - Entorno actual:", import.meta.env.VITE_PADDLE_ENV);
+      console.log("PaddleButton - Token de cliente:", import.meta.env.VITE_PADDLE_CLIENT_TOKEN);
+
       const paddleParams = {
         items: [{ 
           priceId: String(priceId), 
@@ -43,12 +54,17 @@ const PaddleButton = ({
           cancelUrl: cancelUrl
         }
       };
-      
-      console.log("PaddleButton - Paddle.Checkout.open params:", paddleParams);
-      window.Paddle.Checkout.open(paddleParams);
-      console.log("PaddleButton - Paddle.Checkout.open called successfully");
+
+      console.log("PaddleButton - Parámetros para Paddle.Checkout.open:", paddleParams);
+
+      try {
+        window.Paddle.Checkout.open(paddleParams);
+        console.log("PaddleButton - Paddle.Checkout.open llamado exitosamente.");
+      } catch (error) {
+        console.error("PaddleButton - Error al llamar a Paddle.Checkout.open:", error);
+      }
     } else {
-      console.error('Paddle no está disponible en window.');
+      console.error("PaddleButton - Paddle no está disponible en window.");
     }
   };
 
