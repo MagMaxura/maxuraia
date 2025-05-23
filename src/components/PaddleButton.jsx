@@ -1,8 +1,5 @@
 import React from 'react';
 import { getPricePreview } from '@/lib/paddleUtils';
-
-import React from 'react';
-import { getPricePreview } from '@/lib/paddleUtils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
