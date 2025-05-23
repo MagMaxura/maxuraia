@@ -1,9 +1,27 @@
 import React from 'react';
 import { getPricePreview } from '@/lib/paddleUtils';
 
-const PaddleButton = ({ priceId, email, recruiterId, ctaLabel = 'Comprar ahora', successUrl = 'https://www.employsmartia.com/paymentsuccess', cancelUrl = 'https://www.employsmartia.com/paymentcancelled' }) => {
+import React from 'react';
+import { getPricePreview } from '@/lib/paddleUtils';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+const PaddleButton = ({ priceId, ctaLabel = 'Comprar ahora', successUrl = 'https://www.employsmartia.com/paymentsuccess', cancelUrl = 'https://www.employsmartia.com/paymentcancelled' }) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const handleClick = async () => {
-    console.log("PaddleButton - Clicked:", { priceId, email, recruiterId, successUrl, cancelUrl });
+    console.log("PaddleButton - Clicked:", { priceId, user, successUrl, cancelUrl });
+    if (!user) {
+      navigate('/register');
+      return;
+    }
+
+    if (!user.email_verified) {
+      navigate('/register-confirmation');
+      return;
+    }
+
     if (typeof window !== 'undefined' && window.Paddle) {
       try {
         const price = await getPricePreview(priceId, 'US'); // Assuming US as default country
@@ -11,8 +29,8 @@ const PaddleButton = ({ priceId, email, recruiterId, ctaLabel = 'Comprar ahora',
 
         const paddleParams = {
           items: [{ priceId: String(priceId), quantity: 1 }],
-          customer: { email: email },
-          customData: { recruiter_id: recruiterId },
+          customer: { email: user.email },
+          customData: { recruiter_id: user.id },
           settings: {
             successUrl: successUrl,
             cancelUrl: cancelUrl,
