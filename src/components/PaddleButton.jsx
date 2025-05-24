@@ -74,7 +74,8 @@ const PaddleButton = ({
     // Define settings
     const settings = {
       success_url: successUrl,
-      cancel_url: cancelUrl
+      display_mode: 'overlay'
+     // cancel_url: cancelUrl
     };
 
     // Abrir checkout usando la función similar al ejemplo
