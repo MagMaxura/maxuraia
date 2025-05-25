@@ -17,6 +17,7 @@ if (typeof window !== 'undefined' && window.Paddle) {
       token: paddleClientToken,
       eventCallback: function(event) { // <--- MEJORA ESTE LOGGING
         console.log('--- Paddle Event Received ---');
+        console.log(event);
         console.log('Event Name:', event.name); // Muestra el nombre del evento
         console.log('Event Data:', event.data); // Muestra los datos asociados al evento
 
