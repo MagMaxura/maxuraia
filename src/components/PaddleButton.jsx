@@ -74,7 +74,8 @@ const PaddleButton = ({
     // Define settings
     const settings = {
       success_url: successUrl,
-      display_mode: 'overlay'
+      display_mode: 'overlay',
+      apiKey: import.meta.env.VITE_PADDLE_API_KEY
      // cancel_url: cancelUrl
     };
 
