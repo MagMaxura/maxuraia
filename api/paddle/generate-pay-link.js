@@ -12,6 +12,7 @@ const paddle = new Paddle(PADDLE_API_KEY, {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
+    console.log("Estamos por mandar un POST");
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ message: 'Method Not Allowed' });
   }

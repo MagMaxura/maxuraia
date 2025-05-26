@@ -4,7 +4,11 @@ import { supabase } from '@/lib/supabase'; // Ajusta el path si lo tienes en otr
 
 const PADDLE_API_KEY = process.env.PADDLE_API_KEY;
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET;
-const PADDLE_ENV = process.env.PADDLE_ENV === 'production' ? Environment.production : Environment.sandbox;
+const PADDLE_ENV = (process.env.PADDLE_ENV || 'sandbox') === 'production' ? Environment.production : Environment.sandbox;
+
+console.log("PADDLE_API_KEY webhook:", PADDLE_API_KEY);
+console.log("PADDLE_WEBHOOK_SECRET webhook:", PADDLE_WEBHOOK_SECRET);
+console.log("PADDLE_ENV webhook:", PADDLE_ENV);
 
 const paddle = new Paddle(PADDLE_API_KEY, {
   environment: PADDLE_ENV,
