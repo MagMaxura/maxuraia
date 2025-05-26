@@ -1,7 +1,8 @@
+console.log("generate-pay-link.js - Archivo ejecutado");
 import { Paddle, Environment } from '@paddle/paddle-node-sdk';
 
-const PADDLE_API_KEY = process.env['VITE_PADDLE_API_KEY'];
-console.log("VITE_PADDLE_API:", process.env['VITE_PADDLE_API_KEY']);
+const PADDLE_API_KEY = process.env['PADDLE_API_KEY'];
+console.log("VITE_PADDLE_API:", process.env['VITE_PADDLE_API']);
 const PADDLE_ENV = Environment.sandbox;
 
 console.log("PADDLE_API_KEY:", PADDLE_API_KEY);
