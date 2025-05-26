@@ -1,7 +1,8 @@
 import { Paddle, Environment } from '@paddle/paddle-node-sdk';
 
-const PADDLE_API_KEY = process.env['PADDLE_API_KEY'];
-const PADDLE_ENV = (process.env.PADDLE_ENV || 'sandbox') === 'production' ? Environment.production : Environment.sandbox;
+const PADDLE_API_KEY = process.env['VITE_PADDLE_API_KEY'];
+console.log("VITE_PADDLE_API:", process.env['VITE_PADDLE_API_KEY']);
+const PADDLE_ENV = Environment.sandbox;
 
 console.log("PADDLE_API_KEY:", PADDLE_API_KEY);
 const paddle = new Paddle(PADDLE_API_KEY, {
@@ -27,7 +28,7 @@ export default async function handler(req, res) {
       checkout: {
         settings: {
           success_url: successUrl || `${req.headers.origin}/payment-success`,
-          cancel_url: cancelUrl || `${req.headers.origin}/payment-cancelled`,
+          //cancel_url: cancelUrl || `${req.headers.origin}/payment-cancelled`,
         },
       },
     };
