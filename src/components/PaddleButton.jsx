@@ -8,7 +8,7 @@ const PaddleButton = ({
   recruiterId,
   ctaLabel = 'Comprar ahora',
   successUrl = 'https://www.employsmartia.com/',
-  cancelUrl = 'https://www.employsmartia.com/'
+  cancelUrl = 'https://www.employsmartia.com/payment-success'
 }) => {
   const { user } = useAuth(); // Se asume que user ya está cargado si la autenticación es requerida.
   const navigate = useNavigate();
@@ -56,7 +56,7 @@ const PaddleButton = ({
     // Define items, similar al ejemplo
     const items = [
       {
-        price_id: String(priceId), // Usar price_id con guion bajo
+        priceId: String(priceId), // Usar priceId con camelCase
         quantity: 1
       }
     ];
