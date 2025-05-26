@@ -11,6 +11,7 @@ const paddle = new Paddle(PADDLE_API_KEY, {
 });
 
 export default async function handler(req, res) {
+  console.log("generate-pay-link.js - Request received:", req.body);
   if (req.method !== 'POST') {
     console.log("Estamos por mandar un POST");
     res.setHeader('Allow', 'POST');
