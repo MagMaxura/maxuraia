@@ -1,48 +1,39 @@
-// hooks/usePaddle.js
+// Archivo: src/hooks/usePaddle.js
 import { useState, useEffect } from 'react';
+
+const MAX_PADDLE_CHECKS = 50; // Intentar por 5 segundos (50 * 100ms)
+const PADDLE_CHECK_INTERVAL = 100; // ms
 
 export default function usePaddle() {
   const [isPaddleReady, setIsPaddleReady] = useState(false);
 
   useEffect(() => {
-    const checkPaddle = () => {
+    let attempts = 0;
+    let timeoutId = null;
+
+    const checkPaddleScript = () => {
       if (typeof window !== 'undefined' && window.Paddle) {
+        console.log('usePaddle: Paddle.js script está listo.');
         setIsPaddleReady(true);
-        // Opcional: puedes añadir un console.log aquí si quieres saber cuándo está listo
-        // console.log('usePaddle: Paddle.js está listo.');
+        if (timeoutId) clearTimeout(timeoutId); // Detener polling
       } else {
-        // Reintentar después de un tiempo si Paddle no está listo
-        // Este es un polling simple. Considera añadir un límite de reintentos o un timeout
-        // para evitar un bucle infinito si Paddle.js nunca carga por alguna razón.
-        // También, un cleanup para el setTimeout sería bueno.
-        setTimeout(checkPaddle, 100);
+        attempts++;
+        if (attempts < MAX_PADDLE_CHECKS) {
+          timeoutId = setTimeout(checkPaddleScript, PADDLE_CHECK_INTERVAL);
+        } else {
+          console.warn(`usePaddle: Paddle.js script no encontrado después de ${MAX_PADDLE_CHECKS} intentos.`);
+        }
       }
     };
 
-    checkPaddle();
+    checkPaddleScript();
 
-    // Es buena práctica añadir un cleanup para cualquier setTimeout o setInterval en useEffect
-    // aunque en este caso, una vez que isPaddleReady es true, el polling se detiene.
-    // Sin embargo, si el componente se desmonta ANTES de que Paddle esté listo,
-    // el timeout podría intentar llamar a setIsPaddleReady en un componente no montado.
-    // Un cleanup más robusto se vería así:
-    /*
-    let timeoutId;
-    const checkPaddle = () => {
-      if (typeof window !== 'undefined' && window.Paddle) {
-        setIsPaddleReady(true);
-      } else {
-        timeoutId = setTimeout(checkPaddle, 100);
-      }
-    };
-    checkPaddle();
-    return () => {
+    return () => { // Función de limpieza
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
     };
-    */
-  }, []); // El array vacío asegura que esto se ejecute solo una vez (al montar)
+  }, []); // Se ejecuta solo una vez al montar
 
   return isPaddleReady;
 }

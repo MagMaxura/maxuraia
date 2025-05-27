@@ -1,86 +1,52 @@
+// Archivo: src/components/PaddleButton.jsx
+
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { usePayment } from '@/hooks/usePayment'; // Importa el nuevo hook
+import { Button } from '@/components/ui/button'; // Asumo que tienes este componente
+import { Loader2 } from 'lucide-react'; // Para el indicador de carga
 
 const PaddleButton = ({
-  priceId,
-  email,
-  recruiterId,
+  priceId,         // ID del precio de Paddle (ej: plan.paddlePriceId)
+  email,           // Email del usuario (ej: user?.email)
+  recruiterId,     // ID del reclutador/usuario (ej: user?.id)
   ctaLabel = 'Comprar ahora',
-  // Asegúrate que estas URLs sean completas y correctas
-  successUrl = 'https://www.employsmartia.com/payment-success', // URL completa para éxito
-  // Si vuelves a habilitar cancelUrl, asegúrate que sea una URL completa y válida
-  // y que tu dominio esté aprobado en Paddle para ella.
-  // cancelUrl = 'https://www.employsmartia.com/payment-cancelled'
+  successUrl,      // Opcional: URL de éxito específica para este botón
+  cancelUrl,       // Opcional: URL de cancelación específica para este botón
+  // planDetails y userObject se podrían pasar como objetos completos si se prefiere
 }) => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+  const { loadingCheckout, handleCheckout } = usePayment();
 
-  const openPaddleCheckout = (items, customer, customData, settings) => {
-    console.log("PaddleButton - Preparando para abrir checkout...");
-    console.log("PaddleButton - Items:", items);
-    console.log("PaddleButton - Customer:", customer);
-    console.log("PaddleButton - Custom Data:", customData);
-    console.log("PaddleButton - Settings:", settings);
-
-    if (typeof window !== 'undefined' && window.Paddle) {
-      try {
-        window.Paddle.Checkout.open({
-          items: items,
-          customer: customer,
-          custom_data: customData, // Clave correcta para Paddle.js
-          settings: settings
-        });
-        console.log("PaddleButton - Paddle.Checkout.open llamado exitosamente.");
-      } catch (error) {
-        console.error("PaddleButton - Error al llamar a Paddle.Checkout.open:", error);
-      }
-    } else {
-      console.error("PaddleButton - Paddle no está disponible...");
-    }
-  };
-
-  const handleClick = () => {
-    console.log("PaddleButton - Clicked:", { priceId, user, successUrl /*, cancelUrl */ });
-
-    if (!user && !email) {
-      console.warn("PaddleButton - Usuario no autenticado y sin email. Redirigiendo a /register");
-      navigate('/register');
+  const onButtonClick = () => {
+    if (!priceId) {
+      console.error("PaddleButton: priceId es requerido.");
+      // Podrías usar toast aquí si lo importas y configuras
+      alert("Error: Falta el ID del plan."); 
       return;
     }
 
-    const items = [
-      {
-        price_id: String(priceId), // << CORREGIDO: usa price_id (snake_case)
-        quantity: 1
-      }
-    ];
+    // Prepara los datos del plan y del usuario para el hook usePayment
+    // El hook espera un objeto 'planDetails' con 'paddlePriceId' y un objeto 'user' con 'id' y 'email'.
+    const planDetailsPayload = { paddlePriceId: priceId };
+    const userPayload = { id: recruiterId, email: email }; // recruiterId se mapea a userId en el hook
 
-    const customer = {
-      email: email || user?.email
-    };
+    const dynamicUrls = {};
+    if (successUrl) dynamicUrls.successUrl = successUrl;
+    if (cancelUrl) dynamicUrls.cancelUrl = cancelUrl;
 
-    const customData = { // Este se pasará como custom_data a Paddle.Checkout.open
-      recruiter_id: recruiterId || user?.id
-    };
-
-    // Objeto settings CORRECTO y PLANO
-    const settings = {
-      success_url: successUrl,
-      display_mode: 'overlay'
-      // Si resuelves el problema de validación de cancel_url, puedes añadirlo aquí:
-      // cancel_url: cancelUrl,
-      // Puedes añadir otras opciones válidas como 'theme' o 'locale' si las necesitas
-      // NO incluyas el objeto anidado 'settings' con 'apiKey' o 'currency' aquí.
-    };
-
-    openPaddleCheckout(items, customer, customData, settings);
+    handleCheckout(planDetailsPayload, userPayload, dynamicUrls);
   };
 
   return (
-    <button onClick={handleClick} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+    <Button 
+      onClick={onButtonClick} 
+      disabled={loadingCheckout}
+      className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors" // Clases de ejemplo
+    >
+      {loadingCheckout ? (
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+      ) : null}
       {ctaLabel}
-    </button>
+    </Button>
   );
 };
 

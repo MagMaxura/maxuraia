@@ -1,13 +1,13 @@
 // Requiere: framer-motion, lucide-react, APP_PLANS, AuthContext, useToast, Button
 import React, { useState } from 'react';
-import usePaddle from '@/hooks/usePaddle';
-import PaddleButton from '@/components/PaddleButton';
+import usePaddle from '@/hooks/usePaddle'; // Importante: revisaremos este hook si lo envías
+import PaddleButton from '@/components/PaddleButton'; // El componente que hemos estado discutiendo
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { APP_PLANS } from '@/config/plans';
+import { APP_PLANS } from '@/config/plans'; // Asumo que aquí defines tus planes y paddlePriceId
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast'; // No se usa explícitamente aquí, pero lo mantengo si lo necesitas
 
 const fadeInWhileInView = {
   initial: { opacity: 0, y: 20 },
@@ -18,6 +18,8 @@ const fadeInWhileInView = {
 
 const pricingPlans = Object.values(APP_PLANS);
 
+// Esta estructura de keyFeatures parece ser para la tabla comparativa, no directamente para las cards individuales.
+// Lo mantendré como está, asumiendo que APP_PLANS[X].features tiene las características para las cards.
 const keyFeatures = [
   { label: 'Puestos activos', keys: ['1', '3', '25', 'Ilimitados'] },
   { label: 'Análisis de CVs', keys: ['75', '100/mes', '1.000/mes', 'Ilimitados'] },
@@ -31,8 +33,8 @@ const keyFeatures = [
 
 function PricingSection() {
   const { user } = useAuth();
-  const { toast } = useToast();
-  const isPaddleReady = usePaddle();
+  const { toast } = useToast(); // No se usa aquí, pero mantenido
+  const isPaddleReady = usePaddle(); // Este hook determina si Paddle está listo
 
   return (
     <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
@@ -67,7 +69,7 @@ function PricingSection() {
               <ul className="space-y-3 text-white/80 mb-8 flex-grow text-sm">
                 {plan.features.map((feature, fIndex) => (
                   <li key={fIndex} className="flex items-start">
-                    <CheckCircle2 className="h-4 w-4 text-green-400 mr-2 mt-1" />
+                    <CheckCircle2 className="h-4 w-4 text-green-400 mr-2 mt-1 flex-shrink-0" />
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -81,15 +83,23 @@ function PricingSection() {
               ) : (
                 isPaddleReady ? (
                   <PaddleButton
-                    priceId={plan.paddlePriceId}
+                    priceId={plan.paddlePriceId} // Proviene de tu objeto APP_PLANS
                     email={user?.email}
-                    recruiterId={user?.id}
-                    ctaLabel={plan.ctaLabel || 'Elegir'}
+                    recruiterId={user?.id} // Este será el 'userId' para el backend
+                    ctaLabel={plan.ctaLabel || 'Elegir Plan'}
                     successUrl="https://www.employsmartia.com/payment-success"
+                    // El cancelUrl se pasará al backend si PaddleButton llama al backend.
+                    // Si PaddleButton usa Paddle.Checkout.open(), su uso depende de si
+                    // cancel_url está activo en los 'settings' de ese componente y si
+                    // tu dominio está aprobado en Paddle para esa URL.
                     cancelUrl="https://www.employsmartia.com/payment-cancelled"
                   />
                 ) : (
-                  <div>Cargando...</div>
+                  // Muestra un botón deshabilitado o un loader mientras Paddle no está listo
+                  <Button size="lg" disabled className="w-full mt-auto">
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Cargando Planes...
+                  </Button>
                 )
               )}
             </motion.div>
@@ -97,15 +107,15 @@ function PricingSection() {
         </div>
 
         {/* Tabla Comparativa */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto border border-white/10">
+        <div className="overflow-x-auto bg-white/5 backdrop-blur-md rounded-xl p-2 shadow-xl border border-white/10">
+          <table className="min-w-full table-auto"> {/* Eliminado border para aplicar al contenedor */}
             <thead>
               <tr>
-                <th className="text-left py-4 px-6 border-b border-white/10">Características</th>
+                <th className="text-left py-4 px-6 border-b border-white/10 text-white">Características</th>
                 {pricingPlans.map(plan => (
                   <th
                     key={plan.id}
-                    className={`py-4 px-6 border-b border-white/10 text-center font-semibold ${plan.isRecommended ? 'text-yellow-400' : ''}`}
+                    className={`py-4 px-6 border-b border-white/10 text-center font-semibold text-white ${plan.isRecommended ? 'text-yellow-400' : ''}`}
                   >
                     {plan.name}
                   </th>
@@ -114,15 +124,15 @@ function PricingSection() {
             </thead>
             <tbody>
               {keyFeatures.map((feature, rowIndex) => (
-                <tr key={rowIndex} className="border-t border-white/10">
+                <tr key={rowIndex} className="border-t border-white/10 hover:bg-white/5 transition-colors">
                   <td className="py-3 px-6 text-sm font-medium text-white/90">{feature.label}</td>
                   {feature.keys.map((value, colIndex) => (
                     <td
                       key={colIndex}
-                      className="py-3 px-6 text-center text-sm"
+                      className="py-3 px-6 text-center text-sm text-white/80"
                     >
                       {value === '✅' ? <CheckCircle className="w-5 h-5 mx-auto text-green-400" /> :
-                       value === '❌' ? <XCircle className="w-5 h-5 mx-auto text-red-500" /> :
+                       value === '❌' ? <XCircle className="w-5 h-5 mx-auto text-red-400" /> : // Corregido a red-400 para consistencia
                        value}
                     </td>
                   ))}
