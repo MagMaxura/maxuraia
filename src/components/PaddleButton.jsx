@@ -7,13 +7,15 @@ const PaddleButton = ({
   email,
   recruiterId,
   ctaLabel = 'Comprar ahora',
-  successUrl = 'https://www.employsmartia.com/',
-  cancelUrl = 'https://www.employsmartia.com/payment-success'
+  // Asegúrate que estas URLs sean completas y correctas
+  successUrl = 'https://www.employsmartia.com/payment-success', // URL completa para éxito
+  // Si vuelves a habilitar cancelUrl, asegúrate que sea una URL completa y válida
+  // y que tu dominio esté aprobado en Paddle para ella.
+  // cancelUrl = 'https://www.employsmartia.com/payment-cancelled'
 }) => {
-  const { user } = useAuth(); // Se asume que user ya está cargado si la autenticación es requerida.
+  const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Función para abrir el checkout, similar al ejemplo
   const openPaddleCheckout = (items, customer, customData, settings) => {
     console.log("PaddleButton - Preparando para abrir checkout...");
     console.log("PaddleButton - Items:", items);
@@ -22,65 +24,56 @@ const PaddleButton = ({
     console.log("PaddleButton - Settings:", settings);
 
     if (typeof window !== 'undefined' && window.Paddle) {
-      // El ejemplo no verifica Paddle.Initialized, asume que está listo.
-      // Si tu inicialización es asíncrona, considera un estado de carga.
-      // Puedes añadir un console.warn si Paddle no está inicializado si lo deseas.
-
       try {
         window.Paddle.Checkout.open({
           items: items,
           customer: customer,
-          custom_data: customData,
+          custom_data: customData, // Clave correcta para Paddle.js
           settings: settings
         });
         console.log("PaddleButton - Paddle.Checkout.open llamado exitosamente.");
       } catch (error) {
         console.error("PaddleButton - Error al llamar a Paddle.Checkout.open:", error);
-        // Aquí podrías agregar un mensaje de error al usuario
       }
     } else {
-      console.error("PaddleButton - Paddle no está disponible en window. Asegúrate de que el script de Paddle se cargue correctamente.");
-      // Aquí podrías mostrar un mensaje al usuario o un botón deshabilitado
+      console.error("PaddleButton - Paddle no está disponible...");
     }
   };
 
   const handleClick = () => {
-    console.log("PaddleButton - Clicked:", { priceId, user, successUrl, cancelUrl });
+    console.log("PaddleButton - Clicked:", { priceId, user, successUrl /*, cancelUrl */ });
 
-    if (!user && !email) { // Si no hay usuario autenticado ni email proporcionado
+    if (!user && !email) {
       console.warn("PaddleButton - Usuario no autenticado y sin email. Redirigiendo a /register");
       navigate('/register');
       return;
     }
 
-    // Define items, similar al ejemplo
     const items = [
       {
-        priceId: String(priceId), // Usar priceId con camelCase
+        price_id: String(priceId), // << CORREGIDO: usa price_id (snake_case)
         quantity: 1
       }
     ];
 
-    // Define customer details, similar al ejemplo
     const customer = {
-      email: email || user?.email // Usar el email prop o el email del usuario
+      email: email || user?.email
     };
 
-    // Define custom data
-    const customData = {
+    const customData = { // Este se pasará como custom_data a Paddle.Checkout.open
       recruiter_id: recruiterId || user?.id
     };
 
-    // Define settings
+    // Objeto settings CORRECTO y PLANO
     const settings = {
       success_url: successUrl,
-      display_mode: 'overlay',
-      apiKey: import.meta.env.VITE_PADDLE_API_KEY,
-      currency: 'ARS'
-     // cancel_url: cancelUrl
+      display_mode: 'overlay'
+      // Si resuelves el problema de validación de cancel_url, puedes añadirlo aquí:
+      // cancel_url: cancelUrl,
+      // Puedes añadir otras opciones válidas como 'theme' o 'locale' si las necesitas
+      // NO incluyas el objeto anidado 'settings' con 'apiKey' o 'currency' aquí.
     };
 
-    // Abrir checkout usando la función similar al ejemplo
     openPaddleCheckout(items, customer, customData, settings);
   };
 
@@ -92,4 +85,3 @@ const PaddleButton = ({
 };
 
 export default PaddleButton;
-
