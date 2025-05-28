@@ -6,37 +6,61 @@ const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
 
 const SITE_URL = process.env.VITE_SITE_URL;
 
-export const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-    storage: window.localStorage,
-    storageKey: 'supabase.auth.token',
-    redirectTo: `${SITE_URL}/auth/callback`,
-  },
-  db: {
-    schema: 'public'
-  },
-  global: {
-    headers: {
-      'x-application-name': 'employsmartia'
-    }
-  }
-});
+let supabase;
 
-// Add auth state change listener
-supabase.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-    // Delete all supabase-related items from localStorage
-    for (const key of Object.keys(localStorage)) {
-      if (key.startsWith('supabase.auth.')) {
-        localStorage.removeItem(key);
+if (typeof window !== 'undefined') {
+  // Browser environment
+  supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+      storage: window.localStorage,
+      storageKey: 'supabase.auth.token',
+      redirectTo: `${SITE_URL}/auth/callback`,
+    },
+    db: {
+      schema: 'public'
+    },
+    global: {
+      headers: {
+        'x-application-name': 'employsmartia'
+      }
+    }
+  });
+
+  // Add auth state change listener only in browser
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      // Delete all supabase-related items from localStorage
+      for (const key of Object.keys(localStorage)) {
+        if (key.startsWith('supabase.auth.')) {
+          localStorage.removeItem(key);
+        }
       }
     }
   }
-});
+);
+
+} else {
+  // Server environment (e.g., Vercel function, Node.js backend)
+  // Initialize client without browser-specific auth options
+  // Consider using service_role key if needed for elevated privileges
+  // For webhooks, standard key might be sufficient depending on RLS
+  supabase = createClient(supabaseUrl, supabaseKey, {
+    db: {
+      schema: 'public'
+    },
+    global: {
+      headers: {
+        'x-application-name': 'employsmartia'
+      }
+    }
+  });
+}
+
+export { supabase };
 
 export async function checkEmailExists(email) {
   try {
