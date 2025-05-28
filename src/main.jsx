@@ -39,6 +39,9 @@ if (typeof window !== 'undefined' && window.Paddle) {
           //    window.location.href = '/'; 
           // }
         }
+        if (event.name === 'checkout.payment.failed' || event.name === 'checkout.error') {
+           console.error('Paddle Payment Failed/Error Data:', event.data);
+        }
         console.log('--- End of Paddle Event ---');
       }
     });
