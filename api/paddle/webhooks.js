@@ -1,26 +1,29 @@
 // Archivo: pages/api/paddle/webhooks.js (o la ruta que corresponda)
 
 import { Paddle, Environment } from '@paddle/paddle-node-sdk';
-import { supabase } from '../../src/lib/supabase.js'; // Ajusta la ruta si es necesario
+import { supabase } from '../../../src/lib/supabase.js';
 
+// Asegúrate de que estas variables de entorno estén configuradas en tu servidor (Vercel)
 const PADDLE_API_KEY = process.env.PADDLE_API_KEY;
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET;
 const PADDLE_ENV_STRING = process.env.PADDLE_ENV || 'sandbox';
 const PADDLE_SDK_ENV = PADDLE_ENV_STRING === 'production' ? Environment.production : Environment.sandbox;
 
-let paddleWebhookSdk; // Similar al otro endpoint, manejo de instancia del SDK
+let paddleWebhookSdk;
 if (PADDLE_API_KEY) {
     paddleWebhookSdk = new Paddle(PADDLE_API_KEY, {
         environment: PADDLE_SDK_ENV,
     });
-    console.log("SDK de Paddle (webhooks) inicializado para el entorno:", PADDLE_SDK_ENV);
+    // Este log solo se ejecuta una vez cuando la función se carga/inicializa en frío
+    console.log("SDK de Paddle (webhooks) instanciado para el entorno:", PADDLE_SDK_ENV);
 } else {
-    console.error("webhooks.js: PADDLE_API_KEY no está configurada. El SDK de Paddle no se puede inicializar.");
+    // Este log también se ejecuta solo una vez
+    console.error("webhooks.js: PADDLE_API_KEY no está configurada. El SDK de Paddle no se puede instanciar.");
 }
 
 export const config = {
   api: {
-    bodyParser: false,
+    bodyParser: false, // Es obligatorio para webhooks firmados
   },
 };
 
@@ -33,9 +36,14 @@ async function buffer(readable) {
 }
 
 export default async function handler(req, res) {
-  console.log("webhooks.js - Nueva solicitud de webhook recibida. Método:", req.method);
+  // Logs que se ejecutan en cada invocación
+  console.log("webhooks.js: Solicitud de webhook recibida. Método:", req.method);
+  console.log("webhooks.js: PADDLE_API_KEY disponible en handler:", !!PADDLE_API_KEY);
+  console.log("webhooks.js: PADDLE_WEBHOOK_SECRET disponible en handler:", !!PADDLE_WEBHOOK_SECRET);
+
+
   if (!paddleWebhookSdk) {
-    console.error("webhooks.js: El SDK de Paddle no está inicializado (falta API Key).");
+    console.error("webhooks.js: El SDK de Paddle no está disponible en el handler (PADDLE_API_KEY podría faltar).");
     return res.status(500).json({ message: 'Error de configuración del servidor: SDK de Paddle no disponible.' });
   }
 
@@ -49,100 +57,107 @@ export default async function handler(req, res) {
   const signature = req.headers['paddle-signature'];
 
   if (!signature || !PADDLE_WEBHOOK_SECRET) {
-    console.warn('webhooks - Falta firma o secreto de webhook.');
+    console.warn('webhooks.js - Falta firma o PADDLE_WEBHOOK_SECRET. Firma:', !!signature, 'Secreto:', !!PADDLE_WEBHOOK_SECRET);
     return res.status(400).json({ message: 'Falta la firma del webhook o el secreto.' });
   }
 
   let event;
   try {
     event = await paddleWebhookSdk.webhooks.unmarshal(bodyString, PADDLE_WEBHOOK_SECRET, signature);
-    console.log(`webhooks - Evento de Paddle verificado: ${event.eventType}, ID del Evento: ${event.eventId}`);
+    console.log(`webhooks.js - Evento de Paddle verificado: ${event.eventType}, ID del Evento: ${event.eventId}`);
   } catch (err) {
-    console.error('webhooks - Error al verificar la firma del webhook:', err.message);
-    console.error("webhooks - Request body string (falló unmarshal):", bodyString);
-    return res.status(400).json({ message: `Error de verificación de Webhook: ${err.message}` });
+    console.error('webhooks.js - Error al verificar la firma del webhook:', err.message);
+    console.error("webhooks.js - Request body string (falló unmarshal):", bodyString);
+    return res.status(400).json({ message: `Error de verificación de Webhook: ${err.message}. Asegúrate que PADDLE_WEBHOOK_SECRET esté correctamente configurado.` });
   }
 
   try {
-    const customData = event.data.custom_data || {};
-    let recruiterId =
-      customData.recruiter_id ||
-      customData.user_id || 
-      (typeof customData === 'string' ? JSON.parse(customData).recruiter_id : undefined);
+    // Parseo flexible de custom_data
+    const rawCustomDataObject = event.data.customData || event.data.custom_data || {}; // Probar customData (camelCase) y custom_data (snake_case)
+    let recruiterId;
+
+    if (typeof rawCustomDataObject === 'string') {
+        try {
+            const parsedString = JSON.parse(rawCustomDataObject);
+            recruiterId = parsedString.recruiter_id || parsedString.recruiterId || parsedString.user_id;
+        } catch (e) {
+            console.warn('webhooks.js - custom_data era un string pero no pudo ser parseado como JSON:', rawCustomDataObject);
+            recruiterId = undefined;
+        }
+    } else { // Es un objeto
+        recruiterId = rawCustomDataObject.recruiter_id || rawCustomDataObject.recruiterId || rawCustomDataObject.user_id;
+    }
+    console.log('webhooks.js - recruiterId extraído de customData:', recruiterId);
     
-    // ID de suscripción de Paddle (presente en eventos de suscripción y transacciones de suscripción)
     const eventPaddleSubscriptionId = event.data.id; // Para eventos subscription.*
     const transactionRelatedSubscriptionId = event.data.subscription_id; // Para transaction.* relacionadas a una sub
 
-    console.log(`webhooks - Procesando evento: ${event.eventType}. RecruiterID de custom_data: ${recruiterId}. PaddleSubscriptionID del evento: ${eventPaddleSubscriptionId || 'N/A'}. SubscriptionID relacionada a transacción: ${transactionRelatedSubscriptionId || 'N/A'}`);
+    console.log(`webhooks.js - Procesando evento: ${event.eventType}. RecruiterID: ${recruiterId}. PaddleSubscriptionID del evento: ${eventPaddleSubscriptionId || 'N/A'}. SubscriptionID relacionada a txn: ${transactionRelatedSubscriptionId || 'N/A'}`);
 
     switch (event.eventType) {
       case 'transaction.completed':
-        console.log('webhooks - Transacción completada. Datos:', JSON.stringify(event.data, null, 2));
+        console.log('webhooks.js - transaction.completed. Datos:', JSON.stringify(event.data, null, 2));
         const planIdTransaction = event.data.items[0]?.price?.product_id;
 
         if (!planIdTransaction) {
-            console.error('webhooks - transaction.completed: No se pudo obtener planIdTransaction (product_id).');
+            console.error('webhooks.js - transaction.completed: No se pudo obtener planIdTransaction (product_id).');
             break; 
         }
-
         try {
             let query;
-            const updatePayload = { 
+            const updatePayloadTransaction = { 
                 plan_id: planIdTransaction, 
-                // Considera qué status es apropiado aquí. 'active' es una suposición fuerte.
-                // Podrías querer solo actualizar fechas de pago o depender de eventos subscription.*
-                status: 'active', 
+                status: 'active', // Considera si esto siempre es deseable o si depende del estado de la suscripción
             };
 
             if (transactionRelatedSubscriptionId) {
-                console.log(`webhooks - transaction.completed para suscripción ID: ${transactionRelatedSubscriptionId}`);
+                console.log(`webhooks.js - transaction.completed para suscripción ID: ${transactionRelatedSubscriptionId}`);
                 query = supabase.from('suscripciones')
-                                .update(updatePayload)
+                                .update(updatePayloadTransaction)
                                 .eq('paddle_subscription_id', transactionRelatedSubscriptionId);
             } else if (recruiterId) {
-                console.log(`webhooks - transaction.completed (no-suscripción/pago único) para recruiterId: ${recruiterId}`);
+                console.log(`webhooks.js - transaction.completed (no-suscripción/pago único) para recruiterId: ${recruiterId}`);
                 query = supabase.from('suscripciones') 
-                                .update(updatePayload) // Asume que existe un registro para este recruiter y se activa.
+                                .update(updatePayloadTransaction) 
                                 .eq('recruiter_id', recruiterId);
             } else {
-                console.warn('webhooks - transaction.completed: No ID de suscripción ni recruiterId para asociar.');
+                console.warn('webhooks.js - transaction.completed: No ID de suscripción ni recruiterId para asociar.');
                 break; 
             }
-            const { data: dbData, error: dbError } = await query;
-            if (dbError) console.error('webhooks - transaction.completed: Error al actualizar BD:', dbError);
-            else console.log('webhooks - transaction.completed: BD actualizada.', dbData);
+            const { data: dbDataTx, error: dbErrorTx } = await query;
+            if (dbErrorTx) console.error('webhooks.js - transaction.completed: Error al actualizar BD:', dbErrorTx);
+            else console.log('webhooks.js - transaction.completed: BD actualizada.', dbDataTx);
         } catch (dbError) {
-            console.error('webhooks - transaction.completed: Excepción al interactuar con Supabase:', dbError);
+            console.error('webhooks.js - transaction.completed: Excepción al interactuar con Supabase:', dbError);
         }
         break;
 
       case 'subscription.created':
-        console.log('webhooks - Suscripción creada. ID Paddle:', eventPaddleSubscriptionId, 'Datos:', JSON.stringify(event.data, null, 2));
+        console.log('webhooks.js - subscription.created. ID Paddle:', eventPaddleSubscriptionId, 'Datos:', JSON.stringify(event.data, null, 2));
         const planIdCreated = event.data.items[0]?.price?.product_id;
         const initialStatus = event.data.status || 'active'; 
 
         if (!recruiterId) {
-            console.error('webhooks - subscription.created: Falta recruiterId. No se puede crear la suscripción en la BD.');
+            console.error('webhooks.js - subscription.created: Falta recruiterId. No se puede crear la suscripción en la BD.');
             break;
         }
         if (!planIdCreated) {
-            console.error('webhooks - subscription.created: No se pudo obtener planIdCreated (product_id).');
+            console.error('webhooks.js - subscription.created: No se pudo obtener planIdCreated (product_id).');
             break;
         }
         try {
-          const { data: dbData, error: dbError } = await supabase
+          const { data: dbDataCreated, error: dbErrorCreated } = await supabase
             .from('suscripciones')
             .insert({
               recruiter_id: recruiterId,
               plan_id: planIdCreated,
-              status: initialStatus, // Usa el status del evento de Paddle
+              status: initialStatus, 
               paddle_subscription_id: eventPaddleSubscriptionId,
             });
-          if (dbError) console.error('webhooks - subscription.created: Error al insertar en BD:', dbError);
-          else console.log('webhooks - subscription.created: Suscripción insertada en BD.', dbData);
+          if (dbErrorCreated) console.error('webhooks.js - subscription.created: Error al insertar en BD:', dbErrorCreated);
+          else console.log('webhooks.js - subscription.created: Suscripción insertada en BD.', dbDataCreated);
         } catch (dbError) {
-          console.error('webhooks - subscription.created: Excepción al interactuar con Supabase:', dbError);
+          console.error('webhooks.js - subscription.created: Excepción al interactuar con Supabase:', dbError);
         }
         break;
 
@@ -150,43 +165,50 @@ export default async function handler(req, res) {
       case 'subscription.canceled':
       case 'subscription.paused':
       case 'subscription.resumed':
-        console.log(`webhooks - Evento: ${event.eventType}. ID Paddle: ${eventPaddleSubscriptionId}. Status Paddle: ${event.data.status}. Datos:`, JSON.stringify(event.data, null, 2));
-        const planIdForUpdate = event.data.items[0]?.price?.product_id; // El plan puede cambiar en un 'updated'
+        console.log(`webhooks.js - Evento: ${event.eventType}. ID Paddle: ${eventPaddleSubscriptionId}. Status Paddle: ${event.data.status}. Datos:`, JSON.stringify(event.data, null, 2));
+        const planIdForUpdate = event.data.items[0]?.price?.product_id; 
         const newStatusFromPaddle = event.data.status;
 
         if (!eventPaddleSubscriptionId) {
-            console.error(`webhooks - ${event.eventType}: Falta paddle_subscription_id. No se puede actualizar.`);
+            console.error(`webhooks.js - ${event.eventType}: Falta paddle_subscription_id. No se puede actualizar.`);
             break;
         }
         
         try {
-            const updatePayload = { status: newStatusFromPaddle };
+            const updatePayloadSubscription = { status: newStatusFromPaddle };
+            // Solo actualiza plan_id si está presente y es un evento de update o resume
             if (planIdForUpdate && (event.eventType === 'subscription.updated' || event.eventType === 'subscription.resumed')) {
-                updatePayload.plan_id = planIdForUpdate;
+                updatePayloadSubscription.plan_id = planIdForUpdate;
             }
-            if (event.eventType === 'subscription.resumed' && 'cvs_analizados_este_periodo' in event.data.custom_data === false) { // Solo si no viene en custom_data
-                updatePayload.cvs_analizados_este_periodo = 0; 
+            // Lógica específica para 'subscription.resumed'
+            if (event.eventType === 'subscription.resumed') {
+                // Solo resetea 'cvs_analizados_este_periodo' si NO viene en custom_data del evento.
+                // Asumiendo que si viene en custom_data, ese valor tiene precedencia.
+                const eventCustomData = event.data.customData || event.data.custom_data || {};
+                if (typeof eventCustomData.cvs_analizados_este_periodo === 'undefined') {
+                    updatePayloadSubscription.cvs_analizados_este_periodo = 0; 
+                }
             }
 
-            const { data: dbData, error: dbError } = await supabase
+            const { data: dbDataUpdated, error: dbErrorUpdated } = await supabase
                 .from('suscripciones')
-                .update(updatePayload)
+                .update(updatePayloadSubscription)
                 .eq('paddle_subscription_id', eventPaddleSubscriptionId); 
 
-            if (dbError) console.error(`webhooks - ${event.eventType}: Error al actualizar BD:`, dbError);
-            else console.log(`webhooks - ${event.eventType}: BD actualizada.`, dbData);
+            if (dbErrorUpdated) console.error(`webhooks.js - ${event.eventType}: Error al actualizar BD:`, dbErrorUpdated);
+            else console.log(`webhooks.js - ${event.eventType}: BD actualizada.`, dbDataUpdated);
         } catch (dbError) {
-            console.error(`webhooks - ${event.eventType}: Excepción al interactuar con Supabase:`, dbError);
+            console.error(`webhooks.js - ${event.eventType}: Excepción al interactuar con Supabase:`, dbError);
         }
         break;
 
       default:
-        console.log(`webhooks - Evento no manejado: ${event.eventType}, Datos: ${JSON.stringify(event.data, null, 2)}`);
+        console.log(`webhooks.js - Evento no manejado: ${event.eventType}, Datos: ${JSON.stringify(event.data, null, 2)}`);
     }
 
     res.status(200).json({ received: true });
   } catch (processingError) {
-    console.error('webhooks - Error crítico al procesar el evento del webhook:', processingError.message, processingError.stack);
+    console.error('webhooks.js - Error crítico al procesar el evento del webhook:', processingError.message, processingError.stack);
     res.status(500).json({ message: 'Error interno del servidor al procesar el webhook.' });
   }
 }
