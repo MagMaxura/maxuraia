@@ -1,7 +1,7 @@
 // Archivo: pages/api/paddle/webhooks.js (o la ruta que corresponda)
 
 import { Paddle, Environment } from '@paddle/paddle-node-sdk';
-import { supabase } from '../../src/lib/supabase'; // Ajusta la ruta si es necesario
+import { supabase } from '../../src/lib/supabase.js'; // Ajusta la ruta si es necesario
 
 const PADDLE_API_KEY = process.env.PADDLE_API_KEY;
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET;
