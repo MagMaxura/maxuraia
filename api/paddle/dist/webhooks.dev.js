@@ -1,6 +1,7 @@
 // Archivo: api/paddle/webhooks.js
 // Este archivo ha sido comentado temporalmente para reducir el número de funciones Serverless
 // y ajustarse al límite del plan Hobby de Vercel durante la transición a Stripe.
+
 /*
 import { Paddle, Environment } from '@paddle/paddle-node-sdk';
 import { supabase } from '../../../src/lib/supabase.js';
@@ -215,3 +216,4 @@ export default async function handler(req, res) {
   }
 }
 */
+"use strict";
