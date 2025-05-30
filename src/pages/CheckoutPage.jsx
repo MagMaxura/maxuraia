@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext'; // Asumo que tienes este hook
+import { Elements } from '@stripe/react-stripe-js'; // Importa Elements
+import { loadStripe } from '@stripe/stripe-js'; // Importa loadStripe
 import StripePaymentForm from '@/components/StripePaymentForm'; // Tu componente de formulario
 import { APP_PLANS } from '@/config/plans'; // Para obtener detalles del plan
 import { Loader2 } from 'lucide-react'; // Para el indicador de carga
@@ -91,6 +93,10 @@ const CheckoutPage = () => {
     );
   }
 
+// Carga tu clave pública de Stripe. Asegúrate de tenerla en tus variables de entorno.
+// Es seguro exponer la clave pública en el frontend.
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Checkout</h1>
@@ -101,7 +107,10 @@ const CheckoutPage = () => {
           </div>
       )}
       {clientSecret && (
-        <StripePaymentForm clientSecret={clientSecret} onSuccess={() => navigate('/payment-success')} onCancel={() => navigate('/payment-cancelled')} />
+        // Envuelve el formulario con Elements y pasa el clientSecret
+        <Elements stripe={stripePromise} options={{ clientSecret }}>
+          <StripePaymentForm clientSecret={clientSecret} onSuccess={() => navigate('/payment-success')} onCancel={() => navigate('/payment-cancelled')} />
+        </Elements>
       )}
     </div>
   );
