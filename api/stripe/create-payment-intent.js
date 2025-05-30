@@ -2,6 +2,10 @@ import Stripe from 'stripe';
 import { APP_PLANS } from '../../src/config/plans'; // Importa tus planes para obtener el precio
 
 // Asegúrate de tener tu clave secreta de Stripe en las variables de entorno
+if (!process.env.STRIPE_SECRET_KEY) {
+    console.error('STRIPE_SECRET_KEY no está configurada en las variables de entorno.');
+    // Podrías lanzar un error aquí o manejarlo de otra manera si prefieres
+}
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-04-10', // Usa la versión de API más reciente o la que prefieras
 });
@@ -33,6 +37,11 @@ export default async (req, res) => {
   const amountInCents = plan.priceNumeric; // Asumiendo que priceNumeric ya está en centavos
 
   try {
+    // Verifica si la clave de Stripe se inicializó correctamente (aunque el constructor puede lanzar un error antes)
+    if (!stripe) {
+        throw new Error('Stripe no se inicializó correctamente. Verifica STRIPE_SECRET_KEY.');
+    }
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: 'ars', // Asegúrate de que la moneda sea correcta
