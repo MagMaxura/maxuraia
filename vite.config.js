@@ -173,7 +173,7 @@ export default defineConfig({
 	},
 	build: {
 		rollupOptions: {
-			external: ['@stripe/react-stripe-js'], // Externaliza la librería de Stripe React
+			// Eliminamos la externalización de @stripe/react-stripe-js
 		},
 	},
 });
