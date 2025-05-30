@@ -118,6 +118,17 @@ export default async (req, res) => {
                       endDate.setMonth(endDate.getMonth() + 1);
                   }
 
+                  console.log(`Attempting Supabase upsert for user ${recruiterId} with plan ${planIdFromMetadata}. Data:`, {
+                      recruiter_id: recruiterId,
+                      plan_id: planIdFromMetadata,
+                      status: 'active',
+                      trial_ends_at: null,
+                      current_period_start: new Date().toISOString(),
+                      current_period_end: endDate.toISOString(),
+                      stripe_subscription_id: null,
+                      cvs_analizados_este_periodo: 0,
+                  });
+
                   // Upsert para actualizar o insertar la suscripción
                   const { data, error } = await supabase
                       .from('suscripciones')
@@ -132,6 +143,9 @@ export default async (req, res) => {
                           // Puedes añadir stripe_payment_intent_id: paymentIntent.id si quieres rastrear el PI
                           cvs_analizados_este_periodo: 0, // Reiniciar contador
                       }, { onConflict: 'recruiter_id' });
+
+                  console.log(`Supabase upsert finished. Error:`, error, `Data:`, data);
+
 
                   if (error) {
                       console.error('❌ Supabase upsert error for non-one-time PI succeeded:', error);
