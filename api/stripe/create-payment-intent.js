@@ -64,9 +64,9 @@ export default async (req, res) => {
         planId: String(plan.id), // ID interno de tu plan
         stripePriceId: String(priceId), // Price ID de Stripe usado
       },
-      // Considera usar automatic_payment_methods para permitir que Stripe gestione los métodos de pago
-      // y se adapte a las preferencias del cliente y la región.
       automatic_payment_methods: { enabled: true },
+      // Añadir return_url para que Stripe redirija automáticamente después del pago
+      return_url: 'https://employsmartia.com/payment-success', // **Asegúrate de que esta URL sea correcta para tu entorno**
     };
 
     console.log('Creando PaymentIntent con params:', paymentIntentParams);
