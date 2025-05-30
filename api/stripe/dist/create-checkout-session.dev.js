@@ -1,6 +1,7 @@
 // Archivo: api/stripe/create-checkout-session.js
 // Este archivo ha sido comentado temporalmente ya que se está utilizando la integración con Stripe Elements
 // y para reducir el número de funciones Serverless para el límite del plan Hobby de Vercel.
+
 /*
 import Stripe from 'stripe';
 
@@ -49,3 +50,4 @@ export default async (req, res) => {
   }
 };
 */
+"use strict";
