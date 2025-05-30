@@ -15,6 +15,7 @@ import PrivacyPage from "./pages/PrivacyPage"; // Importar página de privacidad
 import TermsPage from "./pages/TermsPage"; // Importar página de términos
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancelled from "./pages/PaymentCancelled";
+import CheckoutPage from "./pages/CheckoutPage"; // Importa CheckoutPage
 // import SupabaseTestPage from "./pages/SupabaseTestPage"; // Ya no se importa
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
