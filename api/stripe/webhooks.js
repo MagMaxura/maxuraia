@@ -35,6 +35,7 @@ export const config = {
 };
 
 export default async (req, res) => {
+  console.log('Webhook received!'); // Añadir este log al inicio
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
