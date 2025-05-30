@@ -154,12 +154,12 @@ console.warn = () => {};
 
 export default defineConfig({
 	plugins: [react(), addTransformIndexHtml],
- define: {
-   'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
-   'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY),
- },
- server: {
- 	cors: true,
+	define: {
+		'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
+		'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY),
+	},
+	server: {
+		cors: true,
 		headers: {
 			'Cross-Origin-Embedder-Policy': 'credentialless',
 		},
@@ -170,6 +170,11 @@ export default defineConfig({
 		alias: {
 			'@': path.resolve(__dirname, './src'),
 		},
-	}
+	},
+	build: {
+		rollupOptions: {
+			external: ['@stripe/react-stripe-js'], // Externaliza la librería de Stripe React
+		},
+	},
 });
 
