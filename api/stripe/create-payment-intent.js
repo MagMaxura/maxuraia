@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import { APP_PLANS } from '/src/config/plans'; // Importa tus planes para obtener el precio (ruta ajustada para Vercel)
+import { APP_PLANS } from './config/plans'; // Importa tus planes para obtener el precio (ruta ajustada para Vercel)
 
 // Asegúrate de tener tu clave secreta de Stripe en las variables de entorno
 if (!process.env.STRIPE_SECRET_KEY) {
