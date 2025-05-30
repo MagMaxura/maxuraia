@@ -100,11 +100,15 @@ const CheckoutPage = () => {
       }
     };
 
-    createPaymentIntent();
+    // Solo crear Payment Intent si tenemos user y priceId, y aún no tenemos un clientSecret
+    // ni estamos ya cargando uno, y no hay un error previo.
+    if (user && priceId && !clientSecret && !loadingIntent && !error) {
+         createPaymentIntent();
+    }
 
   // No incluyas navigate en las dependencias si su identidad es estable (React Router v6)
   // o si solo lo usas dentro de condicionales que ya dependen de user/loadingUser.
-  }, [priceId, user, loadingUser]);
+  }, [priceId, user, loadingUser, clientSecret, loadingIntent, error]); // Añadir clientSecret, loadingIntent, error a dependencias
 
 
   if (loadingUser || loadingIntent) {
