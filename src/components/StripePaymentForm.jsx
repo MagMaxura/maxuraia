@@ -21,6 +21,15 @@ const StripePaymentForm = ({ clientSecret, onSuccess, onCancel }) => { // Recibe
 
     setIsLoading(true);
 
+    // Valida y envía los datos del formulario
+    const { error: submitError } = await elements.submit();
+    if (submitError) {
+        // Muestra errores de validación del formulario si los hay
+        setMessage(submitError.message);
+        setIsLoading(false);
+        return;
+    }
+
     // Confirma el pago utilizando el clientSecret recibido
     const { error } = await stripe.confirmPayment({
       elements,
