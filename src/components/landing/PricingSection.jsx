@@ -1,15 +1,13 @@
-// Requiere: framer-motion, lucide-react, APP_PLANS, AuthContext, useToast, Button
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Importa useNavigate
-// import usePaddle from '@/hooks/usePaddle'; // Comentado para la integración con Stripe
-// import PaddleButton from '@/components/PaddleButton'; // Comentado para la integración con Stripe
+// PricingSection.jsx
+// Requiere: framer-motion, lucide-react, APP_PLANS, AuthContext, Button (de ui)
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-// import StripeButton from '@/components/StripeButton'; // Ya no necesitamos este componente para Elements
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { APP_PLANS } from '@/config/plans'; // Asumo que aquí defines tus planes y paddlePriceId
+import { Button } from '@/components/ui/button'; // Asumo que es de shadcn/ui o similar
+import { CheckCircle2, CheckCircle, XCircle } from 'lucide-react'; // Loader2 no se usa aquí
+import { APP_PLANS } from '@/config/plans'; // Asegúrate que la ruta sea correcta
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/components/ui/use-toast'; // No se usa explícitamente aquí, pero lo mantengo si lo necesitas
+// import { useToast } from '@/components/ui/use-toast'; // No se usa, se puede quitar si no se añade funcionalidad de toast
 
 const fadeInWhileInView = {
   initial: { opacity: 0, y: 20 },
@@ -20,8 +18,8 @@ const fadeInWhileInView = {
 
 const pricingPlans = Object.values(APP_PLANS);
 
-// Esta estructura de keyFeatures parece ser para la tabla comparativa, no directamente para las cards individuales.
-// Lo mantendré como está, asumiendo que APP_PLANS[X].features tiene las características para las cards.
+// Esta estructura de keyFeatures parece ser para la tabla comparativa.
+// APP_PLANS[X].features se usa para las características en las cards individuales.
 const keyFeatures = [
   { label: 'Puestos activos', keys: ['1', '3', '25', 'Ilimitados'] },
   { label: 'Análisis de CVs', keys: ['75', '100/mes', '1.000/mes', 'Ilimitados'] },
@@ -34,10 +32,26 @@ const keyFeatures = [
 ];
 
 function PricingSection() {
-  const { user } = useAuth();
-  const { toast } = useToast(); // No se usa aquí, pero mantenido
-  // const isPaddleReady = usePaddle(); // Comentado para la integración con Stripe
-  const navigate = useNavigate(); // Obtiene la función navigate
+  const { user, loading: loadingUser } = useAuth(); // Agregado loadingUser para evitar clics prematuros
+  // const { toast } = useToast(); // Descomentar si se usa para notificaciones
+  const navigate = useNavigate();
+
+  const handlePlanSelection = (planStripePriceId) => {
+    if (loadingUser) return; // No hacer nada si el usuario aún está cargando
+
+    if (!planStripePriceId) {
+        console.error("PricingSection: No se proporcionó stripePriceId para la navegación.");
+        // toast({ title: "Error", description: "No se pudo seleccionar el plan.", variant: "destructive" });
+        return;
+    }
+
+    if (user) {
+      navigate(`/checkout/${planStripePriceId}`);
+    } else {
+      // Redirige a login, guardando la intención de ir al checkout después
+      navigate('/login', { state: { from: `/checkout/${planStripePriceId}` } });
+    }
+  };
 
   return (
     <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
@@ -65,12 +79,12 @@ function PricingSection() {
                 </div>
               )}
               <h3 className="text-2xl font-semibold text-white mb-2">{plan.name}</h3>
-              <p className="text-white/70 text-sm mb-4">{plan.description}</p>
+              <p className="text-white/70 text-sm mb-4 h-20 overflow-hidden">{plan.description}</p> {/* Altura fija para consistencia */}
               <div className="mb-6">
                 <span className="text-3xl font-bold text-white">{plan.priceDisplay}</span>
               </div>
               <ul className="space-y-3 text-white/80 mb-8 flex-grow text-sm">
-                {plan.features.map((feature, fIndex) => (
+                {plan.features.slice(0, 5).map((feature, fIndex) => ( // Mostrar solo las primeras 5 características por brevedad
                   <li key={fIndex} className="flex items-start">
                     <CheckCircle2 className="h-4 w-4 text-green-400 mr-2 mt-1 flex-shrink-0" />
                     <span>{feature}</span>
@@ -83,40 +97,32 @@ function PricingSection() {
                     {plan.ctaLabel || 'Contactar Ventas'}
                   </Button>
                 </a>
-               ) : (
-                 // Botón para redirigir a la página de checkout de Stripe Elements
-                 <Button
-                   size="lg"
-                   className="w-full mt-auto bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors" // Clases de ejemplo
-                   onClick={() => {
-                     if (user) {
-                       // Redirige a la página de checkout con el priceId en la URL
-                       navigate(`/checkout/${plan.stripePriceId}`);
-                     } else {
-                       // Si el usuario no está autenticado, redirige al login
-                       navigate('/login'); // O muestra un mensaje, etc.
-                     }
-                   }}
-                 >
-                   {plan.ctaLabel || 'Elegir Plan'}
-                 </Button>
-               )}
-             </motion.div>
+              ) : (
+                <Button
+                  size="lg"
+                  className="w-full mt-auto bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                  onClick={() => handlePlanSelection(plan.stripePriceId)}
+                  disabled={loadingUser} // Deshabilita si el usuario está cargando
+                >
+                  {plan.ctaLabel || 'Elegir Plan'}
+                </Button>
+              )}
+            </motion.div>
           ))}
         </div>
 
         {/* Tabla Comparativa */}
         <div className="overflow-x-auto bg-white/5 backdrop-blur-md rounded-xl p-2 shadow-xl border border-white/10">
-          <table className="min-w-full table-auto"> {/* Eliminado border para aplicar al contenedor */}
+          <table className="min-w-full table-auto">
             <thead>
               <tr>
                 <th className="text-left py-4 px-6 border-b border-white/10 text-white">Características</th>
-                {pricingPlans.map(plan => (
+                {pricingPlans.map(p => (
                   <th
-                    key={plan.id}
-                    className={`py-4 px-6 border-b border-white/10 text-center font-semibold text-white ${plan.isRecommended ? 'text-yellow-400' : ''}`}
+                    key={p.id}
+                    className={`py-4 px-6 border-b border-white/10 text-center font-semibold text-white ${p.isRecommended ? 'text-yellow-400' : ''}`}
                   >
-                    {plan.name}
+                    {p.name}
                   </th>
                 ))}
               </tr>
@@ -131,7 +137,7 @@ function PricingSection() {
                       className="py-3 px-6 text-center text-sm text-white/80"
                     >
                       {value === '✅' ? <CheckCircle className="w-5 h-5 mx-auto text-green-400" /> :
-                       value === '❌' ? <XCircle className="w-5 h-5 mx-auto text-red-400" /> : // Corregido a red-400 para consistencia
+                       value === '❌' ? <XCircle className="w-5 h-5 mx-auto text-red-400" /> :
                        value}
                     </td>
                   ))}

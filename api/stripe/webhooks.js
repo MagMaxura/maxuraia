@@ -70,7 +70,7 @@ export default async (req, res) => {
           // La lógica para actualizar la suscripción se manejará en invoice.paid o customer.subscription.updated
       } else if (recruiterId && planIdFromMetadata) {
           // Este podría ser un pago único (como Búsqueda Puntual)
-          const isOneTimePayment = APP_PLANS[planIdFromMetadata]?.type === 'one-time';
+          const isOneTimePayment = APP_PLANS[planIdFromMetadata] && APP_PLANS[planIdFromMetadata].type === 'one-time';
 
           if (isOneTimePayment) {
                try {
@@ -102,8 +102,46 @@ export default async (req, res) => {
               } catch (dbError) {
                 console.error('❌ Database operation failed:', dbError);
               }
-          } else {
-              console.warn(`⚠️ PaymentIntent succeeded for plan ${planIdFromMetadata} (not one-time) without subscription/invoice association. Check flow.`);
+          } else { // Este else maneja planes NO one-time PERO sin invoice/subscription
+              try {
+                  // Obtener detalles del plan para calcular la fecha de fin
+                  const planDetails = APP_PLANS[planIdFromMetadata];
+                  let endDate = new Date();
+
+                  if (planDetails && planDetails.interval === 'month') {
+                      endDate.setMonth(endDate.getMonth() + 1);
+                  } else if (planDetails && planDetails.interval === 'year') {
+                      endDate.setFullYear(endDate.getFullYear() + 1);
+                  } else {
+                      // Manejar otros intervalos o un intervalo por defecto
+                      console.warn(`⚠️ Unknown plan interval for plan ${planIdFromMetadata}. Defaulting to 1 month.`);
+                      endDate.setMonth(endDate.getMonth() + 1);
+                  }
+
+                  // Upsert para actualizar o insertar la suscripción
+                  const { data, error } = await supabase
+                      .from('suscripciones')
+                      .upsert({
+                          recruiter_id: recruiterId,
+                          plan_id: planIdFromMetadata,
+                          status: 'active', // El pago fue exitoso, el estado es activo
+                          trial_ends_at: null, // No aplica trial después del pago
+                          current_period_start: new Date().toISOString(), // Inicio ahora
+                          current_period_end: endDate.toISOString(), // Fin calculado
+                          stripe_subscription_id: null, // No hay suscripción de Stripe asociada en este flujo
+                          // Puedes añadir stripe_payment_intent_id: paymentIntent.id si quieres rastrear el PI
+                          cvs_analizados_este_periodo: 0, // Reiniciar contador
+                      }, { onConflict: 'recruiter_id' });
+
+                  if (error) {
+                      console.error('❌ Supabase upsert error for non-one-time PI succeeded:', error);
+                  } else {
+                      console.log(`🎉 Plan ${planIdFromMetadata} activated for user ${recruiterId} via PaymentIntent ${paymentIntent.id} until ${endDate.toISOString()}.`);
+                  }
+
+              } catch (dbError) {
+                  console.error('❌ Database operation failed for non-one-time PI succeeded:', dbError);
+              }
           }
       } else {
         console.warn('⚠️ PaymentIntent metadata missing recruiterId or planId:', paymentIntent.metadata);
