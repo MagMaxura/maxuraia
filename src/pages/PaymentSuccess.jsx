@@ -3,7 +3,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom'; // Opcional: para enlaces de "Volver al Dashboard"
 
+import { useLocation } from 'react-router-dom'; // Importa useLocation
+
 const PaymentSuccess = () => {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const sessionId = params.get('session_id'); // Obtiene el session_id de la URL
+
+  // Opcional: Puedes loggear el sessionId para depuración
+  console.log('Stripe Checkout Session ID:', sessionId);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-4 text-center">
       <div className="bg-white p-8 sm:p-12 rounded-lg shadow-xl max-w-md w-full">

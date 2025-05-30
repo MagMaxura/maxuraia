@@ -1,6 +1,8 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "./components/ui/toaster";
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import RegisterConfirmation from "./pages/RegisterConfirmation";
@@ -18,12 +20,26 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AuthCallback from "./components/AuthCallback";
 
+// Carga tu clave pública de Stripe. Asegúrate de tenerla en tus variables de entorno.
+// Es seguro exponer la clave pública en el frontend.
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+
 function App() {
+  const options = {
+    // Opciones para Elements, si es necesario (ej. apariencia)
+    // Puedes configurar cosas como la moneda, locale, etc. aquí
+    // mode: 'payment', // o 'setup' o 'subscription'
+    // amount: 1099, // en la unidad más pequeña de la moneda (ej. centavos)
+    // currency: 'usd',
+    // appearance: { /* ... */ },
+  };
+
   return (
     <Router>
       <AuthProvider>
-        <div className="min-h-screen bg-[#f3f2ef]">
-          <Routes>
+        <Elements stripe={stripePromise} options={options}> {/* Envuelve con Elements */}
+          <div className="min-h-screen bg-[#f3f2ef]">
+            <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -35,6 +51,8 @@ function App() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+            {/* Nueva ruta para la página de checkout con Stripe Elements */}
+            <Route path="/checkout/:priceId" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
             <Route
               path="/complete-profile"
               element={
@@ -60,9 +78,10 @@ function App() {
               }
             />
 
-          </Routes>
-          <Toaster />
-        </div>
+            </Routes>
+            <Toaster />
+          </div>
+        </Elements> {/* Cierra Elements */}
       </AuthProvider>
     </Router>
   );

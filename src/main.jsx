@@ -3,7 +3,8 @@ import ReactDOM from 'react-dom/client';
 import App from '@/App';
 import '@/index.css';
 
-// Inicialización de Paddle.js
+// Inicialización de Paddle.js (Comentado para la integración con Stripe)
+/*
 if (typeof window !== 'undefined' && window.Paddle) {
   const paddleClientToken = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
   const paddleEnvString = import.meta.env.VITE_PADDLE_ENV || 'sandbox';
@@ -36,7 +37,7 @@ if (typeof window !== 'undefined' && window.Paddle) {
           console.log('El usuario cerró el modal de checkout.');
           // Aquí podrías, por ejemplo, redirigir al usuario a la página principal si lo deseas:
           // if (!event.data?.completed) { // Asegurarse que no fue un cierre post-éxito
-          //    window.location.href = '/'; 
+          //    window.location.href = '/';
           // }
         }
         if (event.name === 'checkout.payment.failed' || event.name === 'checkout.error') {
@@ -52,6 +53,7 @@ if (typeof window !== 'undefined' && window.Paddle) {
 } else {
   console.error("Paddle.js (window.Paddle) no encontrado. Asegúrate de que el script de Paddle esté cargado en tu index.html. Paddle no funcionará.");
 }
+*/
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

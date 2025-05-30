@@ -1,8 +1,10 @@
 // Requiere: framer-motion, lucide-react, APP_PLANS, AuthContext, useToast, Button
 import React, { useState } from 'react';
-import usePaddle from '@/hooks/usePaddle'; // Importante: revisaremos este hook si lo envías
-import PaddleButton from '@/components/PaddleButton'; // El componente que hemos estado discutiendo
+import { useNavigate } from 'react-router-dom'; // Importa useNavigate
+// import usePaddle from '@/hooks/usePaddle'; // Comentado para la integración con Stripe
+// import PaddleButton from '@/components/PaddleButton'; // Comentado para la integración con Stripe
 import { motion } from 'framer-motion';
+// import StripeButton from '@/components/StripeButton'; // Ya no necesitamos este componente para Elements
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { APP_PLANS } from '@/config/plans'; // Asumo que aquí defines tus planes y paddlePriceId
@@ -34,7 +36,8 @@ const keyFeatures = [
 function PricingSection() {
   const { user } = useAuth();
   const { toast } = useToast(); // No se usa aquí, pero mantenido
-  const isPaddleReady = usePaddle(); // Este hook determina si Paddle está listo
+  // const isPaddleReady = usePaddle(); // Comentado para la integración con Stripe
+  const navigate = useNavigate(); // Obtiene la función navigate
 
   return (
     <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
@@ -80,29 +83,25 @@ function PricingSection() {
                     {plan.ctaLabel || 'Contactar Ventas'}
                   </Button>
                 </a>
-              ) : (
-                isPaddleReady ? (
-                  <PaddleButton
-                    priceId={plan.paddlePriceId} // Proviene de tu objeto APP_PLANS
-                    email={user?.email}
-                    recruiterId={user?.id} // Este será el 'userId' para el backend
-                    ctaLabel={plan.ctaLabel || 'Elegir Plan'}
-                    successUrl="https://www.employsmartia.com/payment-success"
-                    // El cancelUrl se pasará al backend si PaddleButton llama al backend.
-                    // Si PaddleButton usa Paddle.Checkout.open(), su uso depende de si
-                    // cancel_url está activo en los 'settings' de ese componente y si
-                    // tu dominio está aprobado en Paddle para esa URL.
-                    cancelUrl="https://www.employsmartia.com/payment-cancelled"
-                  />
-                ) : (
-                  // Muestra un botón deshabilitado o un loader mientras Paddle no está listo
-                  <Button size="lg" disabled className="w-full mt-auto">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Cargando Planes...
-                  </Button>
-                )
-              )}
-            </motion.div>
+               ) : (
+                 // Botón para redirigir a la página de checkout de Stripe Elements
+                 <Button
+                   size="lg"
+                   className="w-full mt-auto bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors" // Clases de ejemplo
+                   onClick={() => {
+                     if (user) {
+                       // Redirige a la página de checkout con el priceId en la URL
+                       navigate(`/checkout/${plan.stripePriceId}`);
+                     } else {
+                       // Si el usuario no está autenticado, redirige al login
+                       navigate('/login'); // O muestra un mensaje, etc.
+                     }
+                   }}
+                 >
+                   {plan.ctaLabel || 'Elegir Plan'}
+                 </Button>
+               )}
+             </motion.div>
           ))}
         </div>
 
