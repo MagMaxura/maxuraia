@@ -7,7 +7,7 @@ exports["default"] = void 0;
 
 var _stripe = _interopRequireDefault(require("stripe"));
 
-var _plans = require("../../api/_lib/plans");
+var _plans = require("../_lib/plans.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
