@@ -32,7 +32,7 @@ const StripePaymentForm = ({ onSuccess, onCancel }) => {
           // Esta es la URL a la que Stripe redirigirá al usuario después del pago.
           // Debe ser una página en tu aplicación que pueda manejar la confirmación final
           // del estado del PaymentIntent usando el client_secret del PaymentIntent en la URL.
-          return_url: `${window.location.origin}/payment-status-handler`, // Ejemplo de URL de retorno
+          return_url: `${window.location.origin}/payment-success`, // URL de retorno corregida
         },
       });
 

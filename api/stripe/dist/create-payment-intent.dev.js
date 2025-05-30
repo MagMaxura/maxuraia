@@ -136,10 +136,7 @@ var _callee = function _callee(req, res) {
             },
             automatic_payment_methods: {
               enabled: true
-            },
-            // Añadir return_url para que Stripe redirija automáticamente después del pago
-            return_url: 'https://employsmartia.com/payment-success' // **Asegúrate de que esta URL sea correcta para tu entorno**
-
+            }
           };
           console.log('Creando PaymentIntent con params:', paymentIntentParams);
           _context.next = 23;
