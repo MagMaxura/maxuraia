@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 import { buffer } from 'micro'; // Necesario para leer el cuerpo crudo de la solicitud
 import { createClient } from '@supabase/supabase-js'; // Importa Supabase
-import { APP_PLANS } from '../../api/_lib/plans.js'; // Importa tus planes para mapear Product IDs (ruta ajustada para Vercel)
+import { APP_PLANS } from './_lib/plans.js'; // Ruta corregida después de mover el archivo
 
 // Asegúrate de tener tus claves de Stripe y Supabase en las variables de entorno
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
