@@ -1,5 +1,5 @@
 // CheckoutPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react'; // Importar useRef
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Elements } from '@stripe/react-stripe-js';
@@ -28,7 +28,13 @@ const CheckoutPage = () => {
   const [error, setError] = useState(null);
   const [planDetails, setPlanDetails] = useState(null);
 
+  // Usar un ref para rastrear si ya hemos intentado crear el Payment Intent para este priceId
+  const hasCreatedIntent = useRef(false);
+
   useEffect(() => {
+    console.log('CheckoutPage useEffect running...');
+    console.log('Dependencies:', { priceId, user, loadingUser, clientSecret, loadingIntent, error, hasCreatedIntent: hasCreatedIntent.current });
+
     // Si la clave pública de Stripe no está disponible, no se puede continuar.
     if (!VITE_STRIPE_PUBLISHABLE_KEY) {
         setError('La configuración de pagos no está disponible. Por favor, contacta a soporte.');
@@ -37,6 +43,7 @@ const CheckoutPage = () => {
     }
 
     if (loadingUser) {
+      console.log('CheckoutPage: loadingUser is true, waiting...');
       // Espera a que la información del usuario termine de cargar
       return;
     }
@@ -49,6 +56,7 @@ const CheckoutPage = () => {
     }
 
     if (!priceId) {
+      console.log('CheckoutPage: priceId is missing.');
       setError('No se proporcionó un ID de plan para el checkout.');
       setLoadingIntent(false);
       return;
@@ -56,6 +64,7 @@ const CheckoutPage = () => {
 
     const plan = Object.values(APP_PLANS).find(p => p.stripePriceId === priceId);
     if (!plan) {
+      console.log('CheckoutPage: Plan not found for priceId:', priceId);
       setError('El plan seleccionado no es válido o no fue encontrado.');
       setLoadingIntent(false);
       return;
@@ -64,6 +73,7 @@ const CheckoutPage = () => {
 
     // Función para crear el PaymentIntent
     const createPaymentIntent = async () => {
+      console.log('CheckoutPage: Calling createPaymentIntent...');
       setLoadingIntent(true); // Asegura que el estado de carga se active al iniciar la creación
       setError(null); // Limpia errores previos
       try {
@@ -88,6 +98,7 @@ const CheckoutPage = () => {
         if (responseData.clientSecret && typeof responseData.clientSecret === 'string') {
           console.log('CheckoutPage: Client Secret recibido:', responseData.clientSecret.substring(0, 15) + "..."); // Loguea solo una parte por seguridad
           setClientSecret(responseData.clientSecret);
+          hasCreatedIntent.current = true; // Marcar que hemos creado el intent exitosamente
         } else {
           throw new Error('Respuesta inválida del servidor: clientSecret no recibido o en formato incorrecto.');
         }
@@ -95,20 +106,36 @@ const CheckoutPage = () => {
       } catch (err) {
         console.error('CheckoutPage: Error al crear Payment Intent:', err);
         setError(err.message || 'No se pudo iniciar el proceso de pago. Intenta de nuevo.');
+        // No marcamos hasCreatedIntent.current = true en caso de error para permitir reintentos si las dependencias cambian
       } finally {
         setLoadingIntent(false);
       }
     };
 
-    // Solo crear Payment Intent si tenemos user y priceId, y aún no tenemos un clientSecret
-    // ni estamos ya cargando uno, y no hay un error previo.
-    if (user && priceId && !clientSecret && !loadingIntent && !error) {
+    // Condición para crear Payment Intent:
+    // - Tenemos user y priceId
+    // - Aún no tenemos un clientSecret
+    // - No estamos ya cargando uno
+    // - No hay un error previo
+    // - Y, crucialmente, NO hemos intentado crear el intent para este priceId todavía (usando el ref)
+    if (user && priceId && !clientSecret && !loadingIntent && !error && !hasCreatedIntent.current) {
+         console.log('CheckoutPage: Condition met to create Payment Intent.');
          createPaymentIntent();
+    } else {
+        console.log('CheckoutPage: Condition NOT met to create Payment Intent.');
+        console.log('Condition details:', {
+            hasUser: !!user,
+            hasPriceId: !!priceId,
+            hasClientSecret: !!clientSecret,
+            isLoadingIntent: loadingIntent,
+            hasError: !!error,
+            hasCreatedIntentRef: hasCreatedIntent.current
+        });
     }
 
-  // No incluyas navigate en las dependencias si su identidad es estable (React Router v6)
-  // o si solo lo usas dentro de condicionales que ya dependen de user/loadingUser.
-  }, [priceId, user, loadingUser, clientSecret, loadingIntent, error]); // Añadir clientSecret, loadingIntent, error a dependencias
+
+  // Incluir todas las dependencias relevantes. navigate no es necesario si su identidad es estable.
+  }, [priceId, user, loadingUser, clientSecret, loadingIntent, error, navigate]);
 
 
   if (loadingUser || loadingIntent) {
