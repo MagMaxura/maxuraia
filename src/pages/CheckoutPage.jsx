@@ -88,6 +88,7 @@ const CheckoutPage = () => {
           }),
         });
 
+        console.log('CheckoutPage: Raw response status:', response.status, response.statusText);
         const responseData = await response.json(); // Intenta parsear JSON siempre
 
         if (!response.ok) {
