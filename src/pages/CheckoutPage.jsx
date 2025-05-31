@@ -24,7 +24,7 @@ const CheckoutPage = () => {
   const navigate = useNavigate();
 
   const [clientSecret, setClientSecret] = useState(null);
-  const [loadingIntent, setLoadingIntent] = useState(true);
+  const [loadingIntent, setLoadingIntent] = useState(false);
   const [error, setError] = useState(null);
   const [planDetails, setPlanDetails] = useState(null);
 
