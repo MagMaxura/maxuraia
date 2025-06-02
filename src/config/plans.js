@@ -19,6 +19,7 @@ export const APP_PLANS = {
     ctaLabel: 'Empezar ahora',
     description: 'Ideal para emprendedores y pequeñas empresas con necesidades de reclutamiento específicas y puntuales.',
     cvLimit: 75,
+    jobLimit: 1, // Añadido: Límite de puestos de trabajo activos
     features: [
       "1 Puesto de trabajo activo",
       "Análisis de CVs: Hasta 75",
@@ -43,6 +44,7 @@ export const APP_PLANS = {
     ctaLabel: 'Comenzar ahora',
     description: 'Cuota mensual para usar la mejor herramienta de reclutamiento.',
     cvLimit: 100,
+    jobLimit: 3, // Añadido: Límite de puestos de trabajo activos
     features: [
       "Hasta 3 Puestos de trabajo activos",
       "Análisis de CVs: Hasta 100/mes",
@@ -66,6 +68,7 @@ export const APP_PLANS = {
     ctaLabel: 'Elegir Business',
     description: 'Automatizá tus procesos con IA y liberá a tu equipo de RRHH.',
     cvLimit: 1000,
+    jobLimit: 25, // Añadido: Límite de puestos de trabajo activos
     features: [
       "Hasta 25 Puestos de trabajo activos",
       "Análisis de CVs: Hasta 1.000/mes",
@@ -90,6 +93,7 @@ export const APP_PLANS = {
     ctaLabel: 'Solicitar demo',
     description: 'Solución integral y personalizada para grandes empresas con necesidades avanzadas de reclutamiento.',
     cvLimit: Infinity,
+    jobLimit: Infinity, // Añadido: Límite de puestos de trabajo activos
     features: [
       "Puestos de trabajo activos: Ilimitados",
       "Análisis de CVs: Ilimitados",
