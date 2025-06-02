@@ -105,6 +105,14 @@ export const APP_PLANS = {
   }
 };
 
+export const PLAN_HIERARCHY = {
+  trial: { next: 'basico', name: 'Básico' },
+  basico: { next: 'profesional_monthly', name: 'Profesional' },
+  profesional_monthly: { next: 'empresa_monthly', name: 'Business' },
+  empresa_monthly: { next: 'enterprise_monthly', name: 'Enterprise' },
+  enterprise_monthly: null,
+};
+
 export const PLAN_CV_ANALYSIS_LIMITS = {
   trial: 10,
   basico: 50,
