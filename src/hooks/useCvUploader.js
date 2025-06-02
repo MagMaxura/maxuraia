@@ -3,10 +3,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/components/ui/use-toast";
 import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
 import { cvService } from "@/services/cvService.js";
-import { PLAN_CV_ANALYSIS_LIMITS } from '@/config/plans'; // Importar los límites
+import { PLAN_CV_ANALYSIS_LIMITS, APP_PLANS } from '@/config/plans'; // Importar los límites y APP_PLANS
 
 export function useCvUploader({
   fileInputRef, // Ref para limpiar el input de archivo
+  currentCvCount, // Nuevo: número actual de CVs cargados
   setCvFiles, // Para añadir nuevos CVs procesados a la lista general
   setSelectedCV, // Para seleccionar el CV recién subido (si es uno solo)
   setCvAnalysis, // Para mostrar el análisis del CV recién subido
@@ -72,15 +73,35 @@ export function useCvUploader({
       console.log("useCvUploader: handleFileUpload - setFilesUploadedCount(i)", i);
       setFilesUploadedCount(i);
 
-      if (currentAnalysisCount >= analysisLimit) {
+      const planDetails = APP_PLANS[planId];
+      const isOneTimePlan = planDetails?.type === 'one-time';
+
+      let limitExceeded = false;
+      let limitDescription = "";
+
+      if (isOneTimePlan) {
+        // Para planes one-time, verificar si el total de CVs (actual + nuevos) excede el límite total
+        if (currentCvCount + selectedFiles.length > analysisLimit) {
+           limitExceeded = true;
+           limitDescription = `Has alcanzado tu límite total de ${analysisLimit} análisis de CVs para el plan "${planDetails.name}".`;
+        }
+      } else {
+        // Para planes recurrentes, verificar si el contador del período excede el límite del período
+        if (currentAnalysisCount >= analysisLimit) {
+          limitExceeded = true;
+          limitDescription = `Has alcanzado tu límite mensual de ${analysisLimit} análisis de CVs para el plan "${planDetails.name}".`;
+        }
+      }
+
+      if (limitExceeded) {
         anyErrorOccurred = true;
         toast({
           title: "Límite de Análisis Alcanzado",
-          description: `Has alcanzado tu límite de ${analysisLimit} análisis de CVs para el plan "${planId}". Los archivos restantes no serán procesados.`,
+          description: `${limitDescription} Por favor, contacta a ventas si necesitas más capacidad.`,
           variant: "destructive",
           duration: 7000,
         });
-        setTotalFilesToUpload(i);
+        setTotalFilesToUpload(i); // Detener el procesamiento de archivos restantes
         break;
       }
 

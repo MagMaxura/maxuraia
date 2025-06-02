@@ -6,8 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.getAllPlans = exports.getPlanById = exports.PLAN_CV_ANALYSIS_LIMITS = exports.APP_PLANS = void 0;
 
 /**
- * Define los planes de la aplicación y su mapeo con los IDs de producto y precio de Paddle.
- * ¡Verifica que paddlePriceId coincida con tu dashboard de Paddle!
+
  */
 var APP_PLANS = {
   busqueda_puntual: {

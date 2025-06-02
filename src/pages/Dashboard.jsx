@@ -111,7 +111,7 @@ function Dashboard() {
     setSelectedCV,
     setCvAnalysis,
     setActiveTab,
-    // cvFiles: cvFiles, // Podría pasarse si el hook lo necesita para lógica interna
+    currentCvCount: cvFiles.length, // Pasar el número actual de CVs cargados
   });
 
   // Efecto para seleccionar el CV y mostrar su análisis cuando solo se sube un archivo.

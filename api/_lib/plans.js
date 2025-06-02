@@ -1,6 +1,5 @@
 /**
- * Define los planes de la aplicación y su mapeo con los IDs de producto y precio de Paddle.
- * ¡Verifica que paddlePriceId coincida con tu dashboard de Paddle!
+
  */
 export const APP_PLANS = {
   busqueda_puntual: {
