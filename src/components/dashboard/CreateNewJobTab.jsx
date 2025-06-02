@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/components/ui/use-toast";
 import { cvService } from '@/services/cvService';
 import { Brain, AlertCircle } from 'lucide-react'; // Importar el icono Brain y AlertCircle
-import CreateJobAIForm from './CreateJobAIForm'; // Importar el componente del formulario AI
+import CreateJobAIForm from '../CreateJobAIForm.jsx'; // Importar el componente del formulario AI (ruta corregida)
 import { APP_PLANS } from '@/config/plans'; // Importar APP_PLANS
 
 function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob }) {
