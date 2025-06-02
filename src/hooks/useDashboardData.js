@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react'; // Reintroducir useRef
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cvService } from '@/services/cvService.js';
 import { useToast } from "@/components/ui/use-toast";
+import { APP_PLANS, PLAN_CV_ANALYSIS_LIMITS } from '@/config/plans'; // Importar planes y límites
 
 export function useDashboardData() {
   const { user } = useAuth();
@@ -123,5 +124,9 @@ export function useDashboardData() {
     setJobs,
     isLoadingCVs,
     isLoadingJobs,
+    // Nuevo: Devolver información de la suscripción y el límite
+    userSubscription: user?.suscripcion,
+    analysisLimit: user?.suscripcion?.plan_id ? (APP_PLANS[user.suscripcion.plan_id]?.type === 'one-time' ? APP_PLANS[user.suscripcion.plan_id]?.cvLimit : PLAN_CV_ANALYSIS_LIMITS[user.suscripcion.plan_id]) : 0,
+    currentAnalysisCount: user?.suscripcion?.cvs_analizados_este_periodo || 0,
   };
 }

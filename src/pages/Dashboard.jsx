@@ -32,8 +32,12 @@ function Dashboard() {
     setJobs,
     isLoadingCVs,
     isLoadingJobs,
+    userSubscription, // Nuevo
+    analysisLimit, // Nuevo
+    currentAnalysisCount, // Nuevo
   } = useDashboardData();
   console.log("Dashboard: cvFiles from useDashboardData:", cvFiles, "(type:", typeof cvFiles, Array.isArray(cvFiles) ? `length: ${cvFiles.length}` : 'not an array', ")");
+  console.log("Dashboard: userSubscription:", userSubscription, "analysisLimit:", analysisLimit, "currentAnalysisCount:", currentAnalysisCount); // Log para verificar
   console.log("Dashboard: jobs from useDashboardData:", jobs, "(type:", typeof jobs, Array.isArray(jobs) ? `length: ${jobs.length}` : 'not an array', ")");
 
   const [selectedCV, setSelectedCV] = useState(null);
@@ -302,6 +306,9 @@ function Dashboard() {
               currentFileProcessingName={currentFileProcessingName}
               handleDragOver={handleDragOver}
               handleDrop={handleDrop}
+              userSubscription={userSubscription} // Pasar la suscripción
+              analysisLimit={analysisLimit} // Pasar el límite
+              currentAnalysisCount={currentAnalysisCount} // Pasar el contador
             />
             );
           })()}

@@ -1,45 +1,37 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FileUp, AlertCircle, ArrowRightCircle } from 'lucide-react'; // Importar AlertCircle y ArrowRightCircle
+import { FileUp, AlertCircle, ArrowRightCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext.jsx';
-import { Button } from '@/components/ui/button.jsx'; // Importar Button
-import { Link } from 'react-router-dom'; // Para el botón de actualizar plan
+import { Button } from '@/components/ui/button.jsx';
+import { Link } from 'react-router-dom';
 import { extractTextFromFile } from "@/lib/fileProcessing";
-
-const PLAN_CV_ANALYSIS_LIMITS = {
-  trial: 10,
-  basico: 50,
-  business: 1000,
-  enterprise: Infinity,
-};
-
-const PLAN_HIERARCHY = {
-  trial: { next: 'basico', name: 'Básico' },
-  basico: { next: 'business', name: 'Business' },
-  business: { next: 'enterprise', name: 'Enterprise' },
-  enterprise: null, // No hay plan superior
-};
+import { APP_PLANS, PLAN_HIERARCHY } from '@/config/plans'; // Importar desde el archivo central
 
 function UploadCVTab({
   handleFileUpload,
   fileInputRef,
   isBulkProcessing,
-  isProcessing, // Estado general de procesamiento de CV
+  isProcessing,
   totalFilesToUpload,
   filesUploadedCount,
   currentFileProcessingName,
   handleDragOver,
   handleDrop,
+  userSubscription, // Recibir prop
+  analysisLimit, // Recibir prop
+  currentAnalysisCount, // Recibir prop
+  // isLoadingSubscription, // Si useDashboardData devolviera un estado de carga específico para la suscripción
 }) {
   const { user } = useAuth();
 
-  const planId = user?.suscripcion?.plan_id || 'basico'; // Fallback
-  const status = user?.suscripcion?.status;
-  const currentAnalysisCount = user?.suscripcion?.cvs_analizados_este_periodo || 0;
-  const analysisLimit = PLAN_CV_ANALYSIS_LIMITS[planId] || 0;
-  
-  const canAnalyzeMore = (status === 'active' || status === 'trialing') && currentAnalysisCount < analysisLimit;
-  const limitReached = (status === 'active' || status === 'trialing') && currentAnalysisCount >= analysisLimit;
+  // Usar las props directamente, con fallbacks seguros
+  const planId = userSubscription?.plan_id || 'basico';
+  const status = userSubscription?.status;
+  const displayAnalysisLimit = analysisLimit === Infinity ? 'Ilimitados' : analysisLimit;
+  const displayCurrentAnalysisCount = currentAnalysisCount || 0; // Asegurar que sea al menos 0
+
+  const canAnalyzeMore = (status === 'active' || status === 'trialing') && displayCurrentAnalysisCount < analysisLimit;
+  const limitReached = (status === 'active' || status === 'trialing') && displayCurrentAnalysisCount >= analysisLimit;
 
   const handleZoneClick = () => {
     if (!canAnalyzeMore || isBulkProcessing || isProcessing) {
@@ -50,6 +42,20 @@ function UploadCVTab({
 
   const nextPlanDetails = PLAN_HIERARCHY[planId];
   
+  // Mostrar un estado de carga si la suscripción aún no está disponible
+  if (!userSubscription) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white p-6 md:p-8 rounded-xl shadow-xl text-center text-slate-600"
+      >
+        <h2 className="text-2xl font-semibold text-slate-800 mb-4">Cargar nuevo CV</h2>
+        <p>Cargando información de tu plan...</p>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -59,15 +65,15 @@ function UploadCVTab({
       <h2 className="text-2xl font-semibold text-slate-800 mb-4">Cargar nuevo CV</h2>
       
       {/* Información de Uso y Límite */}
-      {user?.suscripcion && (status === 'active' || status === 'trialing') && (
+      {(status === 'active' || status === 'trialing') && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
           <p>
-            CVs analizados este período: <strong className="font-semibold">{currentAnalysisCount}</strong> de <strong className="font-semibold">{analysisLimit === Infinity ? 'Ilimitados' : analysisLimit}</strong>
+            CVs analizados este período: <strong className="font-semibold">{displayCurrentAnalysisCount}</strong> de <strong className="font-semibold">{displayAnalysisLimit}</strong>
           </p>
           <div className="mt-2 w-full bg-blue-200 rounded-full h-2.5">
             <div
               className="bg-blue-600 h-2.5 rounded-full"
-              style={{ width: `${analysisLimit === Infinity ? 100 : (currentAnalysisCount / analysisLimit) * 100}%` }}
+              style={{ width: `${analysisLimit === Infinity || analysisLimit === 0 ? 100 : (displayCurrentAnalysisCount / analysisLimit) * 100}%` }}
             ></div>
           </div>
           {nextPlanDetails && limitReached && (
@@ -78,7 +84,7 @@ function UploadCVTab({
               </Button>
             </Link>
           )}
-           {planId === 'enterprise' && limitReached && ( // Aunque enterprise es ilimitado, por si acaso
+           {planId === 'enterprise_monthly' && limitReached && ( // Usar el ID correcto del plan enterprise
              <p className="mt-3 text-sm">Has alcanzado el límite de tu plan Enterprise (esto no debería suceder).</p>
            )}
         </div>
@@ -92,9 +98,9 @@ function UploadCVTab({
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                Has alcanzado tu límite mensual de <strong className="font-semibold">{analysisLimit === Infinity ? 'Ilimitados' : analysisLimit}</strong> análisis de CVs para tu plan <strong className="font-semibold capitalize">{planId}</strong>.
+                Has alcanzado tu límite de <strong className="font-semibold">{displayAnalysisLimit}</strong> análisis de CVs para tu plan <strong className="font-semibold capitalize">{APP_PLANS[planId]?.name || planId}</strong>.
                 {nextPlanDetails ? (
-                  <> Para analizar más CVs, por favor considera <Link to="/#pricing" className="underline hover:text-yellow-600 font-semibold">actualizar tu plan a {nextPlanDetails.name}</Link> o espera al próximo ciclo.</>
+                  <> Para analizar más CVs, por favor considera <Link to="/#pricing" className="underline hover:text-yellow-600 font-semibold">actualizar tu plan a {nextPlanDetails.name}</Link>.</>
                 ) : (
                   " Por favor, contacta a ventas si necesitas más capacidad."
                 )}
