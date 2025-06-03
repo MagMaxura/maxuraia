@@ -13,21 +13,27 @@ function Login() {
   const [isResetting, setIsResetting] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [loginError, setLoginError] = useState(""); // Estado para el mensaje de error
-  // Obtener también isAuthenticated del contexto
-  const { login, resetPassword, loading, isAuthenticated } = useAuth();
+  // Obtener isAuthenticated y isProfileComplete del contexto
+  const { login, resetPassword, loading, isAuthenticated, isProfileComplete } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate(); // Inicializar useNavigate
 
   // Redirigir si ya está autenticado
   useEffect(() => {
     // Solo redirigir si la comprobación inicial de auth ha terminado y el usuario está autenticado
+    // Solo redirigir si la comprobación inicial de auth ha terminado y el usuario está autenticado
     if (!loading && isAuthenticated) {
-      console.log("Login.jsx: User already authenticated, redirecting to dashboard.");
-      // Aquí asumimos que si está autenticado, ya tiene perfil o el flujo lo manejará.
-      // Podríamos verificar perfil aquí también si fuera necesario, pero /dashboard debería ser seguro.
-      navigate('/dashboard', { replace: true });
+      console.log("Login.jsx: User already authenticated.");
+      // Redirigir según si el perfil está completo
+      if (isProfileComplete) {
+        console.log("Login.jsx: Profile complete, redirecting to dashboard.");
+        navigate('/dashboard', { replace: true });
+      } else {
+        console.log("Login.jsx: Profile incomplete, redirecting to complete-profile.");
+        navigate('/complete-profile', { replace: true });
+      }
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, isProfileComplete, navigate]); // Añadir isProfileComplete a las dependencias
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -44,13 +50,13 @@ function Login() {
     if (result.success) {
       // El toast de éxito puede ser opcional si la redirección es inmediata
       // toast({ title: "Inicio de sesión exitoso", description: "Bienvenido de nuevo.", variant: "default" });
-      // Redirigir según si el perfil existe Y está completo
-      if (result.profileExists && result.profileIsComplete) {
-        navigate('/dashboard');
-      } else {
-        // Si el perfil no existe o no está completo, ir a /complete-profile
-        navigate('/complete-profile');
-      }
+      // La redirección después del login exitoso ahora se maneja en el useEffect de este componente
+      // basándose en el estado isAuthenticated y isProfileComplete del contexto.
+      // No necesitamos lógica de redirección explícita aquí después de un login exitoso.
+      // El useEffect se encargará de ello una vez que el estado de autenticación se actualice.
+      console.log("Login.jsx: Login successful. useEffect will handle redirection.");
+      // Opcional: podrías querer limpiar el formulario aquí si no se redirige inmediatamente
+      // setCredentials({ email: "", password: "" });
     } else {
       // Mostrar el error específico en el estado y opcionalmente en un toast
       const errorMessage = result.error || "Ocurrió un error inesperado.";

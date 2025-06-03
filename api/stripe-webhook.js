@@ -57,7 +57,7 @@ export default async (req, res) => {
 
   // Maneja los tipos de eventos
   switch (event.type) {
-    case 'payment_intent.succeeded':
+    case 'payment_intent.succeeded': { // Usar bloque para scope
       const paymentIntent = event.data.object;
       console.log('✅ PaymentIntent succeeded:', paymentIntent.id);
 
@@ -75,95 +75,95 @@ export default async (req, res) => {
 
           if (isOneTimePayment) {
                try {
-                   // Para pago único, calcula la fecha de fin (1 mes después)
-                   const endDate = new Date();
-                   endDate.setMonth(endDate.getMonth() + 1);
+                   // Obtener detalles del plan one-time comprado
+                   const oneTimePlanDetails = APP_PLANS[planIdFromMetadata];
+                   const additionalCvLimit = oneTimePlanDetails?.cvLimit || 0;
+                   const additionalJobLimit = oneTimePlanDetails?.jobLimit || 0;
 
-                   // Upsert para actualizar o insertar la suscripción de pago único
-                   const { data, error } = await supabase
+                   // Consultar el registro de suscripción existente
+                   const { data: existingSubscription, error: fetchError } = await supabase
                        .from('suscripciones')
-                       .upsert({
-                           recruiter_id: recruiterId,
-                           plan_id: planIdFromMetadata,
-                           status: 'active', // O un estado específico para pago único, ej. 'one_time_active'
-                           trial_ends_at: null, // No aplica trial
-                           current_period_start: new Date().toISOString(), // Inicio ahora
-                           current_period_end: endDate.toISOString(), // Fin en 1 mes
-                           stripe_subscription_id: null, // No hay suscripción de Stripe asociada
-                           // Puedes añadir stripe_payment_intent_id: paymentIntent.id si quieres rastrear el PI
-                           cvs_analizados_este_periodo: 0, // Reiniciar contador si aplica
-                       }, { onConflict: 'recruiter_id' });
+                       .select('CV_Max_plan, Jobs_Max_plan') // Seleccionar las columnas de límites actuales
+                       .eq('recruiter_id', recruiterId)
+                       .single();
 
-                   if (error) {
-                       console.error('❌ Supabase upsert error for one-time payment:', error);
-                   } else {
-                       console.log(`🎉 One-time plan ${planIdFromMetadata} activated for user ${recruiterId} until ${endDate.toISOString()}.`);
+                   if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 es "No rows found"
+                       console.error('❌ Supabase fetch error checking for existing subscription:', fetchError);
+                       throw new Error('Database error checking subscription.');
                    }
 
-              } catch (dbError) {
-                console.error('❌ Database operation failed:', dbError);
-              }
-          } else { // Este else maneja planes NO one-time PERO sin invoice/subscription
-              try {
-                  // Obtener detalles del plan para calcular la fecha de fin
-                  const planDetails = APP_PLANS[planIdFromMetadata];
-                  let endDate = new Date();
+                   if (existingSubscription) {
+                       console.log(`ℹ️ Existing subscription found for user ${recruiterId}. Adding one-time plan limits.`);
+                       // Si ya existe una suscripción, sumar los límites adicionales
+                       const { data, error } = await supabase
+                           .from('suscripciones')
+                           .update({
+                               // Mantener el plan_id existente
+                               // status: 'active', // Asegurar que el estado sea activo si el pago fue exitoso
+                               CV_Max_plan: (existingSubscription.CV_Max_plan || 0) + additionalCvLimit,
+                               Jobs_Max_plan: (existingSubscription.Jobs_Max_plan || 0) + additionalJobLimit,
+                               // Opcional: añadir una fecha de expiración para estos adicionales si se implementa
+                               // adicionales_expire_at: new Date(Date.now() + ...).toISOString(),
+                           })
+                           .eq('recruiter_id', recruiterId);
 
-                  if (planDetails && planDetails.interval === 'month') {
-                      endDate.setMonth(endDate.getMonth() + 1);
-                  } else if (planDetails && planDetails.interval === 'year') {
-                      endDate.setFullYear(endDate.getFullYear() + 1);
-                  } else {
-                      // Manejar otros intervalos o un intervalo por defecto
-                      console.warn(`⚠️ Unknown plan interval for plan ${planIdFromMetadata}. Defaulting to 1 month.`);
-                      endDate.setMonth(endDate.getMonth() + 1);
-                  }
+                       if (error) {
+                           console.error('❌ Supabase update error adding one-time limits:', error);
+                           throw new Error('Database error updating subscription with additional limits.');
+                       }
+                       console.log(`🎉 Added ${additionalCvLimit} CVs and ${additionalJobLimit} jobs to existing subscription for user ${recruiterId}.`);
 
-                  console.log(`Attempting Supabase upsert for user ${recruiterId} with plan ${planIdFromMetadata}. Data:`, {
-                      recruiter_id: recruiterId,
-                      plan_id: planIdFromMetadata,
-                      status: 'active',
-                      trial_ends_at: null,
-                      current_period_start: new Date().toISOString(),
-                      current_period_end: endDate.toISOString(),
-                      stripe_subscription_id: null,
-                      cvs_analizados_este_periodo: 0,
-                  });
+                   } else {
+                       console.log(`ℹ️ No existing subscription found for user ${recruiterId}. Creating new one-time subscription.`);
+                       // Si no existe una suscripción, crear una nueva con los detalles del plan one-time
+                       const endDate = new Date();
+                       endDate.setMonth(endDate.getMonth() + 1); // Ejemplo: suscripción one-time dura 1 mes
 
-                  // Upsert para actualizar o insertar la suscripción
-                  const { data, error } = await supabase
-                      .from('suscripciones')
-                      .upsert({
-                          recruiter_id: recruiterId,
-                          plan_id: planIdFromMetadata,
-                          status: 'active', // El pago fue exitoso, el estado es activo
-                          trial_ends_at: null, // No aplica trial después del pago
-                          current_period_start: new Date().toISOString(), // Inicio ahora
-                          current_period_end: endDate.toISOString(), // Fin calculado
-                          stripe_subscription_id: null, // No hay suscripción de Stripe asociada en este flujo
-                          // Puedes añadir stripe_payment_intent_id: paymentIntent.id si quieres rastrear el PI
-                          cvs_analizados_este_periodo: 0, // Reiniciar contador
-                      }, { onConflict: 'recruiter_id' });
+                       const { data, error } = await supabase
+                           .from('suscripciones')
+                           .upsert({
+                               recruiter_id: recruiterId,
+                               plan_id: planIdFromMetadata, // Establecer el plan one-time como principal si no hay otro
+                               status: 'active',
+                               trial_ends_at: null,
+                               current_period_start: new Date().toISOString(),
+                               current_period_end: endDate.toISOString(),
+                               stripe_subscription_id: null,
+                               cvs_analizados_este_periodo: 0, // Reiniciar contador para este nuevo período/plan
+                               // Establecer los límites máximos del plan one-time
+                               CV_Max_plan: additionalCvLimit,
+                               Jobs_Max_plan: additionalJobLimit,
+                           }, { onConflict: 'recruiter_id' });
 
-                  console.log(`Supabase upsert finished. Error:`, error, `Data:`, data);
+                       if (error) {
+                           console.error('❌ Supabase upsert error for new one-time subscription:', error);
+                           throw new Error('Database error creating new subscription.');
+                       }
+                       console.log(`🎉 New one-time plan ${planIdFromMetadata} activated for user ${recruiterId} until ${endDate.toISOString()}.`);
+                   }
 
-
-                  if (error) {
-                      console.error('❌ Supabase upsert error for non-one-time PI succeeded:', error);
-                  } else {
-                      console.log(`🎉 Plan ${planIdFromMetadata} activated for user ${recruiterId} via PaymentIntent ${paymentIntent.id} until ${endDate.toISOString()}.`);
-                  }
-
-              } catch (dbError) {
-                  console.error('❌ Database operation failed for non-one-time PI succeeded:', dbError);
-              }
-          }
+               } catch (dbError) {
+                 console.error('❌ Database operation failed during one-time payment processing:', dbError);
+                 // Es crucial devolver un error 500 si la operación de BD falló después de un pago exitoso
+                 return res.status(500).json({ error: { message: 'Database operation failed after successful payment.' } });
+               }
+           } else { // Este else maneja planes NO one-time PERO sin invoice/subscription (flujo de pago único para planes recurrentes, lo cual es inusual pero posible)
+               // La lógica aquí podría necesitar revisión dependiendo de tu flujo de negocio.
+               // Si un usuario paga por un plan recurrente sin crear una suscripción de Stripe,
+               // podrías querer activar su plan por un período fijo aquí.
+               // Sin embargo, el flujo recomendado de Stripe para recurrentes es vía customer.subscription.* eventos.
+               console.warn(`⚠️ Received payment_intent.succeeded for non-one-time plan ${planIdFromMetadata} without associated subscription/invoice. RecruiterId: ${recruiterId}. This flow might be unintended.`);
+               // Podrías loguear esto y no hacer nada, o intentar activar el plan por un período.
+               // Si necesitas manejar esto, la lógica sería similar a la creación de una nueva suscripción one-time,
+               // pero usando el planDetails del plan recurrente para calcular la fecha de fin y establecer CV_Max_plan y Jobs_Max_plan.
+           }
       } else {
         console.warn('⚠️ PaymentIntent metadata missing recruiterId or planId:', paymentIntent.metadata);
       }
       break;
+    } // Cerrar bloque case
 
-    case 'customer.subscription.created':
+    case 'customer.subscription.created': { // Usar bloque para scope
       const subscriptionCreated = event.data.object;
       console.log('✅ Subscription created:', subscriptionCreated.id);
       // Cuando se crea una suscripción (incluido el primer pago exitoso)
@@ -173,6 +173,11 @@ export default async (req, res) => {
 
       if (recruiterIdCreated && planIdCreated) {
           try {
+              // Obtener detalles del plan de suscripción
+              const subscriptionPlanDetails = APP_PLANS[planIdCreated];
+              const planCvLimit = subscriptionPlanDetails?.cvLimit || 0;
+              const planJobLimit = subscriptionPlanDetails?.jobLimit || 0;
+
               // Crea o actualiza la suscripción en tu base de datos
               const { data, error } = await supabase
                   .from('suscripciones')
@@ -186,6 +191,9 @@ export default async (req, res) => {
                       trial_ends_at: subscriptionCreated.trial_end ? new Date(subscriptionCreated.trial_end * 1000).toISOString() : null,
                       // Reinicia el contador de CVs analizados para el nuevo período si aplica
                       cvs_analizados_este_periodo: 0,
+                      // Establecer los límites máximos del plan de suscripción
+                      CV_Max_plan: planCvLimit,
+                      Jobs_Max_plan: planJobLimit,
                   }, { onConflict: 'recruiter_id' }); // Conflict on recruiter_id
 
               if (error) {
@@ -200,8 +208,9 @@ export default async (req, res) => {
           console.warn('⚠️ Subscription created event missing recruiterId or Product ID:', subscriptionCreated);
       }
       break;
+    } // Cerrar bloque case
 
-    case 'customer.subscription.updated':
+    case 'customer.subscription.updated': { // Usar bloque para scope
       const subscriptionUpdated = event.data.object;
       console.log('✅ Subscription updated:', subscriptionUpdated.id);
       // Cuando se actualiza una suscripción (cambio de plan, estado, etc.)
@@ -211,6 +220,11 @@ export default async (req, res) => {
 
       if (recruiterIdUpdated && planIdUpdated) {
           try {
+              // Obtener detalles del nuevo plan de suscripción
+              const updatedSubscriptionPlanDetails = APP_PLANS[planIdUpdated];
+              const updatedPlanCvLimit = updatedSubscriptionPlanDetails?.cvLimit || 0;
+              const updatedPlanJobLimit = updatedSubscriptionPlanDetails?.jobLimit || 0;
+
               const { data, error } = await supabase
                   .from('suscripciones')
                   .update({
@@ -221,6 +235,9 @@ export default async (req, res) => {
                       trial_ends_at: subscriptionUpdated.trial_end ? new Date(subscriptionUpdated.trial_end * 1000).toISOString() : null,
                       // Reinicia el contador de CVs si el período ha cambiado (lógica más compleja podría ser necesaria aquí)
                       // cvs_analizados_este_periodo: 0, // Podría ser necesario resetear en ciertos cambios
+                      // Actualizar los límites máximos al nuevo plan de suscripción
+                      CV_Max_plan: updatedPlanCvLimit,
+                      Jobs_Max_plan: updatedPlanJobLimit,
                   })
                   .eq('recruiter_id', recruiterIdUpdated); // O podrías usar stripe_subscription_id si lo guardaste
 
@@ -236,8 +253,9 @@ export default async (req, res) => {
           console.warn('⚠️ Subscription updated event missing recruiterId or Product ID:', subscriptionUpdated);
       }
       break;
+    } // Cerrar bloque case
 
-    case 'customer.subscription.deleted':
+    case 'customer.subscription.deleted': { // Usar bloque para scope
       const subscriptionDeleted = event.data.object;
       console.log('✅ Subscription deleted:', subscriptionDeleted.id);
       // Cuando una suscripción se cancela o finaliza
@@ -252,6 +270,9 @@ export default async (req, res) => {
                       // Opcional: podrías establecer plan_id a un estado 'free' o null
                       // plan_id: 'free',
                       // end_date: new Date(subscriptionDeleted.ended_at * 1000).toISOString(), // Si tienes una columna end_date
+                      // Opcional: resetear límites máximos o establecer a los de un plan free si aplica
+                      // CV_Max_plan: APP_PLANS['free']?.cvLimit || 0,
+                      // Jobs_Max_plan: APP_PLANS['free']?.jobLimit || 0,
                   })
                   .eq('recruiter_id', recruiterIdDeleted); // O usar stripe_subscription_id
 
@@ -267,8 +288,9 @@ export default async (req, res) => {
             console.warn('⚠️ Subscription deleted event missing recruiterId:', subscriptionDeleted);
         }
         break;
+    } // Cerrar bloque case
 
-    case 'invoice.paid':
+    case 'invoice.paid': { // Usar bloque para scope
         const invoice = event.data.object;
         console.log('✅ Invoice paid:', invoice.id);
         // Este evento confirma el pago de una factura de suscripción recurrente.
@@ -286,9 +308,11 @@ export default async (req, res) => {
                      .from('suscripciones')
                      .update({
                          status: 'active', // Asegura que el estado sea activo
-                         // Actualiza las fechas del período actual si es necesario
+                         // Actualiza las fechas del período actual si es necesario (si no se maneja en subscription.updated)
                          // current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
                          // current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+                         // Opcional: Reiniciar el contador de CVs analizados para el nuevo período
+                         // cvs_analizados_este_periodo: 0,
                      })
                      .eq('recruiter_id', recruiterIdFromInvoice); // O usar stripe_subscription_id
 
@@ -304,8 +328,9 @@ export default async (req, res) => {
             console.warn('⚠️ Invoice paid event missing recruiterId or subscriptionId:', invoice);
         }
         break;
+    } // Cerrar bloque case
 
-    case 'payment_intent.payment_failed':
+    case 'payment_intent.payment_failed': { // Usar bloque para scope
         const paymentIntentFailed = event.data.object;
         console.log('❌ PaymentIntent failed:', paymentIntentFailed.id);
         // Notifica al usuario o inicia un flujo de recuperación de pagos
@@ -329,10 +354,12 @@ export default async (req, res) => {
             }
         }
         break;
+    } // Cerrar bloque case
 
     // ... maneja otros tipos de eventos relevantes para tu aplicación
     default:
       // console.log(`Unhandled event type ${event.type}`); // Puedes comentar esto si hay muchos eventos no manejados
+      break; // Añadir break al default
   }
 
   // Retorna un 200 para acusar recibo del evento

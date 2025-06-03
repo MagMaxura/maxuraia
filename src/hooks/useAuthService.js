@@ -194,6 +194,7 @@ export function useAuthService() {
     register,
     resetPassword,
     isAuthenticated: !!user, // Basado en el estado user
+    isProfileComplete: !!(user && user.id && user.company && user.phone), // Determinar si el perfil está completo (ejemplo: basado en campos requeridos)
     refreshUser: () => handleAuthChange("REFRESH", session), // Añadir la función refreshUser
   };
 }
