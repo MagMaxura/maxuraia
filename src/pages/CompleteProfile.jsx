@@ -8,8 +8,8 @@ import { Mail, User, Building2, Phone, Globe, Users, Flag } from 'lucide-react';
 
 function CompleteProfile() {
   console.log("CompleteProfile component rendering");
-  // Obtener la función updateRecruiterProfile del contexto
-  const { user: authUser, updateRecruiterProfile, loading } = useAuth();
+  // Obtener las funciones updateRecruiterProfile y refreshUser del contexto
+  const { user: authUser, updateRecruiterProfile, loading, refreshUser } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -104,6 +104,12 @@ function CompleteProfile() {
         description: "Tu información ha sido guardada exitosamente.",
         variant: "default", // o 'success'
       });
+
+      // Llamar a refreshUser para actualizar el estado del usuario en el contexto
+      console.log("CompleteProfile: [LOG] Calling refreshUser to update auth context.");
+      await refreshUser(); // Esperar a que se complete la actualización del usuario
+
+      console.log("CompleteProfile: [LOG] Profile updated and auth context refreshed. Redirecting to dashboard.");
       navigate('/dashboard');
 
     } catch (error) {
