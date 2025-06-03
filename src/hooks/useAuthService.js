@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react"; // Importar useRef
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/use-toast";
 import { auth } from "../lib/auth";
@@ -29,50 +29,30 @@ export function useAuthService() {
     const supabaseAuthUser = newSession?.user || null;
 
     if (supabaseAuthUser) {
-      // Determine if we need to fetch the full profile:
-      // 1. If the user ID has changed (new user or login)
-      // 2. If it's the first auth check (INITIAL_SESSION) and user state is null
-      // 3. If the user ID is the same, but the current user state doesn't seem to have the full profile data (e.g., missing company/phone)
-      const needsProfileFetch = lastFetchedUserId.current !== supabaseAuthUser.id ||
-                                (event === 'INITIAL_SESSION' && !user) ||
-                                (user && user.id === supabaseAuthUser.id && (!user.company || !user.phone)); // Check for profile completeness
+      console.log(`useAuthService: Authenticated user found. Attempting to fetch full profile for user ID: ${supabaseAuthUser.id}`);
+      try {
+        // Always attempt to fetch the full profile if a Supabase authenticated user exists.
+        // This simplifies the logic and ensures we always try to get the richest user data.
+        const fullUserProfile = await auth.getRecruiterProfile(supabaseAuthUser.id);
 
-      if (needsProfileFetch) {
-        console.log(`useAuthService: Needs profile fetch. Reason: ID changed (${lastFetchedUserId.current !== supabaseAuthUser.id}), Initial session & no user (${event === 'INITIAL_SESSION' && !user}), or Inconsistent user state (${user && user.id === supabaseAuthUser.id && (!user.company || !user.phone)}). Attempting to fetch full profile for user ID: ${supabaseAuthUser.id}`);
-        try {
-          const fullUserProfile = await auth.getRecruiterProfile(supabaseAuthUser.id);
-
-          if (fullUserProfile) {
-            console.log("useAuthService: Full user profile fetched successfully.");
-            setUser(fullUserProfile); // Set state with the full profile
-            auth.user = fullUserProfile; // Update auth object reference
-            lastFetchedUserId.current = supabaseAuthUser.id; // Mark this user ID as having its profile fetched
-          } else {
-            // Profile not found in 'reclutadores', but user is authenticated.
-            console.warn("useAuthService: Recruiter profile not found for authenticated user. Setting user state to basic Supabase Auth user.");
-            setUser(supabaseAuthUser); // Use basic user as fallback
-            auth.user = supabaseAuthUser;
-            lastFetchedUserId.current = supabaseAuthUser.id; // Mark ID as processed even if profile not found
-          }
-        } catch (error) {
-          console.error("useAuthService: Error fetching full user profile:", error);
-          // On error fetching profile, use basic user as fallback and mark ID as processed
-          setUser(supabaseAuthUser);
-          auth.user = supabaseAuthUser;
-          lastFetchedUserId.current = supabaseAuthUser.id; // Mark ID as processed even on error
-        }
-      } else {
-        console.log("useAuthService: Profile fetch skipped. User ID matches last fetched ID and user state seems consistent.");
-        // User ID is the same and user state seems consistent.
-        // Ensure the auth.user reference is up-to-date.
-        if (user && user.id === supabaseAuthUser.id) {
-             console.log("useAuthService: User state is synced. Ensuring auth.user reference is current.");
-             auth.user = user; // Ensure auth.user points to the current user state object
+        if (fullUserProfile) {
+          console.log("useAuthService: Full user profile fetched successfully.");
+          setUser(fullUserProfile); // Set state with the full profile
+          auth.user = fullUserProfile; // Update auth object reference
+          lastFetchedUserId.current = supabaseAuthUser.id; // Mark this user ID as having its profile fetched
         } else {
-             // This case should ideally not happen with the updated needsProfileFetch logic.
-             // If it does, it's a deeper issue. Log a warning.
-             console.warn("useAuthService: Unexpected state: User ID matches last fetched ID, but hook's user state is inconsistent after needsProfileFetch check.");
+          // Profile not found in 'reclutadores', but user is authenticated.
+          console.warn("useAuthService: Recruiter profile not found for authenticated user. Setting user state to basic Supabase Auth user.");
+          setUser(supabaseAuthUser); // Use basic user as fallback
+          auth.user = supabaseAuthUser;
+          lastFetchedUserId.current = supabaseAuthUser.id; // Mark ID as processed even if profile not found
         }
+      } catch (error) {
+        console.error("useAuthService: Error fetching full user profile:", error);
+        // On error fetching profile, use basic user as fallback and mark ID as processed
+        setUser(supabaseAuthUser);
+        auth.user = supabaseAuthUser;
+        lastFetchedUserId.current = supabaseAuthUser.id; // Mark ID as processed even on error
       }
     } else { // No active session
       console.log("useAuthService: No active session, clearing user state.");
@@ -80,6 +60,9 @@ export function useAuthService() {
       auth.clearAuthUser();
       lastFetchedUserId.current = null; // Reset ref on logout
     }
+
+    setAuthChecked(true);
+    setLoading(false); // Set loading false at the very end of processing the event
 
   }, []); // Keep dependencies empty for stability
 
