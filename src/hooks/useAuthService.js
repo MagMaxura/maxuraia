@@ -7,17 +7,24 @@ import { supabase } from "../lib/supabase";
 export function useAuthService() {
   console.log("useAuthService: Hook initialization");
 
-  const [user, setUser] = useState(null);
-  const [session, setSession] = useState(null); // <--- Añadir estado para la sesión
-  const [loading, setLoading] = useState(true); // Iniciar en true hasta que se verifique la sesión inicial
-  const [authChecked, setAuthChecked] = useState(false);
+  // Inicializar el estado user con el usuario de la sesión actual si existe
+  const initialUser = supabase.auth.currentUser;
+  const [user, setUser] = useState(initialUser);
+  const [session, setSession] = useState(supabase.auth.session); // Inicializar sesión también
+  const [loading, setLoading] = useState(!initialUser); // Iniciar en true solo si no hay usuario inicial
+  const [authChecked, setAuthChecked] = useState(!!initialUser); // Marcar como checked si hay usuario inicial
   const { toast } = useToast();
-  const lastFetchedUserId = useRef(null); // <-- Añadir un ref para rastrear el último ID de usuario para el que se obtuvo el perfil.
+  const lastFetchedUserId = useRef(initialUser?.id || null); // Inicializar ref con ID inicial si existe
 
   const handleAuthChange = useCallback(async (event, newSession) => {
     console.log(`useAuthService: handleAuthChange - Event: ${event}, New Session User ID:`, newSession?.user?.id);
 
-    setLoading(true); // Set loading true at the start of processing the event
+    // No establecer loading a true inmediatamente aquí si el evento es INITIAL_SESSION y ya tenemos un usuario.
+    // El estado de carga inicial se maneja en useState.
+    if (event !== 'INITIAL_SESSION' || !user) {
+       setLoading(true);
+    }
+
     setSession(newSession);
     const supabaseAuthUser = newSession?.user || null;
 
@@ -74,8 +81,6 @@ export function useAuthService() {
       lastFetchedUserId.current = null; // Reset ref on logout
     }
 
-    setAuthChecked(true);
-    setLoading(false); // Set loading false at the very end of processing the event
   }, []); // Keep dependencies empty for stability
 
   useEffect(() => {
