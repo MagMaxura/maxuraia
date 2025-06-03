@@ -56,12 +56,14 @@ export function useAuthService() {
              console.log("useAuthService: User state is synced. Ensuring auth.user reference is current.");
              auth.user = user; // Ensure auth.user points to the current user state object
         } else {
-             // This case should ideally not happen if lastFetchedUserId.current is set correctly.
-             // If it does, it might indicate an issue elsewhere or a race condition.
-             // For now, log a warning but avoid setting state to basic user if a richer profile might be held.
-             console.warn("useAuthService: User ID matches last fetched ID, but hook's user state is unexpectedly null or ID mismatch. Skipping state update to avoid potential data loss.");
-             // We could potentially re-fetch here as a safeguard, but that risks reintroducing the loop.
-             // Let's rely on the initial fetch logic being sufficient.
+             // If user state is inconsistent despite matching ID, attempt to set it to the basic Supabase user
+             // This might help stabilize the state and break a potential loop.
+             console.warn("useAuthService: User ID matches last fetched ID, but hook's user state is inconsistent. Attempting to set user state to basic Supabase user.");
+             setUser(supabaseAuthUser); // Attempt to set state to basic user
+             auth.user = supabaseAuthUser; // Update auth.user reference
+             // Note: This might overwrite a richer profile if it was somehow lost from the hook's state.
+             // A more robust solution might involve re-fetching the profile here, but that risks the loop.
+             // This is a pragmatic step to try and break the current inconsistency loop.
         }
       }
     } else { // No active session
