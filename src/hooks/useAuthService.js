@@ -29,10 +29,21 @@ export function useAuthService() {
     const supabaseAuthUser = newSession?.user || null;
 
     if (supabaseAuthUser) {
+      // If the user ID hasn't changed and we already have a user with a fetched profile,
+      // we can potentially skip fetching the profile again to avoid unnecessary re-renders.
+      // We check lastFetchedUserId.current to ensure the profile was successfully fetched previously.
+      if (user && user.id === supabaseAuthUser.id && lastFetchedUserId.current === supabaseAuthUser.id) {
+        console.log(`useAuthService: handleAuthChange - User ID ${supabaseAuthUser.id} is the same and profile already fetched, skipping profile fetch.`);
+        // User state is already correct, just ensure loading is false and authChecked is true.
+        setAuthChecked(true);
+        setLoading(false);
+        return; // Exit the function early as no further state updates are needed for this user.
+      }
+
       console.log(`useAuthService: Authenticated user found. Attempting to fetch full profile for user ID: ${supabaseAuthUser.id}`);
       try {
-        // Always attempt to fetch the full profile if a Supabase authenticated user exists.
-        // This simplifies the logic and ensures we always try to get the richest user data.
+        // Attempt to fetch the full profile. This is necessary if it's a new session,
+        // a different user, or if the previous profile fetch failed.
         const fullUserProfile = await auth.getRecruiterProfile(supabaseAuthUser.id);
 
         if (fullUserProfile) {
