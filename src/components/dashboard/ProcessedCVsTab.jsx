@@ -18,6 +18,8 @@ function ProcessedCVsTab({
   cvFilters,
   onCvFilterChange,
   onDeleteCV,
+  hasUnsavedCVs, // Añadir esta prop
+  onSaveAllCVs, // Añadir esta prop
 }) {
 
   useEffect(() => {
