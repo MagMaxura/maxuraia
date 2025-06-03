@@ -249,6 +249,89 @@ function Dashboard() {
   };
 
 
+  // Función para guardar todos los CVs que aún no tienen cv_database_id
+  const handleSaveAllCVs = async () => {
+    console.log("Dashboard: Entering handleSaveAllCVs");
+    const unsavedCVs = cvFiles.filter(cv => !cv.cv_database_id);
+
+    if (unsavedCVs.length === 0) {
+      toast({
+        title: "No hay CVs sin guardar",
+        description: "Todos los CVs ya están en la base de datos.",
+      });
+      return;
+    }
+
+    toast({
+      title: "Guardando CVs...",
+      description: `Iniciando el guardado de ${unsavedCVs.length} CVs.`,
+    });
+
+    let savedCount = 0;
+    const updatedCvFiles = [...cvFiles]; // Copia para actualizar el estado al final
+
+    for (const cvFile of unsavedCVs) {
+      try {
+        // Asegurarse de que el análisis esté resuelto si es una promesa
+        const analysis = typeof cvFile.analysis.then === 'function'
+          ? await cvFile.analysis
+          : cvFile.analysis;
+
+        const result = await cvService.saveCV({
+          fileName: cvFile.name,
+          fileContent: cvFile.text, // Asumiendo que 'text' es el contenido completo
+          analysis: analysis,
+          userId: user?.id,
+        });
+
+        if (result && result.data) {
+          savedCount++;
+          // Encontrar el índice del CV guardado en la copia y actualizarlo
+          const indexToUpdate = updatedCvFiles.findIndex(cv => cv.name === cvFile.name && !cv.cv_database_id);
+          if (indexToUpdate !== -1) {
+            updatedCvFiles[indexToUpdate] = {
+              ...updatedCvFiles[indexToUpdate],
+              cv_database_id: result.data.cvId,
+              candidate_database_id: result.data.candidateId,
+              analysis: analysis, // Asegurar que el análisis resuelto esté en el estado
+            };
+          }
+        } else {
+           console.error("Dashboard: Error saving CV, no data returned:", cvFile.name, result);
+           toast({
+             title: "Error al guardar un CV",
+             description: `No se recibieron datos al intentar guardar ${cvFile.name}.`,
+             variant: "destructive",
+           });
+        }
+
+      } catch (error) {
+        console.error("Dashboard: Error al guardar CV:", cvFile.name, error);
+        toast({
+          title: "Error al guardar un CV",
+          description: `No se pudo guardar ${cvFile.name}: ${error.message}`,
+          variant: "destructive",
+        });
+      }
+    }
+
+    // Actualizar el estado principal de cvFiles con los CVs guardados
+    setCvFiles(updatedCvFiles);
+
+    if (savedCount > 0) {
+      toast({
+        title: "Guardado Completo",
+        description: `Se guardaron ${savedCount} de ${unsavedCVs.length} CVs sin guardar.`,
+      });
+    } else {
+       toast({
+         title: "Guardado Finalizado",
+         description: "No se pudo guardar ningún CV.",
+         variant: "destructive",
+       });
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       {/* Header Superior */}
