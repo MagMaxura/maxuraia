@@ -1,76 +1,63 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react"; // Eliminar useEffect
 import { motion } from "framer-motion";
 import { Users, Search } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { useToast } from "../components/ui/use-toast";
-import { useAuth } from "../contexts/AuthContext";
-import { cvService } from "../services/cvService";
+// Eliminar useAuth y cvService si no se usan localmente
+// import { useAuth } from "../contexts/AuthContext";
+// import { cvService } from "../services/cvService";
 import CVAnalysis from "./CVAnalysis";
 
-function ProcessedCVs() {
-  const { user } = useAuth();
+// Aceptar props de ProcessedCVsTab
+function ProcessedCVs({
+  cvFiles, // Ahora viene como prop
+  selectedCV, // Ahora viene como prop (índice)
+  handleCVClick, // Ahora viene como prop
+  cvAnalysis, // Ahora viene como prop
+  isLoadingCVs, // Ahora viene como prop
+  isProcessing, // Ahora viene como prop (para el botón de guardar todos)
+  userId, // Ahora viene como prop
+  onDeleteCV, // Ahora viene como prop
+  cvFilters, // Ahora viene como prop
+  onCvFilterChange, // Ahora viene como prop
+  hasUnsavedCVs, // Nueva prop
+  onSaveAllCVs, // Nueva prop
+}) {
+  // const { user } = useAuth(); // Eliminar si no se usa
   const { toast } = useToast();
-  const [cvs, setCvs] = useState([]);
-  const [selectedCV, setSelectedCV] = useState(null);
+  // Eliminar estado local de cvs y useEffect de carga
+  // const [cvs, setCvs] = useState([]);
+  // const [selectedCV, setSelectedCV] = useState(null); // Ahora viene como prop
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true); // Ahora viene como prop isLoadingCVs
 
-  useEffect(() => {
-    loadCVs();
-  }, [user?.id]);
+  // Eliminar useEffect de carga inicial
+  // useEffect(() => {
+  //   loadCVs();
+  // }, [user?.id]);
 
-  const loadCVs = async () => {
-    if (!user?.id) return;
-    
-    try {
-      setIsLoading(true);
-      const data = await cvService.getCVsByRecruiterId(user.id);
-      setCvs(data);
-    } catch (error) {
-      console.error('Error al cargar CVs:', error);
-      toast({
-        title: "Error al cargar CVs",
-        description: "No se pudieron cargar los CVs. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Eliminar loadCVs
+  // const loadCVs = async () => { ... };
 
-  const handleDeleteCV = async (cvId) => {
-    try {
-      await cvService.deleteCV(cvId);
-      setCvs(prevCvs => prevCvs.filter(cv => cv.id !== cvId));
-      if (selectedCV?.id === cvId) {
-        setSelectedCV(null);
-      }
-      toast({
-        title: "CV eliminado",
-        description: "El CV ha sido eliminado correctamente.",
-      });
-    } catch (error) {
-      console.error('Error al eliminar CV:', error);
-      toast({
-        title: "Error al eliminar",
-        description: "No se pudo eliminar el CV. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      });
-    }
-  };
+  // Eliminar handleDeleteCV
+  // const handleDeleteCV = async (cvId) => { ... };
 
-  const filteredCVs = cvs.filter(cv => {
-    const candidate = cv.candidatos[0]; // Asumimos que hay un candidato por CV
-    if (!candidate) return false;
-    
+  // Filtrado ahora usa la prop cvFiles
+  const filteredCVs = cvFiles.filter(cvFile => {
+    // Asumimos que el análisis ya está en cvFile.analysis
+    const analysis = cvFile.analysis;
+    if (!analysis) return false;
+
     const searchLower = searchTerm.toLowerCase();
-    return (
-      candidate.name?.toLowerCase().includes(searchLower) ||
-      candidate.skills?.some(skill => skill.toLowerCase().includes(searchLower))
-    );
+    // Buscar en nombre y habilidades del análisis
+    const nameMatch = analysis.nombre?.toLowerCase().includes(searchLower) || analysis.name?.toLowerCase().includes(searchLower);
+    const skillsMatch = analysis.habilidades?.tecnicas?.some(skill => skill.toLowerCase().includes(searchLower)) || analysis.habilidades?.blandas?.some(skill => skill.toLowerCase().includes(searchLower));
+
+    return nameMatch || skillsMatch;
   });
 
-  if (isLoading) {
+  // Usar isLoadingCVs de las props
+  if (isLoadingCVs) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -80,7 +67,7 @@ function ProcessedCVs() {
 
   return (
     <div className="space-y-6">
-      <motion.section 
+      <motion.section
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="linkedin-section p-6"
@@ -99,22 +86,43 @@ function ProcessedCVs() {
           </div>
         </div>
 
+        {/* Advertencia y botón de guardar todos - Usar la prop hasUnsavedCVs */}
+        {hasUnsavedCVs && (
+          <div className="flex items-center justify-between bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4" role="alert">
+            <p className="font-bold">Advertencia</p>
+            <p>Hay CVs sin guardar.</p>
+            {/* Conectar el botón con la prop onSaveAllCVs */}
+            <Button onClick={onSaveAllCVs} className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded" disabled={isProcessing}>
+              {isProcessing ? 'Guardando...' : 'Guardar todos'}
+            </Button>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 gap-4">
-          {filteredCVs.map((cv) => {
-            const candidate = cv.candidatos[0];
-            if (!candidate) return null;
+          {/* Iterar sobre filteredCVs (que ahora usa cvFiles) */}
+          {filteredCVs.map((cvFile, index) => {
+            const analysis = cvFile.analysis;
+            if (!analysis) return null;
+
+            // Determinar si el CV está guardado para el color
+            const isSaved = (cvFile.cv_database_id && cvFile.cv_database_id !== 'temp-cv-id-error') || cvFile.candidate_database_id;
 
             return (
               <motion.div
-                key={cv.id}
+                // Usar una key única, preferiblemente el ID de BD si existe, o el índice si no
+                key={cvFile.cv_database_id || `temp-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`p-4 rounded-lg cursor-pointer transition-all ${
-                  selectedCV?.id === cv.id
-                    ? "bg-blue-50 border-2 border-blue-500"
-                    : "bg-white border border-gray-200 hover:shadow-md"
+                  // Comparar con el índice seleccionado
+                  selectedCV === index
+                    ? "bg-blue-50 border-2 border-blue-500" // Seleccionado
+                    : isSaved
+                      ? "bg-green-50 border border-green-300 hover:shadow-md" // Guardado (verde)
+                      : "bg-red-50 border border-red-300 hover:shadow-md" // No guardado (rojo)
                 }`}
-                onClick={() => setSelectedCV(cv)}
+                // Usar la prop handleCVClick y pasar el índice
+                onClick={() => handleCVClick(index)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -122,26 +130,42 @@ function ProcessedCVs() {
                       <Users className="h-6 w-6 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900">{candidate.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        {new Date(cv.created_at).toLocaleDateString()}
-                      </p>
+                      {/* Mostrar nombre del análisis */}
+                      <h3 className="font-medium text-gray-900">{analysis.nombre || analysis.name || 'Nombre no disponible'}</h3>
+                      {/* Mostrar fecha de subida si existe */}
+                      {cvFile.uploadedDate && (
+                        <p className="text-sm text-gray-500">
+                          {new Date(cvFile.uploadedDate).toLocaleDateString()}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex space-x-2">
+                    {/* Botón Ver detalles - usa handleCVClick */}
                     <Button
                       variant="ghost"
                       className="text-blue-600 hover:bg-blue-50"
-                      onClick={() => setSelectedCV(cv)}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Evitar que el clic en el botón seleccione el CV
+                        handleCVClick(index); // Seleccionar el CV para mostrar detalles
+                      }}
                     >
                       Ver detalles
                     </Button>
+                    {/* Botón Eliminar - usa la prop onDeleteCV */}
                     <Button
                       variant="ghost"
                       className="text-red-600 hover:bg-red-50"
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleDeleteCV(cv.id);
+                        // Llamar a la prop onDeleteCV con el ID de BD si existe
+                        if (cvFile.cv_database_id && onDeleteCV) {
+                           if (window.confirm(`¿Estás seguro de que quieres eliminar el CV "${cvFile.name}"? Esta acción no se puede deshacer.`)) {
+                             onDeleteCV(cvFile.cv_database_id);
+                           }
+                        } else {
+                           toast({ title: "Error", description: "No se puede eliminar un CV sin guardar permanentemente desde aquí.", variant: "destructive" });
+                        }
                       }}
                     >
                       Eliminar
@@ -152,25 +176,37 @@ function ProcessedCVs() {
             );
           })}
 
-          {filteredCVs.length === 0 && (
+          {/* Mensaje si no hay CVs filtrados */}
+          {filteredCVs.length === 0 && !isLoadingCVs && (
             <div className="text-center py-8 text-gray-500">
               No se encontraron CVs que coincidan con tu búsqueda.
+            </div>
+          )}
+           {/* Mensaje si no hay CVs en absoluto */}
+           {cvFiles.length === 0 && !isLoadingCVs && (
+            <div className="text-center py-8 text-gray-500">
+              No hay CVs procesados o guardados todavía.
             </div>
           )}
         </div>
       </motion.section>
 
-      {selectedCV && (
-        <motion.section 
+      {/* Sección de Análisis del CV - Usar la prop cvAnalysis */}
+      {selectedCV !== null && cvFiles[selectedCV] && cvAnalysis && (
+        <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="linkedin-section p-6"
         >
-          <CVAnalysis analysis={selectedCV.analysis_result} />
+          {/* Pasar el análisis del CV seleccionado */}
+          <CVAnalysis analysis={cvAnalysis} />
         </motion.section>
       )}
     </div>
   );
 }
+
+// Eliminar la función placeholder handleSaveAllCVs
+// const handleSaveAllCVs = async () => { ... };
 
 export default ProcessedCVs;

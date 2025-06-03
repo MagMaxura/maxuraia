@@ -10,6 +10,28 @@ exports.getAllPlans = exports.getPlanById = exports.PLAN_CV_ANALYSIS_LIMITS = ex
  * ¡Verifica que paddlePriceId coincida con tu dashboard de Paddle!
  */
 var APP_PLANS = {
+  // Nuevo plan Trial
+  trial: {
+    id: 'trial',
+    name: 'Plan de Prueba',
+    stripeProductId: 'prod_XXXXXXX',
+    // Reemplazar con ID de producto de Stripe real si aplica
+    stripePriceId: 'price_XXXXXXX',
+    // Reemplazar con ID de precio de Stripe real si aplica
+    priceDisplay: 'Gratis',
+    priceNumeric: 0,
+    type: 'trial',
+    periodicity: 'periodo de prueba',
+    ctaLabel: 'Empezar Prueba',
+    description: 'Prueba todas las funcionalidades básicas de Employ Smart IA por un tiempo limitado.',
+    cvLimit: 10,
+    // Ajustar según la definición real del plan trial
+    jobLimit: 1,
+    // Límite de 1 puesto activo para el plan trial
+    features: ["Te damos la posibilidad de probar la mejor herramienta reclutamiento", "1 Puesto de trabajo activo", "Análisis de CVs: Hasta 10", // Ajustar según la definición real
+    "Macheo de candidatos (match IA): Hasta 10 CVs", // Ajustar según la definición real
+    "Redacción de publicaciones con IA", "Soporte: Email estándar"]
+  },
   busqueda_puntual: {
     id: 'busqueda_puntual',
     name: 'Employ Smart IA - Búsqueda Puntual',

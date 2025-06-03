@@ -175,6 +175,28 @@ function ProcessedCVsTab({
           </div>
         </div>
 
+        {/* Advertencia y botón de guardar todos */}
+        {hasUnsavedCVs && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row items-center justify-between bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded-md shadow-sm"
+            role="alert"
+          >
+            <div className="flex items-center mb-2 sm:mb-0">
+              <span className="font-bold mr-2">Advertencia:</span>
+              <span>Hay CVs procesados sin guardar permanentemente.</span>
+            </div>
+            <Button
+              onClick={onSaveAllCVs}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md text-sm"
+              disabled={isProcessing} // Deshabilitar si ya se está procesando algo
+            >
+              {isProcessing ? 'Guardando...' : 'Guardar todos'}
+            </Button>
+          </motion.div>
+        )}
+
         {/* Mensajes de carga/vacío para la lista de CVs */}
         {isLoadingCVs && !cvFiles.length && ( // Mostrar solo si no hay CVs aún para evitar duplicar mensaje de carga principal
           <p className="text-slate-500 text-sm text-center py-4">Cargando...</p>

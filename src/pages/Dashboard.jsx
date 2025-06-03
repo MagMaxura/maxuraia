@@ -328,6 +328,8 @@ function Dashboard() {
               onDeleteCV={handleDeleteCV}
               cvFilters={cvFilters}
               onCvFilterChange={setCvFilters}
+              hasUnsavedCVs={hasUnsavedCVs} // Pasar la nueva prop
+              onSaveAllCVs={handleSaveAllCVs} // Pasar la nueva función
             />
             );
           })()}
