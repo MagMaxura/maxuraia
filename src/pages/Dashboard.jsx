@@ -40,6 +40,10 @@ function Dashboard() {
   console.log("Dashboard: userSubscription:", userSubscription, "analysisLimit:", analysisLimit, "currentAnalysisCount:", currentAnalysisCount); // Log para verificar
   console.log("Dashboard: jobs from useDashboardData:", jobs, "(type:", typeof jobs, Array.isArray(jobs) ? `length: ${jobs.length}` : 'not an array', ")");
 
+  // Determinar si hay CVs sin guardar (aquellos sin cv_database_id)
+  const hasUnsavedCVs = cvFiles.some(cv => !cv.cv_database_id);
+  console.log("Dashboard: hasUnsavedCVs:", hasUnsavedCVs);
+
   const [selectedCV, setSelectedCV] = useState(null);
   const [cvAnalysis, setCvAnalysis] = useState(null);
   const fileInputRef = useRef(null);
