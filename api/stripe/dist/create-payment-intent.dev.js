@@ -26,7 +26,7 @@ var stripe = new _stripe["default"](process.env.STRIPE_SECRET_KEY, {
 });
 
 var _callee = function _callee(req, res) {
-  var _req$body, priceId, recruiterId, email, plan, amountInCents, paymentIntentParams, paymentIntent;
+  var _req$body, priceId, recruiterId, email, plan, amountInCents, customer, customers, paymentIntentParams, paymentIntent;
 
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
@@ -118,16 +118,50 @@ var _callee = function _callee(req, res) {
 
         case 18:
           _context.prev = 18;
-          // Si la STRIPE_SECRET_KEY no estuviera configurada, la inicialización de `stripe` ya habría fallado
-          // o la siguiente llamada fallaría. El `if (!stripe)` no es estrictamente necesario aquí si se confía
-          // en que la inicialización global de Stripe se maneja correctamente o lanza errores.
+          _context.next = 21;
+          return regeneratorRuntime.awrap(stripe.customers.list({
+            email: email,
+            limit: 1
+          }));
+
+        case 21:
+          customers = _context.sent;
+
+          if (!(customers.data.length > 0)) {
+            _context.next = 27;
+            break;
+          }
+
+          // Si existe, úsalo
+          customer = customers.data[0];
+          console.log("Cliente de Stripe encontrado: ".concat(customer.id));
+          _context.next = 31;
+          break;
+
+        case 27:
+          _context.next = 29;
+          return regeneratorRuntime.awrap(stripe.customers.create({
+            email: email,
+            metadata: {
+              recruiterId: String(recruiterId)
+            } // Es bueno guardar el ID aquí también
+
+          }));
+
+        case 29:
+          customer = _context.sent;
+          console.log("Nuevo cliente de Stripe creado: ".concat(customer.id));
+
+        case 31:
+          // --- FIN DE LA MEJORA ---
           paymentIntentParams = {
+            customer: customer.id,
+            // <-- AÑADES ESTA LÍNEA para asociar el pago al cliente
             amount: amountInCents,
             currency: 'ars',
             // Asegúrate de que esta moneda esté activa en tu cuenta de Stripe
             metadata: {
               recruiterId: String(recruiterId),
-              // Es buena práctica asegurar que los IDs en metadata sean strings
               email: String(email),
               planId: String(plan.id),
               // ID interno de tu plan
@@ -139,20 +173,20 @@ var _callee = function _callee(req, res) {
             }
           };
           console.log('Creando PaymentIntent con params:', paymentIntentParams);
-          _context.next = 23;
+          _context.next = 35;
           return regeneratorRuntime.awrap(stripe.paymentIntents.create(paymentIntentParams));
 
-        case 23:
+        case 35:
           paymentIntent = _context.sent;
           console.log("PaymentIntent ".concat(paymentIntent.id, " creado exitosamente para recruiter ").concat(recruiterId));
           res.status(200).json({
             clientSecret: paymentIntent.client_secret
           });
-          _context.next = 32;
+          _context.next = 44;
           break;
 
-        case 28:
-          _context.prev = 28;
+        case 40:
+          _context.prev = 40;
           _context.t0 = _context["catch"](18);
           console.error("Error al crear Stripe Payment Intent para recruiter ".concat(recruiterId, " con priceId ").concat(priceId, ":"), _context.t0); // Devuelve un error genérico pero loguea el detalle
 
@@ -162,12 +196,12 @@ var _callee = function _callee(req, res) {
             }
           });
 
-        case 32:
+        case 44:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[18, 28]]);
+  }, null, null, [[18, 40]]);
 };
 
 exports["default"] = _callee;

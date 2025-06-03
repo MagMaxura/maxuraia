@@ -51,20 +51,36 @@ export default async (req, res) => {
   }
 
   try {
-    // Si la STRIPE_SECRET_KEY no estuviera configurada, la inicialización de `stripe` ya habría fallado
-    // o la siguiente llamada fallaría. El `if (!stripe)` no es estrictamente necesario aquí si se confía
-    // en que la inicialización global de Stripe se maneja correctamente o lanza errores.
+    // --- INICIO DE LA MEJORA ---
+    let customer;
+    // 1. Busca si ya existe un cliente en Stripe con ese email
+    const customers = await stripe.customers.list({ email: email, limit: 1 });
+
+    if (customers.data.length > 0) {
+        // Si existe, úsalo
+        customer = customers.data[0];
+        console.log(`Cliente de Stripe encontrado: ${customer.id}`);
+    } else {
+        // Si no existe, créalo
+        customer = await stripe.customers.create({
+            email: email,
+            metadata: { recruiterId: String(recruiterId) } // Es bueno guardar el ID aquí también
+        });
+        console.log(`Nuevo cliente de Stripe creado: ${customer.id}`);
+    }
+    // --- FIN DE LA MEJORA ---
 
     const paymentIntentParams = {
-      amount: amountInCents,
-      currency: 'ars', // Asegúrate de que esta moneda esté activa en tu cuenta de Stripe
-      metadata: {
-        recruiterId: String(recruiterId), // Es buena práctica asegurar que los IDs en metadata sean strings
-        email: String(email),
-        planId: String(plan.id), // ID interno de tu plan
-        stripePriceId: String(priceId), // Price ID de Stripe usado
-      },
-      automatic_payment_methods: { enabled: true },
+        customer: customer.id, // <-- AÑADES ESTA LÍNEA para asociar el pago al cliente
+        amount: amountInCents,
+        currency: 'ars', // Asegúrate de que esta moneda esté activa en tu cuenta de Stripe
+        metadata: {
+            recruiterId: String(recruiterId),
+            email: String(email),
+            planId: String(plan.id), // ID interno de tu plan
+            stripePriceId: String(priceId), // Price ID de Stripe usado
+        },
+        automatic_payment_methods: { enabled: true },
     };
 
     console.log('Creando PaymentIntent con params:', paymentIntentParams);
