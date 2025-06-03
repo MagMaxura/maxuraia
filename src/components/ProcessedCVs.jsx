@@ -100,9 +100,11 @@ function ProcessedCVs({
 
         <div className="grid grid-cols-1 gap-4">
           {/* Iterar sobre filteredCVs (que ahora usa cvFiles) */}
+          {/* Iterar sobre filteredCVs (que ahora usa cvFiles) */}
           {filteredCVs.map((cvFile, index) => {
-            const analysis = cvFile.analysis;
-            if (!analysis) return null;
+            // Asegurarse de que cvFile y analysis existen antes de acceder a propiedades
+            const analysis = cvFile?.analysis;
+            if (!analysis) return null; // No renderizar si no hay análisis
 
             // Determinar si el CV está guardado para el color
             const isSaved = (cvFile.cv_database_id && cvFile.cv_database_id !== 'temp-cv-id-error') || cvFile.candidate_database_id;
@@ -130,7 +132,7 @@ function ProcessedCVs({
                       <Users className="h-6 w-6 text-blue-600" />
                     </div>
                     <div>
-                      {/* Mostrar nombre del análisis */}
+                      {/* Mostrar nombre del análisis con comprobación de seguridad */}
                       <h3 className="font-medium text-gray-900">{analysis.nombre || analysis.name || 'Nombre no disponible'}</h3>
                       {/* Mostrar fecha de subida si existe */}
                       {cvFile.uploadedDate && (
