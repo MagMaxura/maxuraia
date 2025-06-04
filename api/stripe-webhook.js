@@ -98,9 +98,9 @@ export default async (req, res) => {
                        const { data, error } = await supabase
                            .from('suscripciones')
                            .update({
-                               // Mantener el plan_id existente
-                               // status: 'active', // Asegurar que el estado sea activo si el pago fue exitoso
-                               CV_Max_plan: (existingSubscription.CV_Max_plan || 0) + additionalCvLimit,
+                                // Mantener el plan_id existente
+                                status: 'active', // Asegurar que el estado sea activo si el pago fue exitoso
+                                CV_Max_plan: (existingSubscription.CV_Max_plan || 0) + additionalCvLimit,
                                Jobs_Max_plan: (existingSubscription.Jobs_Max_plan || 0) + additionalJobLimit,
                                // Opcional: añadir una fecha de expiración para estos adicionales si se implementa
                                // adicionales_expire_at: new Date(Date.now() + ...).toISOString(),
