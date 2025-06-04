@@ -24,6 +24,7 @@ function Login() {
     // Solo redirigir si la comprobación inicial de auth ha terminado y el usuario está autenticado
     if (!loading && isAuthenticated) {
       console.log("Login.jsx: User already authenticated.");
+      console.log("Login.jsx: isAuthenticated:", isAuthenticated, "isProfileComplete:", isProfileComplete); // Log para depuración
       // Redirigir según si el perfil está completo
       if (isProfileComplete) {
         console.log("Login.jsx: Profile complete, redirecting to dashboard.");
