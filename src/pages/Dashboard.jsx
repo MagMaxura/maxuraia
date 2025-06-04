@@ -24,11 +24,6 @@ function Dashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("cargarNuevoCV"); // Pestaña inicial
 
-  // Verificar si la prueba ha expirado
-  const isTrialExpired = userSubscription?.plan_id === 'trial' &&
-                         userSubscription?.trial_ends_at &&
-                         new Date(userSubscription.trial_ends_at) < new Date();
-
   // Usar el hook para obtener datos y funciones de seteo
   const {
     cvFiles,
@@ -41,6 +36,12 @@ function Dashboard() {
     analysisLimit, // Nuevo
     currentAnalysisCount, // Nuevo
   } = useDashboardData();
+
+  // Verificar si la prueba ha expirado después de obtener userSubscription
+  const isTrialExpired = userSubscription?.plan_id === 'trial' &&
+                         userSubscription?.trial_ends_at &&
+                         new Date(userSubscription.trial_ends_at) < new Date();
+
   console.log("Dashboard: cvFiles from useDashboardData:", cvFiles, "(type:", typeof cvFiles, Array.isArray(cvFiles) ? `length: ${cvFiles.length}` : 'not an array', ")");
   console.log("Dashboard: userSubscription:", userSubscription, "analysisLimit:", analysisLimit, "currentAnalysisCount:", currentAnalysisCount); // Log para verificar
   console.log("Dashboard: jobs from useDashboardData:", jobs, "(type:", typeof jobs, Array.isArray(jobs) ? `length: ${jobs.length}` : 'not an array', ")");
