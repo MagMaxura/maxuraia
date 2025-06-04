@@ -40,37 +40,87 @@ function CurrentPlanTab() {
     >
       <h2 className="text-2xl font-semibold text-slate-800 mb-6">Detalles de tu Plan</h2>
       {user && user.suscripcion ? (
-        <div className="space-y-5 text-slate-700">
-          <div>
-            <p className="text-sm font-medium text-slate-500">Plan Contratado:</p>
-            <div className="flex items-center space-x-4">
-              <p className="text-xl font-semibold capitalize text-blue-600">{user.suscripcion.plan_id || "No disponible"}</p>
-              <Button onClick={() => setOpen(true)} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                Mejorar Plan
-              </Button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-700">
+          {/* Columna 1: Plan Actual */}
+          <div className="border p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-3">Tu Plan Actual</h3>
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium text-slate-500">Plan Contratado:</p>
+                <p className="text-xl font-semibold capitalize text-blue-600">{user.suscripcion.plan_id || "No disponible"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Estado:</p>
+                <p className="text-lg capitalize">{user.suscripcion.status || "No disponible"}</p>
+              </div>
+              {user.suscripcion.status === 'trialing' && user.suscripcion.trial_ends_at && (
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Tu prueba gratuita finaliza el:</p>
+                  <p className="text-lg">{new Date(user.suscripcion.trial_ends_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+              )}
+              {user.suscripcion.status === 'active' && user.suscripcion.current_period_end && (
+                <div>
+                  <p className="text-sm font-medium text-slate-500">Próxima fecha de renovación:</p>
+                  <p className="text-lg">{new Date(user.suscripcion.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                </div>
+              )}
+              {/* Puedes añadir más detalles del plan actual aquí si es necesario */}
             </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-slate-500">Estado:</p>
-            <p className="text-lg capitalize">{user.suscripcion.status || "No disponible"}</p>
+
+          {/* Columna 2: Plan Búsqueda Puntual */}
+          {busquedaPuntualPlan && (
+            <div className="border p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-3">{busquedaPuntualPlan.name}</h3>
+              <p className="text-sm text-green-600 font-medium mb-3">¡Aumenta tu límite por única vez!</p>
+              <div className="space-y-3">
+                <p className="text-md">{busquedaPuntualPlan.description}</p>
+                {/* Puedes añadir más detalles del plan Búsqueda Puntual aquí */}
+                <Button
+                  onClick={() => handleCheckout(busquedaPuntualPlan, user)}
+                  disabled={loadingCheckout}
+                  className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Comprar {busquedaPuntualPlan.price} {busquedaPuntualPlan.currency}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Columna 3: Siguiente Plan Jerárquico */}
+          <div className="border p-4 rounded-lg">
+            <h3 className="text-lg font-semibold mb-3">Mejorar Plan</h3>
+            {nextPlan ? (
+              <div className="space-y-3">
+                <p className="text-md font-semibold capitalize text-purple-600">{nextPlan.name}</p>
+                <p className="text-md">{nextPlan.description}</p>
+                {/* Puedes añadir más detalles del siguiente plan aquí */}
+                <Button
+                  onClick={() => handleCheckout(nextPlan, user)}
+                  disabled={loadingCheckout}
+                  className="w-full bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Comprar {nextPlan.price} {nextPlan.currency}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-md font-semibold text-slate-500">No hay un plan superior definido.</p>
+                <p className="text-md text-slate-500">Contacta a soporte para opciones empresariales.</p>
+                {/* Puedes añadir un botón de contacto a soporte aquí si es necesario */}
+              </div>
+            )}
           </div>
-          {user.suscripcion.status === 'trialing' && user.suscripcion.trial_ends_at && (
-            <div>
-              <p className="text-sm font-medium text-slate-500">Tu prueba gratuita finaliza el:</p>
-              <p className="text-lg">{new Date(user.suscripcion.trial_ends_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
-          )}
-          {user.suscripcion.status === 'active' && user.suscripcion.current_period_end && (
-            <div>
-              <p className="text-sm font-medium text-slate-500">Próxima fecha de renovación:</p>
-              <p className="text-lg">{new Date(user.suscripcion.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            </div>
-          )}
         </div>
       ) : (
         <p className="text-slate-500">No se pudo cargar la información de tu plan. Si el problema persiste, contacta a soporte.</p>
       )}
-      <ToastProvider>
+      {/* El ToastProvider y Toast ya no son necesarios aquí para el botón "Mejorar Plan" */}
+      {/* Se pueden mantener si se usan para otras notificaciones */}
+      {/* <ToastProvider>
         <Toast open={open} onOpenChange={setOpen} nextPlan={nextPlan}>
           <ToastTitle>{nextPlan ? nextPlan.name : 'No hay plan superior'}</ToastTitle>
           <ToastDescription>
@@ -86,7 +136,7 @@ function CurrentPlanTab() {
           <ToastClose />
         </Toast>
         <ToastViewport />
-      </ToastProvider>
+      </ToastProvider> */}
     </motion.div>
   );
 }
