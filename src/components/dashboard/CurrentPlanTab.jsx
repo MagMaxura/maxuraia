@@ -19,6 +19,9 @@ function CurrentPlanTab() {
   const { userSubscription } = user || {}; // Obtener userSubscription del usuario
   const { loadingCheckout, handleCheckout } = usePayment();
 
+  // Declarar el estado para controlar la visibilidad del Toast
+  const [open, setOpen] = useState(false);
+
   const currentPlanId = userSubscription?.plan_id;
   const currentPlan = APP_PLANS[currentPlanId] || null;
 
