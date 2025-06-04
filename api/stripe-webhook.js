@@ -64,12 +64,24 @@ export default async (req, res) => {
       // Accede a la metadata que pasamos al crear el PaymentIntent
       const { recruiterId, planId: planIdFromMetadata } = paymentIntent.metadata; // planId aquí es tu ID interno
 
+      // Verificar que los datos esenciales de la metadata estén presentes
+      if (!recruiterId || !planIdFromMetadata) {
+          console.error('❌ Missing required metadata in payment_intent.succeeded event:', paymentIntent.metadata);
+          return res.status(400).json({ error: { message: 'Missing required metadata (recruiterId or planId).' } });
+      }
+
       // Si el PaymentIntent está asociado a una suscripción, la lógica principal se maneja en customer.subscription.*
       // Si no está asociado a una suscripción, podría ser un pago único.
       if (paymentIntent.invoice || paymentIntent.subscription) {
           console.log(`ℹ️ PaymentIntent ${paymentIntent.id} is associated with a subscription/invoice. Handled by other events.`);
           // La lógica para actualizar la suscripción se manejará en invoice.paid o customer.subscription.updated
-      } else if (recruiterId && planIdFromMetadata) {
+      } else { // Este bloque maneja pagos únicos (no asociados a suscripciones/facturas)
+          // Verificar que los datos esenciales de la metadata estén presentes
+          if (!recruiterId || !planIdFromMetadata) {
+              console.error('❌ Missing required metadata in payment_intent.succeeded event:', paymentIntent.metadata);
+              return res.status(400).json({ error: { message: 'Missing required metadata (recruiterId or planId).' } });
+          }
+
           // Este podría ser un pago único (como Búsqueda Puntual)
           const isOneTimePayment = APP_PLANS[planIdFromMetadata] && APP_PLANS[planIdFromMetadata].type === 'one-time';
 
@@ -83,7 +95,7 @@ export default async (req, res) => {
                    // Consultar el registro de suscripción existente
                    const { data: existingSubscription, error: fetchError } = await supabase
                        .from('suscripciones')
-                       .select('CV_Max_plan, Jobs_Max_plan') // Seleccionar las columnas de límites actuales
+                       .select('plan_id, CV_Max_plan, Jobs_Max_plan') // Seleccionar plan_id y límites actuales
                        .eq('recruiter_id', recruiterId)
                        .single();
 
@@ -94,17 +106,25 @@ export default async (req, res) => {
 
                    if (existingSubscription) {
                        console.log(`ℹ️ Existing subscription found for user ${recruiterId}. Adding one-time plan limits.`);
-                       // Si ya existe una suscripción, sumar los límites adicionales
+                       // Si ya existe una suscripción, preparar el objeto de actualización
+                       const updateData = {
+                           status: 'active', // Asegurar que el estado sea activo si el pago fue exitoso
+                           CV_Max_plan: (existingSubscription.CV_Max_plan || 0) + additionalCvLimit,
+                           Jobs_Max_plan: (existingSubscription.Jobs_Max_plan || 0) + additionalJobLimit,
+                           // Opcional: añadir una fecha de expiración para estos adicionales si se implementa
+                           // adicionales_expire_at: new Date(Date.now() + ...).toISOString(),
+                       };
+
+                       // Solo actualizar el plan_id si el plan existente es 'trial'
+                       if (existingSubscription.plan_id === 'trial') {
+                           updateData.plan_id = planIdFromMetadata;
+                       } else {
+                           console.log(`ℹ️ Existing plan is ${existingSubscription.plan_id}, not updating plan_id for one-time purchase.`);
+                       }
+
                        const { data, error } = await supabase
                            .from('suscripciones')
-                           .update({
-                                // Mantener el plan_id existente
-                                status: 'active', // Asegurar que el estado sea activo si el pago fue exitoso
-                                CV_Max_plan: (existingSubscription.CV_Max_plan || 0) + additionalCvLimit,
-                               Jobs_Max_plan: (existingSubscription.Jobs_Max_plan || 0) + additionalJobLimit,
-                               // Opcional: añadir una fecha de expiración para estos adicionales si se implementa
-                               // adicionales_expire_at: new Date(Date.now() + ...).toISOString(),
-                           })
+                           .update(updateData)
                            .eq('recruiter_id', recruiterId);
 
                        if (error) {
@@ -157,8 +177,6 @@ export default async (req, res) => {
                // Si necesitas manejar esto, la lógica sería similar a la creación de una nueva suscripción one-time,
                // pero usando el planDetails del plan recurrente para calcular la fecha de fin y establecer CV_Max_plan y Jobs_Max_plan.
            }
-      } else {
-        console.warn('⚠️ PaymentIntent metadata missing recruiterId or planId:', paymentIntent.metadata);
       }
       break;
     } // Cerrar bloque case
