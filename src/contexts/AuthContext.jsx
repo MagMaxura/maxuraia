@@ -28,6 +28,7 @@ export function AuthProvider({ children }) {
     loading: authService.loading,
     authChecked: authService.authChecked,
     isAuthenticated: authService.isAuthenticated,
+    isProfileComplete: authService.isProfileComplete, // Añadir isProfileComplete al contexto
     login: authService.login,
     logout: authService.logout,
     register: authService.register, // signUp inicial
