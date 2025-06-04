@@ -7,8 +7,8 @@ export const usePayment = () => {
   const { toast } = useToast();
 
   const handleCheckout = async (planDetails, user, dynamicUrls = {}) => {
-    if (!planDetails || !planDetails.paddlePriceId) {
-      console.error('usePayment: planDetails.paddlePriceId no está definido.');
+    if (!planDetails || !planDetails.stripePriceId) {
+      console.error('usePayment: planDetails.stripePriceId no está definido.');
       toast({ title: "Error de Configuración", description: 'Información del plan no disponible.', variant: "destructive" });
       return;
     }

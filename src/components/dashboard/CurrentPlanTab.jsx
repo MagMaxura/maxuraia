@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { APP_PLANS } from '@/config/plans';
+import { APP_PLANS, PLAN_HIERARCHY } from '@/config/plans'; // Añadir PLAN_HIERARCHY
 import { Loader2 } from 'lucide-react';
 import { usePayment } from '@/hooks/usePayment';
 import {
@@ -16,9 +16,17 @@ import {
 
 function CurrentPlanTab() {
   const { user } = useAuth();
-  const [open, setOpen] = useState(false);
-  const nextPlan = APP_PLANS['profesional_monthly'];
+  const { userSubscription } = user || {}; // Obtener userSubscription del usuario
   const { loadingCheckout, handleCheckout } = usePayment();
+
+  const currentPlanId = userSubscription?.plan_id;
+  const currentPlan = APP_PLANS[currentPlanId] || null;
+
+  const busquedaPuntualPlan = APP_PLANS['busqueda_puntual'];
+
+  // Determinar el siguiente plan en la jerarquía si no es enterprise
+  const nextPlanId = PLAN_HIERARCHY[currentPlanId]?.next || null;
+  const nextPlan = nextPlanId ? APP_PLANS[nextPlanId] : null;
 
   return (
     <motion.div
