@@ -42,6 +42,13 @@ function Dashboard() {
                          userSubscription?.trial_ends_at &&
                          new Date(userSubscription.trial_ends_at) < new Date();
 
+  // Si la prueba ha expirado, forzar la pestaña activa a "planActual" después de la carga inicial
+  useEffect(() => {
+    if (isTrialExpired) {
+      setActiveTab("planActual");
+    }
+  }, [isTrialExpired, userSubscription]); // Depende de isTrialExpired y userSubscription
+
   console.log("Dashboard: cvFiles from useDashboardData:", cvFiles, "(type:", typeof cvFiles, Array.isArray(cvFiles) ? `length: ${cvFiles.length}` : 'not an array', ")");
   console.log("Dashboard: userSubscription:", userSubscription, "analysisLimit:", analysisLimit, "currentAnalysisCount:", currentAnalysisCount); // Log para verificar
   console.log("Dashboard: jobs from useDashboardData:", jobs, "(type:", typeof jobs, Array.isArray(jobs) ? `length: ${jobs.length}` : 'not an array', ")");
@@ -337,25 +344,6 @@ function Dashboard() {
        });
     }
   };
-
-  // Si la prueba ha expirado, mostrar un mensaje y restringir el contenido
-  if (isTrialExpired) {
-    console.log("Dashboard: Trial expired, showing upgrade message.");
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-100">
-        <div className="bg-white p-8 rounded-xl shadow-xl text-center space-y-4">
-          <h2 className="text-2xl font-bold text-red-600">Tu período de prueba ha expirado</h2>
-          <p className="text-slate-700">Para seguir utilizando EmploySmart IA, por favor, activa un plan.</p>
-          <Button onClick={() => setActiveTab("planActual")} className="bg-blue-600 hover:bg-blue-700 text-white">
-            Ver Planes Disponibles
-          </Button>
-          <Button variant="ghost" onClick={logout} className="text-slate-600 hover:underline">
-            Cerrar Sesión
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
