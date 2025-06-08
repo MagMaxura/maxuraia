@@ -227,7 +227,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
           <Textarea
             id="description"
             name="description"
-            value={jobDetails.description}
+            value={jobDetails.description || jobDetails.ai_generated_description} // Mostrar descripción manual o IA
             onChange={handleInputChange}
             placeholder="Describe detalladamente el puesto, responsabilidades, requisitos, etc."
             rows="6"
@@ -237,6 +237,31 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
             Si generaste una descripción con IA, puedes editarla aquí o añadir detalles adicionales.
           </p>
         </div>
+
+        {/* Mostrar Requisitos generados por IA */}
+        {jobDetails.requirements && Object.keys(jobDetails.requirements).length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-md font-semibold text-slate-700">Requisitos Generados por IA:</h4>
+            {Object.entries(jobDetails.requirements).map(([category, items], index) => (
+              <div key={index}>
+                <p className="text-sm font-medium text-slate-600 capitalize">{category.replace(/_/g, ' ')}:</p>
+                <ul className="list-disc list-inside text-sm text-slate-800 ml-4">
+                  {Array.isArray(items) && items.map((item, idx) => (
+                    <li key={idx}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Mostrar Palabras Clave generadas por IA */}
+        {jobDetails.keywords && jobDetails.keywords.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-md font-semibold text-slate-700">Palabras Clave Generadas por IA:</h4>
+            <p className="text-sm text-slate-800">{jobDetails.keywords.join(', ')}</p>
+          </div>
+        )}
 
         {/* Botón de Guardar */}
         <Button
