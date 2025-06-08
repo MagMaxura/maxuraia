@@ -214,9 +214,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
               ...prevDetails,
               title: generatedJobData.title || prevDetails.title, // Usar título de IA si existe
               ai_generated_description: generatedJobData.description, // Usar descripción de IA
-              // Puedes añadir otros campos generados por IA aquí si tu modelo los devuelve
-              // requirements: generatedJobData.requirements,
-              // keywords: generatedJobData.keywords,
+              requirements: generatedJobData.requirements || null, // Incluir requisitos generados por IA
+              keywords: generatedJobData.keywords || [], // Incluir palabras clave generadas por IA
             }));
           }}
           currentDescription={jobDetails.description || jobDetails.ai_generated_description} // Pasar la descripción actual (manual o IA)

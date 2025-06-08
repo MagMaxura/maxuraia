@@ -350,7 +350,13 @@ export const cvService = {
     try {
       const { data, error } = await supabase
         .from('jobs')
-        .update(dataToUpdate)
+        .update({
+          title: dataToUpdate.title,
+          description: dataToUpdate.description,
+          ai_generated_description: dataToUpdate.ai_generated_description,
+          requirements: dataToUpdate.requirements, // Incluir requisitos
+          keywords: dataToUpdate.keywords, // Incluir palabras clave
+        })
         .eq('id', jobId)
         .select()
         .single();
