@@ -289,9 +289,10 @@ export const cvService = {
 
   async createJobPost(jobData) {
     console.log("cvService.createJobPost: Creando puesto con datos:", jobData);
-    if (!jobData || !jobData.recruiter_id || !jobData.title || !jobData.description) {
-      console.error("cvService.createJobPost: Faltan datos requeridos (recruiter_id, title, description).");
-      throw new Error("Faltan datos requeridos para crear el puesto.");
+    // Validar que recruiter_id, title y al menos una descripción (manual o IA) estén presentes
+    if (!jobData || !jobData.recruiter_id || !jobData.title || (!jobData.description && !jobData.ai_generated_description)) {
+      console.error("cvService.createJobPost: Faltan datos requeridos (recruiter_id, title, description o ai_generated_description).");
+      throw new Error("Faltan datos requeridos para crear el puesto (título y al menos una descripción).");
     }
     try {
       const { data, error } = await supabase

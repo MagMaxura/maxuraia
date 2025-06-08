@@ -28,8 +28,14 @@ function CurrentPlanTab() {
   const busquedaPuntualPlan = APP_PLANS['busqueda_puntual'];
 
   // Determinar el siguiente plan en la jerarquía si no es enterprise
-  const nextPlanId = PLAN_HIERARCHY[currentPlanId]?.next || null;
-  const nextPlan = nextPlanId ? APP_PLANS[nextPlanId] : null;
+  // Determinar el siguiente plan para mejora
+  let nextPlanToShow = null;
+  if (currentPlanId === 'busqueda_puntual') {
+      nextPlanToShow = APP_PLANS['profesional'];
+  } else {
+      const nextPlanId = PLAN_HIERARCHY[currentPlanId]?.next || null;
+      nextPlanToShow = nextPlanId ? APP_PLANS[nextPlanId] : null;
+  }
 
   return (
     <motion.div
@@ -92,18 +98,18 @@ function CurrentPlanTab() {
           {/* Columna 3: Siguiente Plan Jerárquico */}
           <div className="border p-4 rounded-lg">
             <h3 className="text-lg font-semibold mb-3">Mejorar Plan</h3>
-            {nextPlan ? (
+            {nextPlanToShow ? (
               <div className="space-y-3">
-                <p className="text-md font-semibold capitalize text-purple-600">{nextPlan.name}</p>
-                <p className="text-md">{nextPlan.description}</p>
+                <p className="text-md font-semibold capitalize text-purple-600">{nextPlanToShow.name}</p>
+                <p className="text-md">{nextPlanToShow.description}</p>
                 {/* Puedes añadir más detalles del siguiente plan aquí */}
                 <Button
-                  onClick={() => handleCheckout(nextPlan, user)}
+                  onClick={() => handleCheckout(nextPlanToShow, user)}
                   disabled={loadingCheckout}
                   className="w-full bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
                 >
                   {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Comprar {nextPlan.price} {nextPlan.currency}
+                  Comprar {nextPlanToShow.price} {nextPlanToShow.currency}
                 </Button>
               </div>
             ) : (
