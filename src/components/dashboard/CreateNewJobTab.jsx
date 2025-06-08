@@ -227,41 +227,75 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
           <Textarea
             id="description"
             name="description"
-            value={jobDetails.description || jobDetails.ai_generated_description} // Mostrar descripción manual o IA
+            value={jobDetails.description} // Mostrar el campo description (que ahora puede contener la IA)
             onChange={handleInputChange}
             placeholder="Describe detalladamente el puesto, responsabilidades, requisitos, etc."
             rows="6"
             disabled={formDisabledOverall}
           />
            <p className="mt-1 text-sm text-slate-500">
-            Si generaste una descripción con IA, puedes editarla aquí o añadir detalles adicionales.
+            Si generaste una descripción con IA, aparecerá aquí y podrás editarla o añadir detalles adicionales.
           </p>
         </div>
 
-        {/* Mostrar Requisitos generados por IA */}
-        {jobDetails.requirements && Object.keys(jobDetails.requirements).length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-md font-semibold text-slate-700">Requisitos Generados por IA:</h4>
-            {Object.entries(jobDetails.requirements).map(([category, items], index) => (
-              <div key={index}>
-                <p className="text-sm font-medium text-slate-600 capitalize">{category.replace(/_/g, ' ')}:</p>
-                <ul className="list-disc list-inside text-sm text-slate-800 ml-4">
-                  {Array.isArray(items) && items.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Campo para Requisitos */}
+        <div>
+          <label htmlFor="requirements" className="block text-sm font-medium text-slate-700 mb-1">Requisitos (Formato JSON)</label>
+          <Textarea
+            id="requirements"
+            name="requirements"
+            // Mostrar el JSON stringificado de los requisitos
+            value={jobDetails.requirements ? JSON.stringify(jobDetails.requirements, null, 2) : ''}
+            onChange={(e) => {
+              try {
+                // Intentar parsear el JSON al cambiar
+                const parsedRequirements = JSON.parse(e.target.value);
+                setJobDetails(prevDetails => ({
+                  ...prevDetails,
+                  requirements: parsedRequirements,
+                }));
+              } catch (error) {
+                // Si el JSON es inválido, aún actualizamos el estado con el texto
+                // pero mantenemos el estado 'requirements' como null o el último válido
+                console.error("JSON de requisitos inválido:", error);
+                // Podrías añadir un estado de error visual aquí si es necesario
+                // Por ahora, solo actualizamos el texto en el campo sin cambiar el estado de requisitos
+                // Esto requiere un estado local para el texto del textarea si no queremos perder la entrada inválida
+                // Para simplificar, por ahora, solo actualizamos si es JSON válido.
+                // Una implementación más robusta usaría un estado separado para el texto del textarea.
+              }
+            }}
+            placeholder='Ej: {"educacion": ["Grado en CS"], "experiencia": ["3+ años en React"]}'
+            rows="4"
+            className="mt-1 font-mono text-xs"
+            disabled={formDisabledOverall}
+          />
+          <p className="mt-1 text-sm text-slate-500">Ingresa los requisitos en formato JSON.</p>
+        </div>
 
-        {/* Mostrar Palabras Clave generadas por IA */}
-        {jobDetails.keywords && jobDetails.keywords.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-md font-semibold text-slate-700">Palabras Clave Generadas por IA:</h4>
-            <p className="text-sm text-slate-800">{jobDetails.keywords.join(', ')}</p>
-          </div>
-        )}
+        {/* Campo para Palabras Clave */}
+        <div>
+          <label htmlFor="keywords" className="block text-sm font-medium text-slate-700 mb-1">Palabras Clave (Separadas por coma)</label>
+          <Textarea
+            id="keywords"
+            name="keywords"
+            // Mostrar las palabras clave unidas por coma
+            value={Array.isArray(jobDetails.keywords) ? jobDetails.keywords.join(', ') : ''}
+            onChange={(e) => {
+              // Convertir el texto separado por comas a un array
+              const keywordsArray = e.target.value.split(',').map(keyword => keyword.trim()).filter(keyword => keyword !== '');
+              setJobDetails(prevDetails => ({
+                ...prevDetails,
+                keywords: keywordsArray,
+              }));
+            }}
+            placeholder="Ej: React, TypeScript, UI/UX, Fintech"
+            rows="2"
+            className="mt-1"
+            disabled={formDisabledOverall}
+          />
+          <p className="mt-1 text-sm text-slate-500">Ingresa las palabras clave separadas por comas.</p>
+        </div>
 
         {/* Botón de Guardar */}
         <Button

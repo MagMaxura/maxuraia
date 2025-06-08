@@ -352,8 +352,7 @@ export const cvService = {
         .from('jobs')
         .update({
           title: dataToUpdate.title,
-          description: dataToUpdate.description,
-          ai_generated_description: dataToUpdate.ai_generated_description,
+          description: dataToUpdate.description, // Usar el campo description
           requirements: dataToUpdate.requirements, // Incluir requisitos
           keywords: dataToUpdate.keywords, // Incluir palabras clave
         })
