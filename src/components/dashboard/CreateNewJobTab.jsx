@@ -209,12 +209,14 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
 
         {/* Asistente IA para Creación de Puestos */}
         <CreateJobAIForm
-          onDescriptionGenerated={(aiDescription) => {
+          onJobGenerated={(generatedJobData) => { // Cambiado de onDescriptionGenerated a onJobGenerated
             setJobDetails(prevDetails => ({
               ...prevDetails,
-              ai_generated_description: aiDescription,
-              // Opcional: si quieres que la descripción IA sobrescriba la manual al generar
-              // description: aiDescription,
+              title: generatedJobData.title || prevDetails.title, // Usar título de IA si existe
+              ai_generated_description: generatedJobData.description, // Usar descripción de IA
+              // Puedes añadir otros campos generados por IA aquí si tu modelo los devuelve
+              // requirements: generatedJobData.requirements,
+              // keywords: generatedJobData.keywords,
             }));
           }}
           currentDescription={jobDetails.description || jobDetails.ai_generated_description} // Pasar la descripción actual (manual o IA)
