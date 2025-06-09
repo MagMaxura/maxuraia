@@ -75,7 +75,7 @@ var usePayment = function usePayment() {
             payload = {
               priceId: planDetails.stripePriceId,
               // Usar el ID de precio de Stripe
-              userId: user.id,
+              recruiterId: user.id,
               // Se usará como recruiter_id en custom_data en el backend
               userEmail: user.email,
               successUrl: dynamicUrls.successUrl,
