@@ -339,8 +339,24 @@ export const cvService = {
       console.error("cvService.updateJobPost: jobId y jobData son requeridos.");
       throw new Error("Faltan datos para actualizar el puesto.");
     }
+    // Preparar datos para actualizar, asegurando que requirements y keywords sean objetos/arrays vacíos si son nulos/undefined
     // Excluir campos que no deberían ser actualizados directamente o que maneja la BD
-    const { recruiter_id, id, created_at, updated_at, ai_generated_description, ...dataToUpdate } = jobData; // Excluir ai_generated_description aquí también
+    const { recruiter_id, id, created_at, updated_at, ai_generated_description, ...restOfJobData } = jobData;
+    
+    const dataToUpdate = {
+        title: restOfJobData.title,
+        description: restOfJobData.description,
+        requirements: restOfJobData.requirements || {}, // Asegurar objeto vacío si es nulo/undefined
+        keywords: restOfJobData.keywords || [], // Asegurar array vacío si es nulo/undefined
+        // Incluir otros campos si los hay en restOfJobData
+        ...restOfJobData
+    };
+    // Limpiar campos que no deben actualizarse si se incluyeron accidentalmente
+     delete dataToUpdate.recruiter_id;
+     delete dataToUpdate.id;
+     delete dataToUpdate.created_at;
+     delete dataToUpdate.updated_at;
+     delete dataToUpdate.ai_generated_description; // Asegurar exclusión
 
     try {
       const { data, error } = await supabase
