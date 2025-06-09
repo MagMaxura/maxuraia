@@ -250,7 +250,6 @@ export const cvService = {
       };
     }
   },
-
   async updateCandidate(candidateId, candidateDataToUpdate, recruiterId) {
     console.log(`cvService.updateCandidate: Actualizando candidato ID: ${candidateId}`);
     if (!candidateId || !candidateDataToUpdate) {
@@ -279,25 +278,21 @@ export const cvService = {
   
   async deleteCV(cvDatabaseId) {
     console.warn("cvService.deleteCV: Implementación placeholder.");
-    // Lógica para eliminar de Storage y de la tabla 'cvs' (y 'candidatos' por cascada o explícitamente)
-    // const { data: cvData, error: fetchCvError } = await supabase.from('cvs').select('file_path, candidate_id').eq('id', cvDatabaseId).single();
-    // await supabase.storage.from('cvs').remove([cvData.file_path]);
-    // await supabase.from('cvs').delete().eq('id', cvDatabaseId);
-    // await supabase.from('candidatos').delete().eq('id', cvData.candidate_id); // Si no hay cascada
-    return { success: true };
+     return { success: true };
   },
-
   async createJobPost(jobData) {
     console.log("cvService.createJobPost: Creando puesto con datos:", jobData);
-    // Validar que recruiter_id, title y al menos una descripción (manual o IA) estén presentes
-    if (!jobData || !jobData.recruiter_id || !jobData.title || (!jobData.description && !jobData.ai_generated_description)) {
-      console.error("cvService.createJobPost: Faltan datos requeridos (recruiter_id, title, description o ai_generated_description).");
-      throw new Error("Faltan datos requeridos para crear el puesto (título y al menos una descripción).");
+    // Validar que recruiter_id, title y description estén presentes
+    if (!jobData || !jobData.recruiter_id || !jobData.title || !jobData.description) {
+      console.error("cvService.createJobPost: Faltan datos requeridos (recruiter_id, title, description).");
+      throw new Error("Faltan datos requeridos para crear el puesto (título y descripción).");
     }
+    // Eliminar ai_generated_description si existe antes de insertar
+    const { ai_generated_description, ...dataToInsert } = jobData;
     try {
       const { data, error } = await supabase
         .from('jobs') // Asumiendo que la tabla se llama 'jobs'
-        .insert([jobData])
+        .insert([dataToInsert])
         .select() // Para obtener el registro insertado de vuelta
         .single(); // Asumiendo que se inserta un solo registro
 
@@ -345,17 +340,12 @@ export const cvService = {
       throw new Error("Faltan datos para actualizar el puesto.");
     }
     // Excluir campos que no deberían ser actualizados directamente o que maneja la BD
-    const { recruiter_id, id, created_at, updated_at, ...dataToUpdate } = jobData;
+    const { recruiter_id, id, created_at, updated_at, ai_generated_description, ...dataToUpdate } = jobData; // Excluir ai_generated_description aquí también
 
     try {
       const { data, error } = await supabase
         .from('jobs')
-        .update({
-          title: dataToUpdate.title,
-          description: dataToUpdate.description, // Usar el campo description
-          requirements: dataToUpdate.requirements, // Incluir requisitos
-          keywords: dataToUpdate.keywords, // Incluir palabras clave
-        })
+        .update(dataToUpdate)
         .eq('id', jobId)
         .select()
         .single();
