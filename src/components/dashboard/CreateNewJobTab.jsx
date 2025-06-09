@@ -27,8 +27,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       setJobDetails({
         title: editingJob.title || '',
         description: editingJob.description || '',
-        requirements: editingJob.requirements || null, // Cargar requisitos
-        keywords: editingJob.keywords || [], // Cargar palabras clave
+        requirements: editingJob.requirements || {}, // Cargar requisitos, asegurar objeto vacío si es nulo
+        keywords: editingJob.keywords || [], // Cargar palabras clave, asegurar array vacío si es nulo
       });
       setIsEditing(true);
     } else {
@@ -36,8 +36,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       setJobDetails({
         title: '',
         description: '',
-        requirements: null, // Resetear requisitos
-        keywords: [], // Resetear palabras clave
+        requirements: {}, // Resetear requisitos a objeto vacío
+        keywords: [], // Resetear palabras clave a array vacío
       });
       setIsEditing(false);
     }
@@ -253,7 +253,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
             <div className="space-y-3">
               {jobDetails.requirements && Object.entries(jobDetails.requirements).map(([category, items]) => (
                 Array.isArray(items) && items.map((item, index) => (
-                  <div key={`${category}-${index}`} className="flex space-x-2 items-center">
+                  // Usar una clave más robusta combinando category, index y el item mismo (si es primitivo)
+                  <div key={`${category}-${index}-${typeof item === 'string' || typeof item === 'number' ? item : ''}`} className="flex space-x-2 items-center">
                     <Input
                       type="text"
                       value={category}
