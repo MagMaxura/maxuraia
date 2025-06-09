@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react"; // Añadir useEffect aquí
+import React, { useState, useRef, useEffect, useCallback } from "react"; // Añadir useEffect y useCallback
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
