@@ -97,9 +97,9 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       const jobDataToSave = {
         recruiter_id: user.id,
         title: jobDetails.title,
-        description: jobDetails.description || jobDetails.ai_generated_description, // Usar descripción IA si no hay manual
-        ai_generated_description: jobDetails.ai_generated_description, // Guardar también la descripción IA original
-        // Otros campos del job si los hay
+        description: jobDetails.description, // Usar el campo description (que ahora puede contener la IA)
+        requirements: jobDetails.requirements, // Incluir requisitos
+        keywords: jobDetails.keywords, // Incluir palabras clave
       };
 
       let savedJob;
