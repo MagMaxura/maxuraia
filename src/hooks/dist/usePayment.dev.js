@@ -70,7 +70,7 @@ var usePayment = function usePayment() {
 
           case 10:
             setLoadingCheckout(true);
-            console.log('usePayment - Iniciando checkout para priceId:', planDetails.paddlePriceId, 'Usuario Email:', user.email);
+            console.log('usePayment - Iniciando checkout para stripePriceId:', planDetails.stripePriceId, 'Usuario Email:', user.email);
             _context.prev = 12;
             payload = {
               priceId: planDetails.stripePriceId,

@@ -20,7 +20,7 @@ export const usePayment = () => {
     }
 
     setLoadingCheckout(true);
-    console.log('usePayment - Iniciando checkout para priceId:', planDetails.paddlePriceId, 'Usuario Email:', user.email);
+    console.log('usePayment - Iniciando checkout para stripePriceId:', planDetails.stripePriceId, 'Usuario Email:', user.email);
 
     try {
       const payload = {
