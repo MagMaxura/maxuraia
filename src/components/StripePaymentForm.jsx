@@ -13,6 +13,7 @@ const StripePaymentForm = ({ onSuccess, onCancel }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('StripePaymentForm: handleSubmit called'); // Add this log
 
     if (!stripe || !elements) {
       // Stripe.js o Elements no se han cargado aún.
