@@ -84,8 +84,8 @@ var usePayment = function usePayment() {
             if (!payload.successUrl) delete payload.successUrl;
             if (!payload.cancelUrl) delete payload.cancelUrl;
             _context.next = 17;
-            return regeneratorRuntime.awrap(fetch('/api/paddle/generate-pay-link', {
-              // Confirma que esta es tu ruta de API
+            return regeneratorRuntime.awrap(fetch('/api/stripe/create-checkout-session', {
+              // Usando endpoint de Stripe
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'

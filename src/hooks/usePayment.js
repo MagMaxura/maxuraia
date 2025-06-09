@@ -34,7 +34,7 @@ export const usePayment = () => {
       if (!payload.successUrl) delete payload.successUrl;
       if (!payload.cancelUrl) delete payload.cancelUrl;
       
-      const response = await fetch('/api/paddle/generate-pay-link', { // Confirma que esta es tu ruta de API
+      const response = await fetch('/api/stripe/create-checkout-session', { // Usando endpoint de Stripe
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
