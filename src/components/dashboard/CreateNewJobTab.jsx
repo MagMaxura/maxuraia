@@ -253,8 +253,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
             <div className="space-y-3">
               {jobDetails.requirements && Object.entries(jobDetails.requirements).map(([category, items]) => (
                 Array.isArray(items) && items.map((item, index) => (
-                  // Usar una clave más robusta combinando category, index y el item mismo (si es primitivo)
-                  <div key={`${category}-${index}-${typeof item === 'string' || typeof item === 'number' ? item : ''}`} className="flex space-x-2 items-center">
+                  // Usar una clave estable combinando category y index
+                  <div key={`${category}-${index}`} className="flex space-x-2 items-center">
                     <Input
                       type="text"
                       value={category}
