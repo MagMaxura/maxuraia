@@ -193,109 +193,126 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
 
 
       {/* Formulario de Puesto de Trabajo */}
-      <div className={`space-y-4 ${formDisabledOverall ? 'opacity-50 pointer-events-none' : ''}`}>
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">Título del Puesto</label>
-          <Input
-            type="text"
-            id="title"
-            name="title"
-            value={jobDetails.title}
-            onChange={handleInputChange}
-            placeholder="Ej: Desarrollador Frontend Senior"
-            disabled={formDisabledOverall}
-          />
-        </div>
+      <div className={`space-y-6 ${formDisabledOverall ? 'opacity-50 pointer-events-none' : ''}`}> {/* Aumentado el espacio */}
 
         {/* Asistente IA para Creación de Puestos */}
         <CreateJobAIForm
-          onJobGenerated={(generatedJobData) => { // Cambiado de onDescriptionGenerated a onJobGenerated
+          onJobGenerated={(generatedJobData) => {
             setJobDetails(prevDetails => ({
               ...prevDetails,
-              title: generatedJobData.title || prevDetails.title, // Usar título de IA si existe
-              ai_generated_description: generatedJobData.description, // Usar descripción de IA
-              requirements: generatedJobData.requirements || null, // Incluir requisitos generados por IA
-              keywords: generatedJobData.keywords || [], // Incluir palabras clave generadas por IA
+              title: generatedJobData.title || prevDetails.title,
+              description: generatedJobData.description || prevDetails.description, // Asignar a description
+              requirements: generatedJobData.requirements || prevDetails.requirements, // Asignar a requirements
+              keywords: generatedJobData.keywords || prevDetails.keywords, // Asignar a keywords
             }));
           }}
-          currentDescription={jobDetails.description || jobDetails.ai_generated_description} // Pasar la descripción actual (manual o IA)
+          currentDescription={jobDetails.description}
           disabled={formDisabledOverall}
         />
 
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">Descripción del Puesto (Manual)</label>
-          <Textarea
-            id="description"
-            name="description"
-            value={jobDetails.description} // Mostrar el campo description (que ahora puede contener la IA)
-            onChange={handleInputChange}
-            placeholder="Describe detalladamente el puesto, responsabilidades, requisitos, etc."
-            rows="6"
-            disabled={formDisabledOverall}
-          />
-           <p className="mt-1 text-sm text-slate-500">
-            Si generaste una descripción con IA, aparecerá aquí y podrás editarla o añadir detalles adicionales.
-          </p>
-        </div>
+        {/* Sección de Creación Manual */}
+        <div className="space-y-4 border-t pt-6 mt-6"> {/* Separador visual */}
+          <h3 className="text-xl font-semibold text-slate-800">Detalles del Puesto (Manual o Editar IA)</h3>
 
-        {/* Campo para Requisitos */}
-        <div>
-          <label htmlFor="requirements" className="block text-sm font-medium text-slate-700 mb-1">Requisitos (Formato JSON)</label>
-          <Textarea
-            id="requirements"
-            name="requirements"
-            // Mostrar el JSON stringificado de los requisitos
-            value={jobDetails.requirements ? JSON.stringify(jobDetails.requirements, null, 2) : ''}
-            onChange={(e) => {
-              try {
-                // Intentar parsear el JSON al cambiar
-                const parsedRequirements = JSON.parse(e.target.value);
+          {/* Campo Título */}
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">Título del Puesto</label>
+            <Input
+              type="text"
+              id="title"
+              name="title"
+              value={jobDetails.title}
+              onChange={handleInputChange}
+              placeholder="Ej: Desarrollador Frontend Senior"
+              disabled={formDisabledOverall}
+            />
+          </div>
+
+          {/* Campo Descripción */}
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">Descripción del Puesto</label>
+            <Textarea
+              id="description"
+              name="description"
+              value={jobDetails.description}
+              onChange={handleInputChange}
+              placeholder="Describe detalladamente el puesto, responsabilidades, requisitos, etc."
+              rows="6"
+              disabled={formDisabledOverall}
+            />
+            <p className="mt-1 text-sm text-slate-500">
+              Puedes editar la descripción generada por IA o escribir una manualmente.
+            </p>
+          </div>
+
+          {/* Campo Requisitos (Interfaz mejorada) */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Requisitos</label>
+            <div className="space-y-3">
+              {jobDetails.requirements && Object.entries(jobDetails.requirements).map(([category, items]) => (
+                Array.isArray(items) && items.map((item, index) => (
+                  <div key={`${category}-${index}`} className="flex space-x-2 items-center">
+                    <Input
+                      type="text"
+                      value={category}
+                      onChange={(e) => handleRequirementChange(category, index, e.target.value, item)}
+                      placeholder="Categoría (Ej: Educación)"
+                      className="w-1/3"
+                      disabled={formDisabledOverall}
+                    />
+                    <Input
+                      type="text"
+                      value={item}
+                      onChange={(e) => handleRequirementChange(category, index, category, e.target.value)}
+                      placeholder="Cualidad (Ej: Secundaria Completa)"
+                      className="w-2/3"
+                      disabled={formDisabledOverall}
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleRemoveRequirement(category, index)}
+                      disabled={formDisabledOverall}
+                    >
+                      -
+                    </Button>
+                  </div>
+                ))
+              ))}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleAddNewRequirement}
+                disabled={formDisabledOverall}
+              >
+                + Añadir Requisito
+              </Button>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">Añade o edita los requisitos del puesto.</p>
+          </div>
+
+          {/* Campo Palabras Clave */}
+          <div>
+            <label htmlFor="keywords" className="block text-sm font-medium text-slate-700 mb-1">Palabras Clave (Separadas por coma)</label>
+            <Input
+              id="keywords"
+              name="keywords"
+              value={Array.isArray(jobDetails.keywords) ? jobDetails.keywords.join(', ') : ''}
+              onChange={(e) => {
+                const keywordsArray = e.target.value.split(',').map(keyword => keyword.trim()).filter(keyword => keyword !== '');
                 setJobDetails(prevDetails => ({
                   ...prevDetails,
-                  requirements: parsedRequirements,
+                  keywords: keywordsArray,
                 }));
-              } catch (error) {
-                // Si el JSON es inválido, aún actualizamos el estado con el texto
-                // pero mantenemos el estado 'requirements' como null o el último válido
-                console.error("JSON de requisitos inválido:", error);
-                // Podrías añadir un estado de error visual aquí si es necesario
-                // Por ahora, solo actualizamos el texto en el campo sin cambiar el estado de requisitos
-                // Esto requiere un estado local para el texto del textarea si no queremos perder la entrada inválida
-                // Para simplificar, por ahora, solo actualizamos si es JSON válido.
-                // Una implementación más robusta usaría un estado separado para el texto del textarea.
-              }
-            }}
-            placeholder='Ej: {"educacion": ["Grado en CS"], "experiencia": ["3+ años en React"]}'
-            rows="4"
-            className="mt-1 font-mono text-xs"
-            disabled={formDisabledOverall}
-          />
-          <p className="mt-1 text-sm text-slate-500">Ingresa los requisitos en formato JSON.</p>
-        </div>
+              }}
+              placeholder="Ej: React, TypeScript, UI/UX, Fintech"
+              disabled={formDisabledOverall}
+            />
+            <p className="mt-1 text-sm text-slate-500">Ingresa las palabras clave separadas por comas.</p>
+          </div>
 
-        {/* Campo para Palabras Clave */}
-        <div>
-          <label htmlFor="keywords" className="block text-sm font-medium text-slate-700 mb-1">Palabras Clave (Separadas por coma)</label>
-          <Textarea
-            id="keywords"
-            name="keywords"
-            // Mostrar las palabras clave unidas por coma
-            value={Array.isArray(jobDetails.keywords) ? jobDetails.keywords.join(', ') : ''}
-            onChange={(e) => {
-              // Convertir el texto separado por comas a un array
-              const keywordsArray = e.target.value.split(',').map(keyword => keyword.trim()).filter(keyword => keyword !== '');
-              setJobDetails(prevDetails => ({
-                ...prevDetails,
-                keywords: keywordsArray,
-              }));
-            }}
-            placeholder="Ej: React, TypeScript, UI/UX, Fintech"
-            rows="2"
-            className="mt-1"
-            disabled={formDisabledOverall}
-          />
-          <p className="mt-1 text-sm text-slate-500">Ingresa las palabras clave separadas por comas.</p>
-        </div>
+        </div> {/* Fin Sección Creación Manual */}
+
 
         {/* Botón de Guardar */}
         <Button
@@ -308,6 +325,66 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       </div>
     </motion.div>
   );
+
+  // Helper functions for Requirements
+  function handleRequirementChange(category, index, newCategory, newItem) {
+    setJobDetails(prevDetails => {
+      const updatedRequirements = { ...prevDetails.requirements };
+      const items = updatedRequirements[category];
+
+      if (items && Array.isArray(items)) {
+        // Si la categoría cambió, necesitamos mover el item a la nueva categoría
+        if (newCategory !== category) {
+          // Eliminar de la categoría antigua
+          items.splice(index, 1);
+          if (items.length === 0) {
+            delete updatedRequirements[category];
+          }
+
+          // Añadir a la nueva categoría
+          if (!updatedRequirements[newCategory]) {
+            updatedRequirements[newCategory] = [];
+          }
+          updatedRequirements[newCategory].push(newItem);
+
+        } else {
+          // Si solo cambió el item dentro de la misma categoría
+          items[index] = newItem;
+        }
+      }
+      return { ...prevDetails, requirements: updatedRequirements };
+    });
+  }
+
+  function handleRemoveRequirement(category, index) {
+    setJobDetails(prevDetails => {
+      const updatedRequirements = { ...prevDetails.requirements };
+      const items = updatedRequirements[category];
+
+      if (items && Array.isArray(items)) {
+        items.splice(index, 1);
+        if (items.length === 0) {
+          delete updatedRequirements[category];
+        }
+      }
+      return { ...prevDetails, requirements: updatedRequirements };
+    });
+  }
+
+  function handleAddNewRequirement() {
+    setJobDetails(prevDetails => {
+      const updatedRequirements = { ...prevDetails.requirements };
+      const defaultCategory = 'Nueva Categoría';
+      const defaultItem = 'Nuevo Requisito';
+
+      if (!updatedRequirements[defaultCategory]) {
+        updatedRequirements[defaultCategory] = [];
+      }
+      updatedRequirements[defaultCategory].push(defaultItem);
+
+      return { ...prevDetails, requirements: updatedRequirements };
+    });
+  }
 }
 
 export default CreateNewJobTab;
