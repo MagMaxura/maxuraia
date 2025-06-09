@@ -376,7 +376,16 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
 
   function handleAddNewRequirement() {
     setJobDetails(prevDetails => {
-      const updatedRequirements = { ...prevDetails.requirements };
+      const currentRequirements = prevDetails.requirements || {};
+      const updatedRequirements = {};
+
+      // Copiar todas las categorías y sus ítems de forma inmutable
+      for (const cat in currentRequirements) {
+        if (Object.hasOwnProperty.call(currentRequirements, cat)) {
+          updatedRequirements[cat] = [...currentRequirements[cat]]; // Copiar el array de ítems
+        }
+      }
+
       const defaultCategory = 'Nueva Categoría';
       const defaultItem = 'Nuevo Requisito';
 
