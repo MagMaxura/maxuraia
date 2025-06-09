@@ -27,7 +27,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       setJobDetails({
         title: editingJob.title || '',
         description: editingJob.description || '',
-        ai_generated_description: editingJob.ai_generated_description || '', // Cargar descripción IA si existe
+        requirements: editingJob.requirements || null, // Cargar requisitos
+        keywords: editingJob.keywords || [], // Cargar palabras clave
       });
       setIsEditing(true);
     } else {
@@ -35,7 +36,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       setJobDetails({
         title: '',
         description: '',
-        ai_generated_description: '',
+        requirements: null, // Resetear requisitos
+        keywords: [], // Resetear palabras clave
       });
       setIsEditing(false);
     }
