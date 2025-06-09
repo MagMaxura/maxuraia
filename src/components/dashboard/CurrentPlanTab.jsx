@@ -31,7 +31,7 @@ function CurrentPlanTab() {
   // Determinar el siguiente plan para mejora
   let nextPlanToShow = null;
   if (currentPlanId === 'busqueda_puntual') {
-      nextPlanToShow = APP_PLANS['profesional'];
+      nextPlanToShow = APP_PLANS['profesional_monthly'];
   } else {
       const nextPlanId = PLAN_HIERARCHY[currentPlanId]?.next || null;
       nextPlanToShow = nextPlanId ? APP_PLANS[nextPlanId] : null;

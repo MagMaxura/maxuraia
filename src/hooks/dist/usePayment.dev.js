@@ -54,22 +54,24 @@ var usePayment = function usePayment() {
 
           case 5:
             if (!(!user || !user.id || !user.email)) {
-              _context.next = 9;
+              _context.next = 10;
               break;
             }
 
-            console.error('usePayment: Información del usuario incompleta.');
+            console.error('usePayment: Información del usuario incompleta (ID o email faltante).');
             toast({
               title: "Error de Usuario",
-              description: 'Se requiere información de usuario para el pago.',
+              description: 'Se requiere información de usuario (ID y email) para el pago.',
               variant: "destructive"
             });
+            setLoadingCheckout(false); // Asegurarse de desactivar el loading si la validación falla
+
             return _context.abrupt("return");
 
-          case 9:
+          case 10:
             setLoadingCheckout(true);
             console.log('usePayment - Iniciando checkout para priceId:', planDetails.paddlePriceId, 'Usuario Email:', user.email);
-            _context.prev = 11;
+            _context.prev = 12;
             payload = {
               priceId: planDetails.stripePriceId,
               // Usar el ID de precio de Stripe
@@ -84,7 +86,7 @@ var usePayment = function usePayment() {
 
             if (!payload.successUrl) delete payload.successUrl;
             if (!payload.cancelUrl) delete payload.cancelUrl;
-            _context.next = 17;
+            _context.next = 18;
             return regeneratorRuntime.awrap(fetch('/api/stripe/create-payment-intent', {
               // Usando endpoint de Stripe Payment Intent
               method: 'POST',
@@ -94,16 +96,16 @@ var usePayment = function usePayment() {
               body: JSON.stringify(payload)
             }));
 
-          case 17:
+          case 18:
             response = _context.sent;
-            _context.next = 20;
+            _context.next = 21;
             return regeneratorRuntime.awrap(response.json());
 
-          case 20:
+          case 21:
             data = _context.sent;
 
             if (response.ok) {
-              _context.next = 26;
+              _context.next = 27;
               break;
             }
 
@@ -116,7 +118,7 @@ var usePayment = function usePayment() {
             setLoadingCheckout(false);
             return _context.abrupt("return");
 
-          case 26:
+          case 27:
             // Si la respuesta es exitosa, esperamos un clientSecret
             if (data.clientSecret) {
               console.log('usePayment - Payment Intent clientSecret recibido.'); // Aquí deberías integrar la lógica de Stripe Elements para confirmar el pago
@@ -162,12 +164,12 @@ var usePayment = function usePayment() {
               });
             }
 
-            _context.next = 33;
+            _context.next = 34;
             break;
 
-          case 29:
-            _context.prev = 29;
-            _context.t0 = _context["catch"](11);
+          case 30:
+            _context.prev = 30;
+            _context.t0 = _context["catch"](12);
             console.error('usePayment - Excepción al llamar a create-payment-intent:', _context.t0);
             toast({
               title: "Error de Red",
@@ -175,18 +177,18 @@ var usePayment = function usePayment() {
               variant: "destructive"
             });
 
-          case 33:
-            _context.prev = 33;
+          case 34:
+            _context.prev = 34;
             setLoadingCheckout(false); // Asegurarse de que loading se desactive
 
-            return _context.finish(33);
+            return _context.finish(34);
 
-          case 36:
+          case 37:
           case "end":
             return _context.stop();
         }
       }
-    }, null, null, [[11, 29, 33, 36]]);
+    }, null, null, [[12, 30, 34, 37]]);
   };
 
   return {

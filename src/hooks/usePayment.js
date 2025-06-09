@@ -13,8 +13,9 @@ export const usePayment = () => {
       return;
     }
     if (!user || !user.id || !user.email) {
-      console.error('usePayment: Información del usuario incompleta.');
-      toast({ title: "Error de Usuario", description: 'Se requiere información de usuario para el pago.', variant: "destructive" });
+      console.error('usePayment: Información del usuario incompleta (ID o email faltante).');
+      toast({ title: "Error de Usuario", description: 'Se requiere información de usuario (ID y email) para el pago.', variant: "destructive" });
+      setLoadingCheckout(false); // Asegurarse de desactivar el loading si la validación falla
       return;
     }
 
