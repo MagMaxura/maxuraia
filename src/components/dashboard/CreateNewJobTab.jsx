@@ -333,26 +333,34 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
   function handleRequirementChange(category, index, newCategory, newItem) {
     setJobDetails(prevDetails => {
       const updatedRequirements = { ...prevDetails.requirements };
-      const items = updatedRequirements[category];
 
-      if (items && Array.isArray(items)) {
+      if (newCategory !== category) {
         // Si la categoría cambió, necesitamos mover el item a la nueva categoría
-        if (newCategory !== category) {
-          // Eliminar de la categoría antigua
-          items.splice(index, 1);
-          if (items.length === 0) {
+        const oldItems = updatedRequirements[category];
+        if (oldItems && Array.isArray(oldItems)) {
+          // Crear nuevo array para la categoría antigua excluyendo el item
+          const newOldItems = oldItems.filter((_, i) => i !== index);
+          if (newOldItems.length === 0) {
             delete updatedRequirements[category];
+          } else {
+            updatedRequirements[category] = newOldItems;
           }
+        }
 
-          // Añadir a la nueva categoría
-          if (!updatedRequirements[newCategory]) {
-            updatedRequirements[newCategory] = [];
-          }
-          updatedRequirements[newCategory].push(newItem);
+        // Añadir a la nueva categoría (creando un nuevo array si es necesario)
+        if (!updatedRequirements[newCategory]) {
+          updatedRequirements[newCategory] = [];
+        }
+        updatedRequirements[newCategory] = [...updatedRequirements[newCategory], newItem];
 
-        } else {
-          // Si solo cambió el item dentro de la misma categoría
-          items[index] = newItem;
+      } else {
+        // Si solo cambió el item dentro de la misma categoría
+        const items = updatedRequirements[category];
+        if (items && Array.isArray(items)) {
+          // Crear una nueva instancia de array para la categoría modificada
+          updatedRequirements[category] = items.map((item, i) =>
+            i === index ? newItem : item
+          );
         }
       }
       return { ...prevDetails, requirements: updatedRequirements };
@@ -365,9 +373,12 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       const items = updatedRequirements[category];
 
       if (items && Array.isArray(items)) {
-        items.splice(index, 1);
-        if (items.length === 0) {
+        // Crear una nueva instancia de array excluyendo el item a remover
+        const newItems = items.filter((_, i) => i !== index);
+        if (newItems.length === 0) {
           delete updatedRequirements[category];
+        } else {
+          updatedRequirements[category] = newItems;
         }
       }
       return { ...prevDetails, requirements: updatedRequirements };
