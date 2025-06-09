@@ -79,7 +79,7 @@ const StripePaymentForm = ({ onSuccess, onCancel }) => {
       <Button
         type="submit" // Asegura que sea de tipo submit para el form
         onClick={() => console.log('StripePaymentForm: Button clicked!')} // Add a simple test log
-        disabled={isLoading || !stripe || !elements}
+        // disabled={isLoading || !stripe || !elements} // Temporarily remove disabled prop
         className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition-colors duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 disabled:opacity-50"
       >
         {isLoading ? (
