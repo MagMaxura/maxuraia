@@ -71,7 +71,8 @@ var usePayment = function usePayment() {
             console.log('usePayment - Iniciando checkout para priceId:', planDetails.paddlePriceId, 'Usuario Email:', user.email);
             _context.prev = 11;
             payload = {
-              priceId: planDetails.paddlePriceId,
+              priceId: planDetails.stripePriceId,
+              // Usar el ID de precio de Stripe
               userId: user.id,
               // Se usará como recruiter_id en custom_data en el backend
               userEmail: user.email,

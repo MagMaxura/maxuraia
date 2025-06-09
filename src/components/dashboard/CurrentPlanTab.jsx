@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/toast';
 
 function CurrentPlanTab() {
-  const { user } = useAuth();
+  const { user, loading: loadingUser } = useAuth(); // Obtener loading del hook useAuth
   const { userSubscription } = user || {}; // Obtener userSubscription del usuario
   const { loadingCheckout, handleCheckout } = usePayment();
 
@@ -85,7 +85,7 @@ function CurrentPlanTab() {
                 {/* Puedes añadir más detalles del plan Búsqueda Puntual aquí */}
                 <Button
                   onClick={() => handleCheckout(busquedaPuntualPlan, user)}
-                  disabled={loadingCheckout}
+                  disabled={loadingCheckout || loadingUser || !user?.id} // Deshabilitar si está cargando el checkout, el usuario, o si user.id no está disponible
                   className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
                 >
                   {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -105,7 +105,7 @@ function CurrentPlanTab() {
                 {/* Puedes añadir más detalles del siguiente plan aquí */}
                 <Button
                   onClick={() => handleCheckout(nextPlanToShow, user)}
-                  disabled={loadingCheckout}
+                  disabled={loadingCheckout || loadingUser || !user?.id} // Deshabilitar si está cargando el checkout, el usuario, o si user.id no está disponible
                   className="w-full bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
                 >
                   {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
