@@ -23,7 +23,7 @@ export const usePayment = () => {
 
     try {
       const payload = {
-        priceId: planDetails.paddlePriceId,
+        priceId: planDetails.stripePriceId, // Usar el ID de precio de Stripe
         userId: user.id, // Se usará como recruiter_id en custom_data en el backend
         userEmail: user.email,
         successUrl: dynamicUrls.successUrl, // Opcional, el backend tiene un fallback
