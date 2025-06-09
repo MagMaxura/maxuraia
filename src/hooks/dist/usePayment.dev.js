@@ -77,7 +77,7 @@ var usePayment = function usePayment() {
               // Usar el ID de precio de Stripe
               recruiterId: user.id,
               // Se usará como recruiter_id en custom_data en el backend
-              userEmail: user.email,
+              email: user.email,
               successUrl: dynamicUrls.successUrl,
               // Opcional, el backend tiene un fallback
               cancelUrl: dynamicUrls.cancelUrl // Opcional, el backend puede tener un fallback
