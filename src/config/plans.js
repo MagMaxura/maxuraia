@@ -31,10 +31,10 @@ export const APP_PLANS = {
     name: 'Employ Smart IA - Búsqueda Puntual',
     // paddleProductId: 'pro_01jvsnq9yztcy6ycqhxmh82ahb', // Comentado para Stripe
     // paddlePriceId: 'pri_01jvsnrta15svqcgec4z0c948a', // Comentado para Stripe
-    // stripeProductId: 'prod_SOuIhd2wtVyKlt', // Product ID de Stripe para Búsqueda Puntual (Real)
-    // stripePriceId: 'price_1RU6U4A5iob5uvoTs9J8cvob', // Price ID de Stripe para Búsqueda Puntual (Real)
-    stripeProductId: 'prod_SP3ceC9zv6TSJO', // Product ID de Stripe para Búsqueda Puntual (Prueba)
-    stripePriceId: 'price_1RUFVEA5iob5uvoTOCXpgQtD', // Price ID de Stripe para Búsqueda Puntual (Prueba)
+    stripeProductId: 'prod_SOuIhd2wtVyKlt', // Product ID de Stripe para Búsqueda Puntual (Real)
+    stripePriceId: 'price_1RU6U4A5iob5uvoTs9J8cvob', // Price ID de Stripe para Búsqueda Puntual (Real)
+    //stripeProductId: 'prod_SP3ceC9zv6TSJO', // Product ID de Stripe para Búsqueda Puntual (Prueba)
+    //stripePriceId: 'price_1RUFVEA5iob5uvoTOCXpgQtD', // Price ID de Stripe para Búsqueda Puntual (Prueba)
     priceDisplay: 'ARS 18,000.00', // Mantener display si es el mismo precio de prueba
     priceNumeric: 1800000, // Mantener numeric si es el mismo precio de prueba
     type: 'one-time',
@@ -57,10 +57,10 @@ export const APP_PLANS = {
     name: 'Employ Smart IA - Plan Profesional',
     // paddleProductId: 'pro_01jvsmnsj3hhfnyt0y89rawyn4', // Comentado para Stripe
     // paddlePriceId: 'pri_01jvsn7rjbv61144k9ztfrscjr', // Comentado para Stripe
-    // stripeProductId: 'prod_SOuQ5ACG8YX7vu', // Product ID de Stripe para Plan Profesional (Real)
-    // stripePriceId: 'price_1RU6bpA5iob5uvoT2c5VkaIf', // Price ID de Stripe para Plan Profesional (Real)
-    stripeProductId: 'prod_SP3bTBrf7tFsyt', // Product ID de Stripe para Plan Profesional (Prueba)
-    stripePriceId: 'price_1RUFUfA5iob5uvoTwfgZtdfi', // Price ID de Stripe para Plan Profesional (Prueba)
+    stripeProductId: 'prod_SOuQ5ACG8YX7vu', // Product ID de Stripe para Plan Profesional (Real)
+    stripePriceId: 'price_1RU6bpA5iob5uvoT2c5VkaIf', // Price ID de Stripe para Plan Profesional (Real)
+    //stripeProductId: 'prod_SP3bTBrf7tFsyt', // Product ID de Stripe para Plan Profesional (Prueba)
+    //stripePriceId: 'price_1RUFUfA5iob5uvoTwfgZtdfi', // Price ID de Stripe para Plan Profesional (Prueba)
     priceDisplay: 'ARS 12,500.00/month', // Mantener display si es el mismo precio de prueba
     priceNumeric: 1250000, // Mantener numeric si es el mismo precio de prueba
     type: 'monthly',
