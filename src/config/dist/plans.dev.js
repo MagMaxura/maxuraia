@@ -122,10 +122,6 @@ var APP_PLANS = {
 exports.APP_PLANS = APP_PLANS;
 var PLAN_HIERARCHY = {
   trial: {
-    next: 'basico',
-    name: 'Básico'
-  },
-  basico: {
     next: 'profesional_monthly',
     name: 'Profesional'
   },
@@ -142,7 +138,6 @@ var PLAN_HIERARCHY = {
 exports.PLAN_HIERARCHY = PLAN_HIERARCHY;
 var PLAN_CV_ANALYSIS_LIMITS = {
   trial: 10,
-  basico: 50,
   busqueda_puntual: 75,
   profesional_monthly: 100,
   empresa_monthly: 1000,
