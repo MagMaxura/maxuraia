@@ -17,6 +17,7 @@ function Register() {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [passwordMismatchError, setPasswordMismatchError] = useState(false); // Nuevo estado para el error de contraseña
   // Obtener también loading e isAuthenticated
   const { register, loading, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -69,12 +70,15 @@ function Register() {
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
       console.log("Register.jsx: Passwords don't match");
+      setPasswordMismatchError(true); // Establecer el estado de error
       toast({
         title: "Error en la contraseña",
         description: "Las contraseñas no coinciden",
         variant: "destructive",
       });
       return;
+    } else {
+      setPasswordMismatchError(false); // Limpiar el estado de error si coinciden
     }
 
     // Validate password length
@@ -183,7 +187,10 @@ function Register() {
                     bg-white/10 text-white placeholder-white/50 p-3 pl-10
                     focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    setPasswordMismatchError(false); // Limpiar error al cambiar email
+                  }}
                   placeholder="tu@email.com"
                   required
                   disabled={isSubmitting}
@@ -202,7 +209,10 @@ function Register() {
                   bg-white/10 text-white placeholder-white/50 p-3
                   focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, password: e.target.value });
+                  setPasswordMismatchError(false); // Limpiar error al cambiar contraseña
+                }}
                 placeholder="••••••••"
                 required
                 disabled={isSubmitting}
@@ -220,11 +230,17 @@ function Register() {
                   bg-white/10 text-white placeholder-white/50 p-3
                   focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent"
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onChange={(e) => {
+                  setFormData({ ...formData, confirmPassword: e.target.value });
+                  setPasswordMismatchError(false); // Limpiar error al cambiar confirmación
+                }}
                 placeholder="••••••••"
                 required
                 disabled={isSubmitting}
               />
+              {passwordMismatchError && (
+                <p className="text-red-300 text-sm mt-2">Las contraseñas no coinciden.</p>
+              )}
             </div>
           </div>
           
