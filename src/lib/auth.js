@@ -57,7 +57,8 @@ export const auth = {
           const basicProfileData = {
             id: authUser.id,
             email: authUser.email,
-            // Los placeholders se añaden en saveRecruiterProfile
+            first_name: authUser.user_metadata?.first_name || "LLENAR POR EL USUARIO",
+            last_name: authUser.user_metadata?.last_name || "LLENAR POR EL USUARIO",
           };
           const newProfile = await auth.saveRecruiterProfile(basicProfileData); // INSERT
           if (newProfile) {
@@ -202,9 +203,9 @@ export const auth = {
       .single();
 
     if (recruiterInsertError) {
-      console.error('auth.js: [LOG] Error during INSERT in saveRecruiterProfile. Details:', JSON.stringify(recruiterInsertError, null, 2));
+      console.error('auth.js: [LOG] Error during INSERT in saveRecruiterProfile. Full error object:', recruiterInsertError);
       console.error('auth.js: [LOG] Failed data for INSERT:', JSON.stringify(recruiterDataToInsert, null, 2));
-      throw new Error(`Error al guardar perfil inicial: ${recruiterInsertError.message}`);
+      throw new Error(`Error al guardar perfil inicial: ${recruiterInsertError.message || recruiterInsertError.details || "Error desconocido"}`);
     }
 
     console.log("auth.js: [LOG] saveRecruiterProfile - INSERT successful. Result:", insertedRecruiter);
