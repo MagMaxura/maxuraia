@@ -184,6 +184,7 @@ export default async (req, res) => {
     case 'customer.subscription.created': { // Usar bloque para scope
       const subscriptionCreated = event.data.object;
       console.log('✅ Subscription created:', subscriptionCreated.id);
+      console.log('DEBUG: Full subscriptionCreated object:', JSON.stringify(subscriptionCreated, null, 2)); // Añadir este log
       // Cuando se crea una suscripción (incluido el primer pago exitoso)
       const recruiterIdCreated = subscriptionCreated.metadata?.recruiterId || subscriptionCreated.customer; // Obtén recruiterId
       const stripeProductIdCreated = subscriptionCreated.items.data[0]?.price?.product; // Obtén el Product ID

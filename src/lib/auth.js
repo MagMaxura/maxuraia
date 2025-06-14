@@ -50,6 +50,41 @@ export const auth = {
       console.log("auth.js: Profile exists:", profileExists, "Is complete:", profileIsComplete);
       console.log("auth.js: Checking conditions for profile creation: email_confirmed_at:", authUser.email_confirmed_at, "!profileExists:", !profileExists);
 
+      // Si el perfil existe pero no tiene una suscripción, intentar crear una de prueba
+      if (profileExists && !profile.suscripcion) {
+        console.log("auth.js: Profile exists but no active subscription found. Attempting to create trial subscription.");
+        try {
+          const defaultPlanId = 'trial';
+          const trialDays = 7;
+          const trialEnds = new Date();
+          trialEnds.setDate(trialEnds.getDate() + trialDays);
+
+          const defaultSubscription = {
+            recruiter_id: authUser.id,
+            plan_id: defaultPlanId,
+            status: 'trialing',
+            trial_ends_at: trialEnds.toISOString(),
+          };
+
+          const { data: newSubscription, error: subError } = await supabase
+            .from('suscripciones')
+            .insert([defaultSubscription])
+            .select()
+            .single();
+
+          if (subError) {
+            console.error("auth.js: Error creating trial subscription during login flow:", subError);
+          } else if (!newSubscription) {
+            console.warn("auth.js: Trial subscription INSERT returned no data during login flow, but no error. Check RLS or table configuration.");
+          } else {
+            console.log("auth.js: Trial subscription created successfully during login flow:", newSubscription);
+            profile.suscripcion = newSubscription; // Actualizar el perfil con la nueva suscripción
+          }
+        } catch (subCreationError) {
+          console.error("auth.js: Exception during trial subscription creation in login flow:", subCreationError);
+        }
+      }
+
       // Si el usuario está confirmado pero el perfil no existe, crearlo ahora
       if (authUser.email_confirmed_at && !profileExists) {
         console.log("auth.js: CONDITION MET - User confirmed but no profile. Attempting to create basic profile...");
@@ -238,7 +273,10 @@ export const auth = {
         // No lanzar error aquí para no interrumpir el flujo de creación de perfil,
         // pero sí loguearlo. El usuario tendrá perfil pero no suscripción.
         // Se podría reintentar o manejar administrativamente.
-      } else {
+      } else if (!newSubscription) {
+        console.warn("auth.js: Default subscription INSERT returned no data, but no error. Check RLS or table configuration.");
+      }
+      else {
         console.log("auth.js: Default subscription created successfully:", newSubscription);
         // Opcional: añadir la suscripción al objeto insertedRecruiter antes de devolverlo
         // insertedRecruiter.suscripcion = newSubscription;
