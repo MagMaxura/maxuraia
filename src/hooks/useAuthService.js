@@ -75,7 +75,7 @@ export function useAuthService() {
     setAuthChecked(true);
     setLoading(false); // Set loading false at the very end of processing the event
 
-  }, []); // Keep dependencies empty for stability
+  }, [user, session]); // Add user and session to dependencies
 
   useEffect(() => {
     console.log("useAuthService: useEffect - Setting up onAuthStateChange listener.");
