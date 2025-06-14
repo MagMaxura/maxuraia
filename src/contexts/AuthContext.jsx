@@ -46,7 +46,8 @@ export function AuthProvider({ children }) {
        authService.login,
        authService.logout,
        authService.register,
-       authService.resetPassword
+       authService.resetPassword,
+       authService.refreshUser // Añadir refreshUser a las dependencias
        // Las funciones importadas de auth.js (saveRecruiterProfile, etc.) no necesitan ser dependencias
        // porque son estáticas (asumiendo que no usan 'this' internamente)
      ]); // Depender de los valores individuales estabiliza el contexto
