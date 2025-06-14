@@ -75,7 +75,7 @@ export function useAuthService() {
     setAuthChecked(true);
     setLoading(false); // Set loading false at the very end of processing the event
 
-  }, [user, session]); // Add user and session to dependencies
+  }, []); // Keep dependencies empty for stability
 
   useEffect(() => {
     console.log("useAuthService: useEffect - Setting up onAuthStateChange listener.");
@@ -195,6 +195,9 @@ export function useAuthService() {
     resetPassword,
     isAuthenticated: !!user, // Basado en el estado user
     isProfileComplete: !!(user && user.id && user.company && user.phone), // Determinar si el perfil está completo (ejemplo: basado en campos requeridos)
-    refreshUser: () => handleAuthChange("REFRESH", session), // Añadir la función refreshUser
+    refreshUser: async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      handleAuthChange("REFRESH", currentSession);
+    },
   };
 }
