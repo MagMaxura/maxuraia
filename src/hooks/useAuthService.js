@@ -46,20 +46,57 @@ export function useAuthService() {
         // a different user, or if the previous profile fetch failed.
         const fullUserProfile = await auth.getRecruiterProfile(supabaseAuthUser.id);
 
-        if (fullUserProfile) {
-          console.log("useAuthService: Full user profile fetched successfully.");
-          setUser(fullUserProfile); // Set state with the full profile
-          auth.user = fullUserProfile; // Update auth object reference
-          lastFetchedUserId.current = supabaseAuthUser.id; // Mark this user ID as having its profile fetched
-        } else {
+        let userToSet = fullUserProfile;
+
+        if (!fullUserProfile) {
           // Profile not found in 'reclutadores', but user is authenticated.
           console.warn("useAuthService: Recruiter profile not found for authenticated user. Setting user state to basic Supabase Auth user.");
-          setUser(supabaseAuthUser); // Use basic user as fallback
+          userToSet = supabaseAuthUser; // Use basic user as fallback
           auth.user = supabaseAuthUser;
           lastFetchedUserId.current = supabaseAuthUser.id; // Mark ID as processed even if profile not found
+        } else {
+          console.log("useAuthService: Full user profile fetched successfully.");
+          auth.user = fullUserProfile; // Update auth object reference
+          lastFetchedUserId.current = supabaseAuthUser.id; // Mark this user ID as having its profile fetched
         }
+
+        // Lógica para asegurar que el usuario tenga una suscripción de prueba
+        if (userToSet && !userToSet.suscripcion) {
+          console.log("useAuthService: User has profile but no active subscription. Attempting to create trial subscription.");
+          try {
+            const defaultPlanId = 'trial';
+            const trialDays = 7;
+            const trialEnds = new Date();
+            trialEnds.setDate(trialEnds.getDate() + trialDays);
+
+            const defaultSubscription = {
+              recruiter_id: userToSet.id,
+              plan_id: defaultPlanId,
+              status: 'trialing',
+              trial_ends_at: trialEnds.toISOString(),
+            };
+
+            const { data: newSubscription, error: subError } = await supabase
+              .from('suscripciones')
+              .insert([defaultSubscription])
+              .select()
+              .single();
+
+            if (subError) {
+              console.error("useAuthService: Error creating trial subscription:", subError);
+            } else if (!newSubscription) {
+              console.warn("useAuthService: Trial subscription INSERT returned no data, but no error. Check RLS or table configuration.");
+            } else {
+              console.log("useAuthService: Trial subscription created successfully:", newSubscription);
+              userToSet.suscripcion = newSubscription; // Añadir la suscripción al objeto de usuario
+            }
+          } catch (subCreationError) {
+            console.error("useAuthService: Exception during trial subscription creation:", subCreationError);
+          }
+        }
+        setUser(userToSet); // Set state with the (potentially updated) user profile
       } catch (error) {
-        console.error("useAuthService: Error fetching full user profile:", error);
+        console.error("useAuthService: Error fetching full user profile or creating subscription:", error);
         // On error fetching profile, use basic user as fallback and mark ID as processed
         setUser(supabaseAuthUser);
         auth.user = supabaseAuthUser;
@@ -75,7 +112,7 @@ export function useAuthService() {
     setAuthChecked(true);
     setLoading(false); // Set loading false at the very end of processing the event
 
-  }, []); // Keep dependencies empty for stability
+  }, [user]); // Depende de 'user' para re-ejecutar si el usuario cambia (ej. después de un login)
 
   useEffect(() => {
     console.log("useAuthService: useEffect - Setting up onAuthStateChange listener.");
