@@ -33,6 +33,7 @@ export function AuthProvider({ children }) {
     logout: authService.logout,
     register: authService.register, // signUp inicial
     resetPassword: authService.resetPassword,
+    refreshUser: authService.refreshUser, // <--- AÑADIR ESTA LÍNEA
     // Funciones añadidas directamente desde auth.js
     saveRecruiterProfile: authFunctions.saveRecruiterProfile,
     getRecruiterProfile: authFunctions.getRecruiterProfile,
@@ -47,9 +48,7 @@ export function AuthProvider({ children }) {
        authService.logout,
        authService.register,
        authService.resetPassword,
-       authService.refreshUser // Añadir refreshUser a las dependencias
-       // Las funciones importadas de auth.js (saveRecruiterProfile, etc.) no necesitan ser dependencias
-       // porque son estáticas (asumiendo que no usan 'this' internamente)
+       authService.refreshUser // Asegurarse de que refreshUser esté en las dependencias
      ]); // Depender de los valores individuales estabiliza el contexto
 
   return (

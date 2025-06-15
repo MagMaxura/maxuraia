@@ -110,7 +110,7 @@ function CompleteProfile() {
       await refreshUser(); // Esperar a que se complete la actualización del usuario
 
       console.log("CompleteProfile: [LOG] Profile updated and auth context refreshed. Redirecting to dashboard.");
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true }); // Usar replace para evitar que el usuario vuelva a CompleteProfile con el botón de atrás
 
     } catch (error) {
       console.error("CompleteProfile: [LOG] Error saving profile:", error, JSON.stringify(error, null, 2));
