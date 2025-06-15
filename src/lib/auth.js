@@ -261,7 +261,7 @@ export const auth = {
         // created_at y updated_at se manejarán por defecto en la BD si están configurados
       };
 
-      console.log("auth.js: Attempting to create default subscription:", defaultSubscription);
+      console.log("auth.js: Attempting to create default subscription for recruiter_id:", insertedRecruiter.id, "with data:", defaultSubscription);
       const { data: newSubscription, error: subError } = await supabase
         .from('suscripciones')
         .insert([defaultSubscription])
@@ -422,18 +422,41 @@ export const auth = {
         .limit(1) // Solo necesitamos una
         .maybeSingle(); // Puede que no tenga ninguna suscripción activa
 
-      console.log("[DEBUG] Subscription query finished. Error:", subscriptionError, "Data:", subscriptionData);
+      console.log("[DEBUG] Subscription query (active/trialing) finished. Error:", subscriptionError, "Data:", subscriptionData);
 
       if (subscriptionError) {
-        console.error('auth.js: Error fetching subscription:', subscriptionError);
+        console.error('auth.js: Error fetching active/trialing subscription:', subscriptionError);
         // Decidir si lanzar el error o solo devolver el perfil sin suscripción.
         // Por ahora, logueamos el error y continuamos, el perfil podría existir sin suscripción activa.
+      }
+
+      let finalSubscriptionData = subscriptionData;
+
+      // Si no se encontró una suscripción activa/trial, intentar buscar cualquier suscripción para el usuario
+      if (!finalSubscriptionData) {
+        console.log("[DEBUG] No active/trialing subscription found. Attempting to fetch any subscription for recruiterId:", userId);
+        const { data: anySubscriptionData, error: anySubError } = await supabase
+          .from('suscripciones')
+          .select('*')
+          .eq('recruiter_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        console.log("[DEBUG] Any subscription query finished. Error:", anySubError, "Data:", anySubscriptionData);
+
+        if (anySubError) {
+          console.error('auth.js: Error fetching any subscription:', anySubError);
+        } else if (anySubscriptionData) {
+          console.log("auth.js: Found a subscription with a non-active/trialing status:", anySubscriptionData.status);
+          finalSubscriptionData = anySubscriptionData;
+        }
       }
       
       // Combinar el perfil del reclutador con su suscripción (si existe)
       return {
         ...recruiterProfile,
-        suscripcion: subscriptionData || null // Añadir la info de suscripción al objeto del perfil
+        suscripcion: finalSubscriptionData || null // Añadir la info de suscripción al objeto del perfil
       };
     } catch (error) {
       console.error('auth.js: Exception in getRecruiterProfile:', error);
