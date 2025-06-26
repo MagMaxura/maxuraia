@@ -7,8 +7,8 @@ export const APP_PLANS = {
   trial: {
     id: 'trial',
     name: 'Plan de Prueba',
-    stripeProductId: 'prod_XXXXXXX', // Reemplazar con ID de producto de Stripe real si aplica
-    stripePriceId: 'price_XXXXXXX', // Reemplazar con ID de precio de Stripe real si aplica
+    stripeProductId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'prod_YOUR_TRIAL_TEST_PRODUCT_ID' : 'prod_XXXXXXX', // Reemplazar con ID de producto de Stripe real si aplica
+    stripePriceId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'price_YOUR_TRIAL_TEST_PRICE_ID' : 'price_XXXXXXX', // Reemplazar con ID de precio de Stripe real si aplica
     priceDisplay: 'Gratis',
     priceNumeric: 0,
     type: 'trial',
