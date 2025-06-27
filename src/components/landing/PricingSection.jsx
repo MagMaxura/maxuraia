@@ -1,7 +1,7 @@
 // PricingSection.jsx
 // Requiere: framer-motion, lucide-react, APP_PLANS, AuthContext, Button (de ui)
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button'; // Asumo que es de shadcn/ui o similar
 import { CheckCircle2, CheckCircle, XCircle } from 'lucide-react'; // Loader2 no se usa aquí
@@ -91,7 +91,16 @@ function PricingSection() {
                   </li>
                 ))}
               </ul>
-              {plan.type === 'enterprise' ? (
+              {plan.id === 'trial' ? (
+                <Link to="/register" className="mt-auto block text-center">
+                  <Button
+                    size="lg"
+                    className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                  >
+                    {plan.ctaLabel || 'Empezar Prueba'}
+                  </Button>
+                </Link>
+              ) : plan.type === 'enterprise' ? (
                 <a href="#contact" className="mt-auto block text-center">
                   <Button size="lg" className="w-full bg-gray-500 hover:bg-gray-600 text-white">
                     {plan.ctaLabel || 'Contactar Ventas'}
