@@ -15,7 +15,7 @@ export const usePayment = () => {
     if (!user || !user.id || !user.email) {
       console.error('usePayment: Información del usuario incompleta (ID o email faltante).');
       toast({ title: "Error de Usuario", description: 'Se requiere información de usuario (ID y email) para el pago.', variant: "destructive" });
-      setLoadingCheckout(false); // Asegurarse de desactivar el loading si la validación falla
+      setLoadingCheckout(false);
       return;
     }
 
@@ -35,67 +35,69 @@ export const usePayment = () => {
       if (!payload.successUrl) delete payload.successUrl;
       if (!payload.cancelUrl) delete payload.cancelUrl;
       
-      const response = await fetch('/api/stripe/create-payment-intent', { // Usando endpoint de Stripe Payment Intent
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-      });
+      let response;
+      let data;
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        console.error('usePayment - Error del API create-payment-intent:', data);
-        toast({
-          title: "Error al Iniciar Pago",
-          description: data.message || data.error || 'No se pudo iniciar el proceso de pago. Intenta de nuevo.',
-          variant: "destructive"
+      if (planDetails.type === 'one-time') {
+        // Para planes de pago único, usar Stripe Checkout Session
+        response = await fetch('/api/stripe/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
         });
-        setLoadingCheckout(false);
-        return;
-      }
+        data = await response.json();
 
-      // Si la respuesta es exitosa, esperamos un clientSecret
-      if (data.clientSecret) {
-        console.log('usePayment - Payment Intent clientSecret recibido.');
-        // Aquí deberías integrar la lógica de Stripe Elements para confirmar el pago
-        // Esto probablemente implica usar stripe.js y los Elements montados en tu UI.
-        // Por ahora, solo logueamos el éxito y el clientSecret.
-        // La confirmación del pago con Elements ocurriría DESPUÉS de recibir este clientSecret.
+        if (!response.ok) {
+          console.error('usePayment - Error del API create-checkout-session:', data);
+          toast({
+            title: "Error al Iniciar Pago",
+            description: data.message || data.error || 'No se pudo iniciar el proceso de pago. Intenta de nuevo.',
+            variant: "destructive"
+          });
+          setLoadingCheckout(false);
+          return;
+        }
 
-        // Ejemplo conceptual (requiere la instancia de Stripe Elements):
-        // const stripe = useStripe(); // Asumiendo que tienes un hook para obtener la instancia de Stripe
-        // const elements = useElements(); // Asumiendo que tienes un hook para obtener la instancia de Elements
-        // const cardElement = elements.getElement(CardElement); // O el Element que estés usando
-
-        // const { paymentIntent, error: confirmError } = await stripe.confirmCardPayment(data.clientSecret, {
-        //   payment_method: {
-        //     card: cardElement,
-        //     billing_details: {
-        //       email: user.email,
-        //     },
-        //   },
-        // });
-
-        // if (confirmError) {
-        //   console.error('usePayment - Error confirming payment:', confirmError);
-        //   toast({ title: "Error en el Pago", description: confirmError.message, variant: "destructive" });
-        // } else if (paymentIntent.status === 'succeeded') {
-        //   console.log('usePayment - Pago exitoso:', paymentIntent);
-        //   toast({ title: "Pago Exitoso", description: "Tu pago ha sido procesado.", variant: "success" });
-        //   // Redirigir o actualizar UI tras pago exitoso
-        //   // window.location.href = dynamicUrls.successUrl || '/payment-success';
-        // }
-
-        // Como no tengo acceso directo a la implementación de Stripe Elements aquí,
-        // simplemente indicaré que el clientSecret fue recibido y la siguiente etapa
-        // (confirmación del pago con Elements) debería ocurrir ahora.
-        toast({ title: "Proceso de Pago Iniciado", description: "Continúa en el formulario de pago.", variant: "success" });
+        if (data.checkoutUrl) {
+          console.log('usePayment - Redirigiendo a Stripe Checkout:', data.checkoutUrl);
+          window.location.href = data.checkoutUrl; // Redirigir al usuario a la URL de checkout
+        } else {
+          console.error('usePayment - No se recibió checkoutUrl del API.');
+          toast({ title: "Error Inesperado", description: 'No se pudo obtener la URL de pago del servidor.', variant: "destructive" });
+        }
 
       } else {
-        console.error('usePayment - No se recibió clientSecret del API.');
-        toast({ title: "Error Inesperado", description: 'No se pudo obtener la información de pago del servidor.', variant: "destructive" });
+        // Para planes de suscripción, seguir usando Payment Intent (o adaptar si se decide usar Checkout para suscripciones)
+        response = await fetch('/api/stripe/create-payment-intent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload)
+        });
+        data = await response.json();
+
+        if (!response.ok) {
+          console.error('usePayment - Error del API create-payment-intent:', data);
+          toast({
+            title: "Error al Iniciar Pago",
+            description: data.message || data.error || 'No se pudo iniciar el proceso de pago. Intenta de nuevo.',
+            variant: "destructive"
+          });
+          setLoadingCheckout(false);
+          return;
+        }
+
+        if (data.clientSecret) {
+          console.log('usePayment - Payment Intent clientSecret recibido.');
+          toast({ title: "Proceso de Pago Iniciado", description: "Continúa en el formulario de pago.", variant: "success" });
+          // Aquí se esperaría la lógica para confirmar el pago con Stripe Elements
+        } else {
+          console.error('usePayment - No se recibió clientSecret del API.');
+          toast({ title: "Error Inesperado", description: 'No se pudo obtener la información de pago del servidor.', variant: "destructive" });
+        }
       }
     } catch (error) {
       console.error('usePayment - Excepción al llamar a create-payment-intent:', error);
