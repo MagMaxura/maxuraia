@@ -55,8 +55,8 @@ export const APP_PLANS = {
     // paddlePriceId: 'pri_01jvsn7rjbv61144k9ztfrscjr', // Comentado para Stripe
     stripeProductId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'prod_SP3bTBrf7tFsyt' : 'prod_SOuQ5ACG8YX7vu', // Product ID de Stripe para Plan Profesional
     stripePriceId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'price_1RUFUfA5iob5uvoTwfgZtdfi' : 'price_1RU6bpA5iob5uvoT2c5VkaIf', // Price ID de Stripe para Plan Profesional
-    priceDisplay: 'ARS 12,500.00/month', // Mantener display si es el mismo precio de prueba
-    priceNumeric: 1250000, // Mantener numeric si es el mismo precio de prueba
+    priceDisplay: 'ARS 18,500.00/mes', // Cambiado a "/mes"
+    priceNumeric: 1850000, // Mantener numeric si es el mismo precio de prueba
     type: 'monthly',
     ctaLabel: 'Comenzar ahora',
     description: 'Cuota mensual para usar la mejor herramienta de reclutamiento.',

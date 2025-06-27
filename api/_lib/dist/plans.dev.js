@@ -38,9 +38,9 @@ var APP_PLANS = {
     // Product ID de Stripe para Búsqueda Puntual
     stripePriceId: process.env.VITE_STRIPE_MODE === 'test' ? 'price_1RUFVEA5iob5uvoTOCXpgQtD' : 'price_1RU6U4A5iob5uvoTs9J8cvob',
     // Price ID de Stripe para Búsqueda Puntual
-    priceDisplay: 'ARS 18,000.00',
+    priceDisplay: 'ARS 25,000.00',
     // Mantener display si es el mismo precio de prueba
-    priceNumeric: 1800000,
+    priceNumeric: 2500000,
     // Mantener numeric si es el mismo precio de prueba
     type: 'one-time',
     periodicity: 'único por puesto',
@@ -58,7 +58,7 @@ var APP_PLANS = {
     // Product ID de Stripe para Plan Profesional
     stripePriceId: process.env.VITE_STRIPE_MODE === 'test' ? 'price_1RUFUfA5iob5uvoTwfgZtdfi' : 'price_1RU6bpA5iob5uvoT2c5VkaIf',
     // Price ID de Stripe para Plan Profesional
-    priceDisplay: 'ARS 12,500.00/month',
+    priceDisplay: 'ARS 18,500.00/month',
     // Mantener display si es el mismo precio de prueba
     priceNumeric: 1250000,
     // Mantener numeric si es el mismo precio de prueba
