@@ -1,4 +1,5 @@
 import { supabase, getRecruiterByEmail } from "./supabase";
+import { APP_PLANS } from '../config/plans'; // Importar APP_PLANS
 
 const STORAGE_KEY = 'auth_user';
 const SITE_URL = 'https://www.employsmartia.com'; // Asegurar consistencia con el dominio canónico y certificado SSL
@@ -50,14 +51,20 @@ export const auth = {
       console.log("auth.js: Profile exists:", profileExists, "Is complete:", profileIsComplete);
       console.log("auth.js: Checking conditions for profile creation: email_confirmed_at:", authUser.email_confirmed_at, "!profileExists:", !profileExists);
 
-      // Si el perfil existe pero no tiene una suscripción, intentar crear una de prueba
-      if (profileExists && !profile.suscripcion) {
-        console.log("auth.js: Profile exists but no active subscription found. Attempting to create trial subscription.");
+      // Si el perfil existe pero no tiene una suscripción activa o puntual, intentar crear una de prueba
+      // O si tiene una suscripción pero no es de tipo mensual ni puntual (ej. solo trial expirado)
+      if (profileExists && (!profile.suscripcion || (!profile.suscripcion.current_plan && !profile.suscripcion.one_time_plan))) {
+        console.log("auth.js: Profile exists but no active monthly/one-time subscription found. Attempting to create/update trial subscription.");
         try {
           const defaultPlanId = 'trial';
           const trialDays = 7;
           const trialEnds = new Date();
           trialEnds.setDate(trialEnds.getDate() + trialDays);
+
+          // Obtener los límites del plan trial desde APP_PLANS
+          const trialPlanDetails = APP_PLANS[defaultPlanId];
+          const trialCvLimit = trialPlanDetails?.cvLimit || 0;
+          const trialJobLimit = trialPlanDetails?.jobLimit || 0;
 
           const defaultSubscription = {
             recruiter_id: authUser.id,
@@ -68,7 +75,20 @@ export const auth = {
 
           const { data: newSubscription, error: subError } = await supabase
             .from('suscripciones')
-            .insert([defaultSubscription])
+            .upsert({
+              recruiter_id: authUser.id,
+              plan_id: defaultPlanId,
+              status: 'trialing',
+              trial_ends_at: trialEnds.toISOString(),
+              current_period_start: new Date().toISOString(),
+              current_period_end: trialEnds.toISOString(), // Para que el trial tenga un período definido
+              cvs_analizados_este_periodo: 0,
+              jobs_creados_este_periodo: 0,
+              CV_Max_plan: trialCvLimit, // Establecer límites del trial
+              Jobs_Max_plan: trialJobLimit, // Establecer límites del trial
+              one_time_cv_bonus: 0, // Asegurar que los bonos puntuales sean 0 para un trial
+              one_time_job_bonus: 0, // Asegurar que los bonos puntuales sean 0 para un trial
+            }, { onConflict: 'recruiter_id' }) // Usar upsert para evitar duplicados
             .select()
             .single();
 
@@ -245,12 +265,17 @@ export const auth = {
 
     console.log("auth.js: [LOG] saveRecruiterProfile - INSERT successful. Result:", insertedRecruiter);
 
-    // Después de crear el perfil del reclutador, crear una suscripción de prueba por defecto
+    // Después de crear el perfil del reclutador, crear o actualizar una suscripción de prueba por defecto
     if (insertedRecruiter) {
-      const defaultPlanId = 'trial'; // O 'basico', según tu lógica de negocio
+      const defaultPlanId = 'trial';
       const trialDays = 7;
       const trialEnds = new Date();
       trialEnds.setDate(trialEnds.getDate() + trialDays);
+
+      // Obtener los límites del plan trial desde APP_PLANS
+      const trialPlanDetails = APP_PLANS[defaultPlanId];
+      const trialCvLimit = trialPlanDetails?.cvLimit || 0;
+      const trialJobLimit = trialPlanDetails?.jobLimit || 0;
 
       const defaultSubscription = {
         recruiter_id: insertedRecruiter.id,
@@ -261,10 +286,23 @@ export const auth = {
         // created_at y updated_at se manejarán por defecto en la BD si están configurados
       };
 
-      console.log("auth.js: Attempting to create default subscription for recruiter_id:", insertedRecruiter.id, "with data:", defaultSubscription);
+      console.log("auth.js: Attempting to create/update default subscription for recruiter_id:", insertedRecruiter.id);
       const { data: newSubscription, error: subError } = await supabase
         .from('suscripciones')
-        .insert([defaultSubscription])
+        .upsert({
+          recruiter_id: insertedRecruiter.id,
+          plan_id: defaultPlanId,
+          status: 'trialing',
+          trial_ends_at: trialEnds.toISOString(),
+          current_period_start: new Date().toISOString(),
+          current_period_end: trialEnds.toISOString(), // Para que el trial tenga un período definido
+          cvs_analizados_este_periodo: 0,
+          jobs_creados_este_periodo: 0,
+          CV_Max_plan: trialCvLimit, // Establecer límites del trial
+          Jobs_Max_plan: trialJobLimit, // Establecer límites del trial
+          one_time_cv_bonus: 0, // Asegurar que los bonos puntuales sean 0 para un trial
+          one_time_job_bonus: 0, // Asegurar que los bonos puntuales sean 0 para un trial
+        }, { onConflict: 'recruiter_id' }) // Usar upsert para evitar duplicados
         .select()
         .single();
 
