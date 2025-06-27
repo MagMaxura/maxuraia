@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cvService } from '@/services/cvService.js';
 import { useToast } from "@/components/ui/use-toast";
-import { APP_PLANS, PLAN_CV_ANALYSIS_LIMITS } from '@/config/plans'; // Importar planes y límites
+import { APP_PLANS, PLAN_CV_ANALYSIS_LIMITS, calculateEffectivePlan } from '@/config/plans'; // Importar planes, límites y la nueva función
 
 export function useDashboardData() {
   const { user } = useAuth();
@@ -126,7 +126,12 @@ export function useDashboardData() {
     isLoadingJobs,
     // Nuevo: Devolver información de la suscripción y el límite
     userSubscription: user?.suscripcion,
-    analysisLimit: user?.suscripcion?.plan_id ? (APP_PLANS[user.suscripcion.plan_id]?.type === 'one-time' ? APP_PLANS[user.suscripcion.plan_id]?.cvLimit : PLAN_CV_ANALYSIS_LIMITS[user.suscripcion.plan_id]) : 0,
+    // Calcular los límites efectivos usando la nueva función
+    effectiveLimits: user?.suscripcion?.current_plan && user?.suscripcion?.one_time_plan ?
+      calculateEffectivePlan(APP_PLANS[user.suscripcion.current_plan], APP_PLANS[user.suscripcion.one_time_plan]) :
+      (user?.suscripcion?.current_plan ? { cvLimit: APP_PLANS[user.suscripcion.current_plan]?.cvLimit, jobLimit: APP_PLANS[user.suscripcion.current_plan]?.jobLimit, effectiveCurrentPlan: APP_PLANS[user.suscripcion.current_plan] } :
+      (user?.suscripcion?.one_time_plan ? { cvLimit: APP_PLANS[user.suscripcion.one_time_plan]?.cvLimit, jobLimit: APP_PLANS[user.suscripcion.one_time_plan]?.jobLimit, effectiveCurrentPlan: APP_PLANS[user.suscripcion.one_time_plan] } :
+      { cvLimit: 0, jobLimit: 0, effectiveCurrentPlan: null })),
     currentAnalysisCount: user?.suscripcion?.cvs_analizados_este_periodo || 0,
   };
 }

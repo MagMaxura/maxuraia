@@ -409,54 +409,59 @@ export const auth = {
         return null;
       }
 
-      // Ahora, obtener la suscripción activa del reclutador
-      console.log("[DEBUG] Attempting to fetch active subscription for recruiterId:", userId);
-      const { data: subscriptionData, error: subscriptionError } = await supabase
+      // Ahora, obtener todas las suscripciones activas del reclutador
+      console.log("[DEBUG] Attempting to fetch all active subscriptions for recruiterId:", userId);
+      const { data: subscriptions, error: subscriptionsError } = await supabase
         .from('suscripciones')
         .select('*')
         .eq('recruiter_id', userId)
-        // Queremos la suscripción activa o en trial más reciente.
-        // Podríamos filtrar por status 'active' o 'trialing' y luego ordenar.
-        .in('status', ['active', 'trialing'])
-        .order('created_at', { ascending: false }) // Tomar la más reciente si hay varias activas/trial
-        .limit(1) // Solo necesitamos una
-        .maybeSingle(); // Puede que no tenga ninguna suscripción activa
+        .in('status', ['active', 'trialing']) // Considerar activas y en prueba
+        .order('created_at', { ascending: false }); // Ordenar por más reciente
 
-      console.log("[DEBUG] Subscription query (active/trialing) finished. Error:", subscriptionError, "Data:", subscriptionData);
+      console.log("[DEBUG] Subscriptions query finished. Error:", subscriptionsError, "Data:", subscriptions);
 
-      if (subscriptionError) {
-        console.error('auth.js: Error fetching active/trialing subscription:', subscriptionError);
-        // Decidir si lanzar el error o solo devolver el perfil sin suscripción.
-        // Por ahora, logueamos el error y continuamos, el perfil podría existir sin suscripción activa.
+      if (subscriptionsError) {
+        console.error('auth.js: Error fetching subscriptions:', subscriptionsError);
+        // Decidir si lanzar el error o solo devolver el perfil sin suscripciones.
       }
 
-      let finalSubscriptionData = subscriptionData;
+      let currentPlan = null; // Para planes mensuales/empresariales
+      let oneTimePlan = null; // Para planes de búsqueda puntual
 
-      // Si no se encontró una suscripción activa/trial, intentar buscar cualquier suscripción para el usuario
-      if (!finalSubscriptionData) {
-        console.log("[DEBUG] No active/trialing subscription found. Attempting to fetch any subscription for recruiterId:", userId);
-        const { data: anySubscriptionData, error: anySubError } = await supabase
-          .from('suscripciones')
-          .select('*')
-          .eq('recruiter_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        console.log("[DEBUG] Any subscription query finished. Error:", anySubError, "Data:", anySubscriptionData);
-
-        if (anySubError) {
-          console.error('auth.js: Error fetching any subscription:', anySubError);
-        } else if (anySubscriptionData) {
-          console.log("auth.js: Found a subscription with a non-active/trialing status:", anySubscriptionData.status);
-          finalSubscriptionData = anySubscriptionData;
+      if (subscriptions && subscriptions.length > 0) {
+        // Iterar sobre las suscripciones para clasificar y encontrar las más relevantes
+        for (const sub of subscriptions) {
+          // Asumiendo que APP_PLANS está disponible y tiene la propiedad 'type'
+          const planDetails = APP_PLANS[sub.plan_id];
+          if (planDetails) {
+            if (planDetails.type === 'monthly' || planDetails.type === 'enterprise') {
+              // Si ya tenemos un plan mensual, el más reciente (por el order by) es el que nos interesa
+              if (!currentPlan) {
+                currentPlan = sub;
+              }
+            } else if (planDetails.type === 'one-time') {
+              // Si ya tenemos un plan puntual, el más reciente (por el order by) es el que nos interesa
+              if (!oneTimePlan) {
+                oneTimePlan = sub;
+              }
+            }
+          }
         }
       }
       
-      // Combinar el perfil del reclutador con su suscripción (si existe)
+      // Combinar el perfil del reclutador con sus suscripciones (si existen)
       return {
         ...recruiterProfile,
-        suscripcion: finalSubscriptionData || null // Añadir la info de suscripción al objeto del perfil
+        suscripcion: {
+          current_plan: currentPlan ? currentPlan.plan_id : null,
+          one_time_plan: oneTimePlan ? oneTimePlan.plan_id : null,
+          // Aquí podrías añadir más detalles de las suscripciones si son necesarios en el frontend
+          // Por ejemplo, los objetos completos de las suscripciones, no solo los IDs
+          current_plan_details: currentPlan || null,
+          one_time_plan_details: oneTimePlan || null,
+          cvs_analizados_este_periodo: recruiterProfile.cvs_analizados_este_periodo || 0, // Asegurar que este campo exista
+          jobs_creados_este_periodo: recruiterProfile.jobs_creados_este_periodo || 0, // Asegurar que este campo exista
+        }
       };
     } catch (error) {
       console.error('auth.js: Exception in getRecruiterProfile:', error);
