@@ -21,14 +21,15 @@ const pricingPlans = Object.values(APP_PLANS);
 // Esta estructura de keyFeatures parece ser para la tabla comparativa.
 // APP_PLANS[X].features se usa para las características en las cards individuales.
 const keyFeatures = [
-  { label: 'Puestos activos', keys: ['1', '3', '25', 'Ilimitados'] },
-  { label: 'Análisis de CVs', keys: ['75', '100/mes', '1.000/mes', 'Ilimitados'] },
-  { label: 'Macheo por IA', keys: ['75', '100', '1.000', 'Ilimitados'] },
-  { label: 'Preselección IA', keys: ['Manual', 'Manual', 'Avanzada con ranking', 'Ranking y criterios personalizados'] },
-  { label: 'Chatbot entrevistas', keys: ['❌', '❌', '✅', '✅'] },
-  { label: 'Soporte', keys: ['Email estándar', 'Email estándar', 'Prioritario', 'Dedicado 24/7'] },
-  { label: 'Personalización', keys: ['❌', '❌', 'Opcional', 'Incluida'] },
-  { label: 'Acceso a métricas', keys: ['❌', '❌', 'Avanzado', 'Consultoría y análisis'] }
+  { label: 'Puestos activos', keys: ['1', '1', '3', '25', 'Ilimitados'] },
+  { label: 'Análisis de CVs', keys: ['10', '75', '100/mes', '1.000/mes', 'Ilimitados'] },
+  { label: 'Macheo por IA', keys: ['10', '75', '100', '1.000', 'Ilimitados'] },
+  { label: 'Redacción de publicaciones con IA', keys: ['✅', '✅', '✅', '✅', '✅'] },
+  { label: 'Preselección IA', keys: ['Manual', 'Manual', 'Manual', 'Avanzada con ranking', 'Ranking y criterios personalizados'] },
+  { label: 'Chatbot entrevistas', keys: ['❌', '❌', '❌', '❌', '✅'] },
+  { label: 'Soporte', keys: ['Email estándar', 'Email estándar', 'Email estándar', '❌', 'Dedicado 24/7'] },
+  { label: 'Personalización', keys: ['❌', '❌', '❌', '❌', 'Incluida'] },
+  { label: 'Acceso a métricas', keys: ['❌', '❌', '❌', '❌', 'Consultoría y análisis'] }
 ];
 
 function PricingSection() {
