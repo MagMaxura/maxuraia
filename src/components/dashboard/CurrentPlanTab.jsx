@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { APP_PLANS, PLAN_HIERARCHY } from '@/config/plans'; // Añadir PLAN_HIERARCHY
 import { Loader2 } from 'lucide-react';
 import { usePayment } from '@/hooks/usePayment';
+import { useDashboardData } from '@/hooks/useDashboardData'; // Importar useDashboardData
 import {
   Toast,
   ToastClose,
@@ -16,7 +17,7 @@ import {
 
 function CurrentPlanTab() {
   const { user, loading: loadingUser } = useAuth(); // Obtener loading del hook useAuth
-  const { userSubscription } = user || {}; // Obtener userSubscription del usuario
+  const { userSubscription, effectiveLimits } = useDashboardData(); // Obtener userSubscription y effectiveLimits
   const { loadingCheckout, handleCheckout } = usePayment();
 
   // Declarar el estado para controlar la visibilidad del Toast
@@ -53,7 +54,15 @@ function CurrentPlanTab() {
             <div className="space-y-3">
               <div>
                 <p className="text-sm font-medium text-slate-500">Plan Contratado:</p>
-                <p className="text-xl font-semibold capitalize text-blue-600">{user.suscripcion.plan_id || "No disponible"}</p>
+                <p className="text-xl font-semibold capitalize text-blue-600">{effectiveLimits?.effectiveCurrentPlan?.name || "No disponible"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Límite de CVs:</p>
+                <p className="text-lg">{effectiveLimits?.cvLimit === Infinity ? "Ilimitados" : effectiveLimits?.cvLimit}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-500">Límite de Puestos:</p>
+                <p className="text-lg">{effectiveLimits?.jobLimit === Infinity ? "Ilimitados" : effectiveLimits?.jobLimit}</p>
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-500">Estado:</p>

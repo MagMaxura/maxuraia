@@ -15,6 +15,7 @@ export function useDashboardData() {
   const initialLoadAttemptedForUserIdRef = useRef(null);
 
   useEffect(() => {
+    console.log("[DEBUG] useDashboardData: useEffect triggered. Current user:", user);
     const currentUserId = user?.id;
 
     const loadUserCandidatosYCVs = async (userIdToLoad) => { // Renombrado
@@ -114,8 +115,7 @@ export function useDashboardData() {
       if (jobs.length === 0 && isLoadingJobs) setIsLoadingJobs(false);
     }
 
-  }, [user?.id, toast]); // Dependencias principales: user.id y toast.
-                         // Las funciones de seteo de estado y refs no necesitan estar aquí.
+  }, [user?.id, toast, user?.suscripcion]); // Añadir user.suscripcion a las dependencias
 
   return {
     cvFiles,

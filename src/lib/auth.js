@@ -427,15 +427,14 @@ export const auth = {
       return null;
     }
     try {
-      console.log("[DEBUG] Attempting SELECT query in getRecruiterProfile...");
-      // Seleccionar todos los campos para poder verificar el contenido
+      console.log("[DEBUG] getRecruiterProfile: Querying 'reclutadores' table for userId:", userId);
       const { data: recruiterProfile, error: recruiterError } = await supabase
         .from('reclutadores')
-        .select('*') // Seleccionar todos los campos
+        .select('*')
         .eq('id', userId)
-        .maybeSingle(); // Devuelve el objeto o null si no se encuentra
+        .maybeSingle();
 
-      console.log("[DEBUG] Recruiter profile query finished. Error:", recruiterError, "Data:", recruiterProfile);
+      console.log("[DEBUG] getRecruiterProfile: 'reclutadores' query result - Error:", recruiterError, "Data:", recruiterProfile);
 
       if (recruiterError) {
         console.error('auth.js: Error fetching recruiter profile by ID:', recruiterError);
@@ -448,15 +447,15 @@ export const auth = {
       }
 
       // Ahora, obtener todas las suscripciones activas del reclutador
-      console.log("[DEBUG] Attempting to fetch all active subscriptions for recruiterId:", userId);
+      console.log("[DEBUG] getRecruiterProfile: Querying 'suscripciones' table for recruiterId:", userId);
       const { data: subscriptions, error: subscriptionsError } = await supabase
         .from('suscripciones')
         .select('*')
         .eq('recruiter_id', userId)
-        .in('status', ['active', 'trialing']) // Considerar activas y en prueba
-        .order('created_at', { ascending: false }); // Ordenar por más reciente
+        .in('status', ['active', 'trialing'])
+        .order('created_at', { ascending: false });
 
-      console.log("[DEBUG] Subscriptions query finished. Error:", subscriptionsError, "Data:", subscriptions);
+      console.log("[DEBUG] getRecruiterProfile: 'suscripciones' query result - Error:", subscriptionsError, "Data:", subscriptions);
 
       if (subscriptionsError) {
         console.error('auth.js: Error fetching subscriptions:', subscriptionsError);
