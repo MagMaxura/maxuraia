@@ -162,6 +162,9 @@ export const calculateEffectivePlan = (monthlyPlanDetails, oneTimePlanDetails) =
   let effectiveJobLimit = 0;
   let effectiveCurrentPlan = null;
 
+  console.log("[DEBUG] calculateEffectivePlan - monthlyPlanDetails:", monthlyPlanDetails);
+  console.log("[DEBUG] calculateEffectivePlan - oneTimePlanDetails:", oneTimePlanDetails);
+
   // 1. Establecer límites base del plan mensual si existe
   if (monthlyPlanDetails) {
     effectiveCvLimit = monthlyPlanDetails.cvLimit || 0;
@@ -192,6 +195,10 @@ export const calculateEffectivePlan = (monthlyPlanDetails, oneTimePlanDetails) =
   } else if (oneTimePlanDetails) {
     effectiveCurrentPlan = oneTimePlanDetails;
   }
+
+  console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveCvLimit:", effectiveCvLimit);
+  console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveJobLimit:", effectiveJobLimit);
+  console.log("[DEBUG] calculateEffectivePlan - Effective Current Plan:", effectiveCurrentPlan);
 
   return {
     cvLimit: effectiveCvLimit,
