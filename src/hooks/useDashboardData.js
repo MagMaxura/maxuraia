@@ -131,6 +131,14 @@ export function useDashboardData() {
       user?.suscripcion?.current_plan_details, // Pasar el objeto completo del plan mensual
       user?.suscripcion?.one_time_plan_details // Pasar el objeto completo del plan puntual
     ),
+    analysisLimit: calculateEffectivePlan(
+      user?.suscripcion?.current_plan_details,
+      user?.suscripcion?.one_time_plan_details
+    ).cvLimit, // Tomar el cvLimit del resultado de effectiveLimits
+    jobLimit: calculateEffectivePlan(
+      user?.suscripcion?.current_plan_details,
+      user?.suscripcion?.one_time_plan_details
+    ).jobLimit, // Tomar el jobLimit del resultado de effectiveLimits
     currentAnalysisCount: user?.suscripcion?.cvs_analizados_este_periodo || 0,
   };
 }
