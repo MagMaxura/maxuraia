@@ -166,23 +166,29 @@ export const calculateEffectivePlan = (monthlyPlanDetails, oneTimePlanDetails) =
   console.log("[DEBUG] calculateEffectivePlan - oneTimePlanDetails:", oneTimePlanDetails);
 
   // 1. Establecer límites base del plan mensual si existe
-  if (monthlyPlanDetails) {
-    effectiveCvLimit = monthlyPlanDetails.cvLimit || 0;
-    effectiveJobLimit = monthlyPlanDetails.jobLimit || 0;
-    effectiveCurrentPlan = monthlyPlanDetails;
+  if (monthlyPlanDetails && monthlyPlanDetails.plan_id) {
+    const plan = APP_PLANS[monthlyPlanDetails.plan_id];
+    if (plan) {
+      effectiveCvLimit = plan.cvLimit || 0;
+      effectiveJobLimit = plan.jobLimit || 0;
+      effectiveCurrentPlan = plan; // Usar el objeto de plan completo
+    }
   }
 
   // 2. Sumar bonos del plan puntual si existe
-  if (oneTimePlanDetails) {
-    // Si no hay plan mensual, el plan puntual es el base
-    if (!monthlyPlanDetails) {
-      effectiveCvLimit = oneTimePlanDetails.cvLimit || 0;
-      effectiveJobLimit = oneTimePlanDetails.jobLimit || 0;
-      effectiveCurrentPlan = oneTimePlanDetails;
-    } else {
-      // Si hay plan mensual, los límites del puntual se suman como bonos
-      effectiveCvLimit += oneTimePlanDetails.cvLimit || 0;
-      effectiveJobLimit += oneTimePlanDetails.jobLimit || 0;
+  if (oneTimePlanDetails && oneTimePlanDetails.plan_id) {
+    const oneTimePlan = APP_PLANS[oneTimePlanDetails.plan_id];
+    if (oneTimePlan) {
+      // Si no hay plan mensual, el plan puntual es el base
+      if (!monthlyPlanDetails) {
+        effectiveCvLimit = oneTimePlan.cvLimit || 0;
+        effectiveJobLimit = oneTimePlan.jobLimit || 0;
+        effectiveCurrentPlan = oneTimePlan; // Usar el objeto de plan completo
+      } else {
+        // Si hay plan mensual, los límites del puntual se suman como bonos
+        effectiveCvLimit += oneTimePlan.cvLimit || 0;
+        effectiveJobLimit += oneTimePlan.jobLimit || 0;
+      }
     }
   }
 
@@ -190,10 +196,10 @@ export const calculateEffectivePlan = (monthlyPlanDetails, oneTimePlanDetails) =
   // Si hay un plan mensual, ese es el plan actual.
   // Si no hay plan mensual pero sí puntual, el puntual es el plan actual.
   // Si no hay ninguno, effectiveCurrentPlan sigue siendo null.
-  if (monthlyPlanDetails) {
-    effectiveCurrentPlan = monthlyPlanDetails;
-  } else if (oneTimePlanDetails) {
-    effectiveCurrentPlan = oneTimePlanDetails;
+  if (monthlyPlanDetails && monthlyPlanDetails.plan_id) {
+    effectiveCurrentPlan = APP_PLANS[monthlyPlanDetails.plan_id];
+  } else if (oneTimePlanDetails && oneTimePlanDetails.plan_id) {
+    effectiveCurrentPlan = APP_PLANS[oneTimePlanDetails.plan_id];
   }
 
   console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveCvLimit:", effectiveCvLimit);
