@@ -157,54 +157,40 @@ export const getAllPlans = () => {
  * @param {object} newPlan - El nuevo plan que el usuario ha adquirido.
  * @returns {object} Un objeto con los límites efectivos de cvLimit y jobLimit, y el plan actual efectivo.
  */
-export const calculateEffectivePlan = (currentPlan, newPlan) => {
+export const calculateEffectivePlan = (monthlyPlanDetails, oneTimePlanDetails) => {
   let effectiveCvLimit = 0;
   let effectiveJobLimit = 0;
-  let effectiveCurrentPlan = newPlan; // Por defecto, el nuevo plan es el efectivo
+  let effectiveCurrentPlan = null;
 
-  // Si no hay plan actual, el nuevo plan es el efectivo
-  if (!currentPlan) {
-    return {
-      cvLimit: newPlan.cvLimit,
-      jobLimit: newPlan.jobLimit,
-      effectiveCurrentPlan: newPlan
-    };
+  // 1. Establecer límites base del plan mensual si existe
+  if (monthlyPlanDetails) {
+    effectiveCvLimit = monthlyPlanDetails.cvLimit || 0;
+    effectiveJobLimit = monthlyPlanDetails.jobLimit || 0;
+    effectiveCurrentPlan = monthlyPlanDetails;
   }
 
-  // Lógica para cuando el plan actual es de "búsqueda puntual"
-  if (currentPlan.id === 'busqueda_puntual') {
-    if (newPlan.id === 'busqueda_puntual') {
-      // Caso 1: puntual + puntual
-      effectiveCvLimit = currentPlan.cvLimit + 75;
-      effectiveJobLimit = currentPlan.jobLimit + 1;
-      effectiveCurrentPlan = currentPlan; // El plan puntual sigue siendo el "actual"
-    } else if (newPlan.type === 'monthly' || newPlan.type === 'enterprise') {
-      // Caso 2: puntual + suscripción mensual
-      effectiveCvLimit = currentPlan.cvLimit + newPlan.cvLimit;
-      effectiveJobLimit = currentPlan.jobLimit + newPlan.jobLimit;
-      effectiveCurrentPlan = newPlan; // El plan de suscripción pasa a ser el "actual"
-    }
-  }
-  // Lógica para cuando el plan actual es de suscripción mensual
-  else if (currentPlan.type === 'monthly' || currentPlan.type === 'enterprise') {
-    if (newPlan.id === 'busqueda_puntual') {
-      // Caso 3: suscripción mensual + puntual
-      effectiveCvLimit = currentPlan.cvLimit + newPlan.cvLimit;
-      effectiveJobLimit = currentPlan.jobLimit + newPlan.jobLimit;
-      effectiveCurrentPlan = currentPlan; // El plan de suscripción sigue siendo el "actual"
-    } else if (newPlan.type === 'monthly' || newPlan.type === 'enterprise') {
-      // Caso 4: suscripción mensual + suscripción mensual (se toma el plan más reciente o el de mayor jerarquía si es necesario)
-      // Por simplicidad, aquí asumimos que el nuevo plan reemplaza al anterior si ambos son de suscripción.
-      // Si se necesita una lógica de "upgrade" más compleja, se debería implementar aquí.
-      effectiveCvLimit = newPlan.cvLimit;
-      effectiveJobLimit = newPlan.jobLimit;
-      effectiveCurrentPlan = newPlan;
+  // 2. Sumar bonos del plan puntual si existe
+  if (oneTimePlanDetails) {
+    // Si no hay plan mensual, el plan puntual es el base
+    if (!monthlyPlanDetails) {
+      effectiveCvLimit = oneTimePlanDetails.cvLimit || 0;
+      effectiveJobLimit = oneTimePlanDetails.jobLimit || 0;
+      effectiveCurrentPlan = oneTimePlanDetails;
+    } else {
+      // Si hay plan mensual, los límites del puntual se suman como bonos
+      effectiveCvLimit += oneTimePlanDetails.cvLimit || 0;
+      effectiveJobLimit += oneTimePlanDetails.jobLimit || 0;
     }
   }
 
-  // Si el nuevo plan es de suscripción, siempre tiene prioridad para ser el plan actual efectivo
-  if (newPlan.type === 'monthly' || newPlan.type === 'enterprise') {
-    effectiveCurrentPlan = newPlan;
+  // 3. Determinar el plan actual efectivo
+  // Si hay un plan mensual, ese es el plan actual.
+  // Si no hay plan mensual pero sí puntual, el puntual es el plan actual.
+  // Si no hay ninguno, effectiveCurrentPlan sigue siendo null.
+  if (monthlyPlanDetails) {
+    effectiveCurrentPlan = monthlyPlanDetails;
+  } else if (oneTimePlanDetails) {
+    effectiveCurrentPlan = oneTimePlanDetails;
   }
 
   return {
