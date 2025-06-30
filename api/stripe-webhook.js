@@ -57,17 +57,120 @@ export default async (req, res) => {
 
   // Maneja los tipos de eventos
   switch (event.type) {
-    case 'payment_intent.succeeded': {
-      // Este evento se maneja principalmente por 'checkout.session.completed'
-      // o 'invoice.paid' para suscripciones.
-      // Si llega aquí, es un PaymentIntent directo no asociado a una Checkout Session
-      // o una suscripción, lo cual es un flujo menos común para esta aplicación.
+    case 'payment_intent.succeeded': { // Usar bloque para scope
       const paymentIntent = event.data.object;
-      console.log('✅ PaymentIntent succeeded (direct PI or unhandled flow):', paymentIntent.id);
-      // No se realiza ninguna acción de BD aquí para evitar duplicidades con checkout.session.completed
-      // o customer.subscription.created/updated.
-      break;
-    }
+      console.log('✅ PaymentIntent succeeded:', paymentIntent.id);
+
+      // Accede a la metadata que pasamos al crear el PaymentIntent
+      const { recruiterId, planId: planIdFromMetadata } = paymentIntent.metadata; // planId aquí es tu ID interno (ej: 'busqueda_puntual')
+
+      // Verificar que los datos esenciales de la metadata estén presentes
+      if (!recruiterId || !planIdFromMetadata) {
+          console.error('❌ Missing required metadata in payment_intent.succeeded event:', paymentIntent.metadata);
+          return res.status(400).json({ error: { message: 'Missing required metadata (recruiterId or planId).' } });
+      }
+
+      // Si el PaymentIntent está asociado a una suscripción, la lógica principal se maneja en customer.subscription.*
+      // Si no está asociado a una suscripción, podría ser un pago único.
+      if (paymentIntent.invoice || paymentIntent.subscription) {
+          console.log(`ℹ️ PaymentIntent ${paymentIntent.id} is associated with a subscription/invoice. Handled by other events.`);
+      } else { // Este bloque maneja pagos únicos (no asociados a suscripciones/facturas)
+          const oneTimePlanDetails = APP_PLANS[planIdFromMetadata]; // Obtener detalles del plan
+          const isOneTimePayment = oneTimePlanDetails && oneTimePlanDetails.type === 'one-time';
+
+          if (isOneTimePayment) {
+               try {
+                   const additionalCvLimit = oneTimePlanDetails.cvLimit || 0;
+                   const additionalJobLimit = oneTimePlanDetails.jobLimit || 0;
+
+                   // Consultar el registro de suscripción existente
+                   const { data: existingSubscription, error: fetchError } = await supabase
+                       .from('suscripciones')
+                       .select('plan_id, CV_Max_plan, Jobs_Max_plan, one_time_cv_bonus, one_time_job_bonus') // Incluir nuevos campos
+                       .eq('recruiter_id', recruiterId)
+                       .maybeSingle(); // Usar maybeSingle para manejar caso de no encontrar
+
+                   if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 es "No rows found"
+                       console.error('❌ Supabase fetch error checking for existing subscription (payment_intent.succeeded):', fetchError);
+                       console.error('DEBUG: Supabase fetch error details (payment_intent.succeeded):', fetchError);
+                       throw new Error('Database error checking subscription.');
+                   }
+
+                   let updateData = {};
+                   let newSubscriptionData = {};
+                   const now = new Date();
+
+                   if (existingSubscription) {
+                       console.log(`ℹ️ Existing subscription found for user ${recruiterId}. Adding one-time plan limits as bonus.`);
+                       updateData = {
+                           one_time_cv_bonus: (existingSubscription.one_time_cv_bonus || 0) + additionalCvLimit,
+                           one_time_job_bonus: (existingSubscription.one_time_job_bonus || 0) + additionalJobLimit,
+                       };
+                       // Si el plan existente es puntual, extender el current_period_end
+                       if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type === 'one-time') {
+                         const currentEndDate = existingSubscription.current_period_end ? new Date(existingSubscription.current_period_end) : now;
+                         updateData.current_period_end = addMonths(currentEndDate, 1).toISOString();
+                         updateData.status = 'active'; // Asegurar que el estado sea activo
+                         updateData.plan_id = planIdFromMetadata; // Mantener el plan puntual como principal
+                       } else if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type !== 'one-time') {
+                         // Si tiene un plan mensual, no se modifica el current_period_end ni el plan_id
+                         // Los bonos se suman y se reiniciarán con el ciclo mensual.
+                         console.log(`ℹ️ User ${recruiterId} with monthly plan purchased one-time plan. Bonuses added.`);
+                       }
+
+                       const { error: updateError } = await supabase
+                           .from('suscripciones')
+                           .update(updateData)
+                           .eq('recruiter_id', recruiterId);
+
+                       if (updateError) {
+                           console.error('❌ Supabase update error adding one-time limits (payment_intent.succeeded):', updateError);
+                           console.error('DEBUG: Supabase update error details (payment_intent.succeeded):', updateError);
+                           throw new Error('Database error updating subscription with additional limits.');
+                       }
+                       console.log(`🎉 Added ${additionalCvLimit} CVs and ${additionalJobLimit} jobs as bonus to existing subscription for user ${recruiterId}.`);
+
+                   } else {
+                       console.log(`ℹ️ No existing subscription found for user ${recruiterId}. Creating new subscription with one-time plan as base.`);
+                       newSubscriptionData = {
+                           recruiter_id: recruiterId,
+                           plan_id: planIdFromMetadata, // El plan puntual es el principal si no hay otro
+                           status: 'active',
+                           trial_ends_at: null,
+                           current_period_start: now.toISOString(),
+                           current_period_end: addMonths(now, 1).toISOString(), // Válido por 1 mes
+                           stripe_subscription_id: null,
+                           cvs_analizados_este_periodo: 0,
+                           jobs_creados_este_periodo: 0,
+                           CV_Max_plan: 0, // Los límites base son 0, los límites del plan puntual van a los bonos
+                           Jobs_Max_plan: 0,
+                           one_time_cv_bonus: additionalCvLimit, // Los límites del plan puntual se guardan como bonos
+                           one_time_job_bonus: additionalJobLimit,
+                       };
+                       console.log('DEBUG: New subscription data for one-time plan (payment_intent.succeeded):', newSubscriptionData);
+
+                       const { error: insertError } = await supabase
+                           .from('suscripciones')
+                           .insert([newSubscriptionData]);
+
+                       if (insertError) {
+                           console.error('❌ Supabase insert error for new one-time subscription (payment_intent.succeeded):', insertError);
+                           console.error('DEBUG: Supabase insert error details (payment_intent.succeeded):', insertError);
+                           throw new Error('Database error creating new subscription.');
+                       }
+                       console.log(`🎉 New subscription created with one-time plan ${planIdFromMetadata} as base for user ${recruiterId}.`);
+                   }
+               } catch (dbError) {
+                 console.error('❌ Database operation failed during one-time payment processing (payment_intent.succeeded):', dbError);
+                 console.error('DEBUG: Supabase error details (payment_intent.succeeded general catch):', dbError);
+                 return res.status(500).json({ error: { message: 'Database operation failed after successful payment.' } });
+               }
+           } else { // Este else maneja planes NO one-time PERO sin invoice/subscription (flujo de pago único para planes recurrentes, lo cual es inusual pero posible)
+               console.warn(`⚠️ Received payment_intent.succeeded for non-one-time plan ${planIdFromMetadata} without associated subscription/invoice. RecruiterId: ${recruiterId}. This flow might be unintended.`);
+           }
+       }
+       break;
+     }
 
     case 'checkout.session.completed': {
       const session = event.data.object;
