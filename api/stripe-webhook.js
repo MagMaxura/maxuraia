@@ -217,6 +217,7 @@ export default async (req, res) => {
           }
         } catch (dbError) {
           console.error('❌ Database operation failed during checkout.session.completed processing:', dbError);
+          console.error('DEBUG: Supabase error details (general catch):', dbError); // Nuevo log
           return res.status(500).json({ error: { message: 'Database operation failed after successful payment.' } });
         }
       } else {
@@ -272,11 +273,13 @@ export default async (req, res) => {
 
                    if (error) {
                        console.error('❌ Supabase upsert error for subscription.created:', error);
+                       console.error('DEBUG: Supabase upsert error details (created):', error); // Nuevo log
                    } else {
                        console.log(`🎉 Subscription ${subscriptionCreated.id} created/updated for user ${recruiterIdCreated} with plan ${subscriptionPlanDetails.id}.`);
                    }
                } catch (dbError) {
                    console.error('❌ Database operation failed for subscription.created:', dbError);
+                   console.error('DEBUG: Supabase error details (created):', dbError); // Nuevo log
                }
            } else {
                console.warn('⚠️ Subscription created event missing recruiterId or Product ID:', subscriptionCreated);
@@ -328,11 +331,13 @@ export default async (req, res) => {
 
                    if (error) {
                        console.error('❌ Supabase update error for subscription.updated:', error);
+                       console.error('DEBUG: Supabase update error details (updated):', error); // Nuevo log
                    } else {
                        console.log(`🎉 Subscription ${subscriptionUpdated.id} updated for user ${recruiterIdUpdated} to plan ${updatedSubscriptionPlanDetails.id}.`);
                    }
                } catch (dbError) {
                    console.error('❌ Database operation failed for subscription.updated:', dbError);
+                   console.error('DEBUG: Supabase error details (updated):', dbError); // Nuevo log
                }
            } else {
                console.warn('⚠️ Subscription updated event missing recruiterId or Product ID:', subscriptionUpdated);
@@ -363,11 +368,13 @@ export default async (req, res) => {
 
                if (error) {
                    console.error('❌ Supabase update error for subscription.deleted:', error);
+                   console.error('DEBUG: Supabase update error details (deleted):', error); // Nuevo log
                } else {
                    console.log(`🎉 Subscription ${subscriptionDeleted.id} deleted for user ${recruiterIdDeleted}.`);
                }
            } catch (dbError) {
                console.error('❌ Database operation failed for subscription.deleted:', dbError);
+               console.error('DEBUG: Supabase error details (deleted):', dbError); // Nuevo log
              }
          } else {
              console.warn('⚠️ Subscription deleted event missing recruiterId:', subscriptionDeleted);
@@ -402,11 +409,13 @@ export default async (req, res) => {
 
                   if (error) {
                       console.error('❌ Supabase update error for invoice.paid:', error);
+                      console.error('DEBUG: Supabase update error details (invoice.paid):', error); // Nuevo log
                   } else {
                       console.log(`🎉 Subscription for user ${recruiterIdFromInvoice} confirmed active via invoice ${invoice.id}.`);
                   }
               } catch (dbError) {
                   console.error('❌ Database operation failed for invoice.paid:', dbError);
+                  console.error('DEBUG: Supabase error details (invoice.paid):', dbError); // Nuevo log
               }
          } else {
              console.warn('⚠️ Invoice paid event missing recruiterId or subscriptionId:', invoice);
@@ -430,11 +439,13 @@ export default async (req, res) => {
 
                  if (error) {
                      console.error('❌ Supabase update error for payment_intent.payment_failed:', error);
+                     console.error('DEBUG: Supabase update error details (payment_failed):', error); // Nuevo log
                  } else {
                      console.log(`⚠️ Subscription for user ${recruiterIdFailed} marked as past_due.`);
                  }
              } catch (dbError) {
                  console.error('❌ Database operation failed for payment_intent.payment_failed:', dbError);
+                 console.error('DEBUG: Supabase error details (payment_failed):', dbError); // Nuevo log
              }
          }
          break;
