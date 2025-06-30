@@ -50,18 +50,17 @@ const PaymentSuccess = () => {
           retrievedPaymentIntent = result.paymentIntent;
           stripeError = result.error;
         } else if (sessionId) {
-          // Si tenemos sessionId, recuperamos la Checkout Session y luego el PaymentIntent
-          const { session, error: sessionError } = await stripe.retrieveCheckoutSession(sessionId);
-          if (sessionError) {
-            stripeError = sessionError;
-          } else if (session && session.payment_intent) {
-            // Si la sesión tiene un payment_intent, lo recuperamos
-            const result = await stripe.retrievePaymentIntent(session.payment_intent);
-            retrievedPaymentIntent = result.paymentIntent;
-            stripeError = result.error;
+          // Si tenemos sessionId, llamamos a nuestro endpoint de backend para recuperar la Checkout Session
+          const response = await fetch(`/api/stripe/retrieve-checkout-session?sessionId=${sessionId}`);
+          const data = await response.json();
+
+          if (!response.ok) {
+            stripeError = { message: data.error || 'Error al recuperar la sesión de checkout.' };
+          } else if (data.session && data.session.payment_intent) {
+            // Si la sesión tiene un payment_intent, lo usamos
+            retrievedPaymentIntent = data.session.payment_intent;
           } else {
-            // Si no hay payment_intent en la sesión, o la sesión no existe
-            setError('No se pudo encontrar un PaymentIntent asociado a la sesión.');
+            setError('No se pudo encontrar un PaymentIntent asociado a la sesión de checkout.');
             setLoading(false);
             return;
           }
