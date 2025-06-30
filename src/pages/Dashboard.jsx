@@ -459,6 +459,7 @@ function Dashboard() {
               onJobPublishedOrUpdated={handleJobPublishedOrUpdated}
               editingJob={editingJob}
               setEditingJob={setEditingJob}
+              effectiveLimits={effectiveLimits} // Pasar effectiveLimits
             />
             );
           })()}

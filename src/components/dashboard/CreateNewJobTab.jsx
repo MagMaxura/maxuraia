@@ -68,7 +68,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       const planId = user.suscripcion?.plan_id || 'basico'; // Fallback a 'basico' si no hay suscripción
       const status = user.suscripcion?.status;
       // Obtener jobLimit de APP_PLANS
-      const jobLimit = APP_PLANS[planId]?.jobLimit || 0;
+      const jobLimit = effectiveLimits?.effectiveJobLimit || 0;
 
       // Verificar estado de suscripción si no estamos editando
       if (!isEditing && (status !== 'active' && status !== 'trialing')) {
@@ -86,7 +86,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       if (!isEditing && currentJobsCount >= jobLimit) {
         toast({
           title: "Límite de Puestos Alcanzado",
-          description: `Has alcanzado el límite de ${jobLimit === Infinity ? 'puestos ilimitados' : `${jobLimit} puestos activos`} para tu plan "${APP_PLANS[planId]?.name || planId}". Considera actualizar tu plan para crear más.`,
+          description: `Has alcanzado el límite de ${jobLimit === Infinity ? 'puestos ilimitados' : `${jobLimit} puestos activos`} para tu plan "${effectiveLimits?.effectiveCurrentPlan?.name || planId}". Considera actualizar tu plan para crear más.`,
           variant: "destructive",
           duration: 7000,
         });
@@ -144,7 +144,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
   const planId = user?.suscripcion?.plan_id || 'basico';
   const status = user?.suscripcion?.status;
   // Obtener jobLimit de APP_PLANS
-  const jobLimit = APP_PLANS[planId]?.jobLimit || 0;
+  const jobLimit = effectiveLimits?.effectiveJobLimit || 0;
   // canCreateJob ahora solo se aplica si NO estamos editando. Si estamos editando, siempre se puede intentar guardar.
   const canCreateNewJob = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount < jobLimit;
   const limitReachedForNew = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount >= jobLimit;
@@ -168,7 +168,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                Has alcanzado el límite de <strong className="font-semibold">{jobLimit === Infinity ? 'puestos ilimitados' : `${jobLimit} puestos activos`}</strong> para tu plan <strong className="font-semibold capitalize">{APP_PLANS[planId]?.name || planId}</strong>.
+                Has alcanzado el límite de <strong className="font-semibold">{jobLimit === Infinity ? 'puestos ilimitados' : `${jobLimit} puestos activos`}</strong> para tu plan <strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || planId}</strong>.
                 Para crear más puestos, por favor considera <a href="/#pricing" className="underline hover:text-yellow-600">actualizar tu plan</a>.
               </p>
             </div>
