@@ -31,8 +31,17 @@ function UploadCVTab({
   const displayAnalysisLimit = analysisLimit === Infinity ? 'Ilimitados' : analysisLimit;
   const displayCurrentAnalysisCount = currentAnalysisCount || 0; // Asegurar que sea al menos 0
 
-  const canAnalyzeMore = (status === 'active' || status === 'trialing') && displayCurrentAnalysisCount < analysisLimit;
-  const limitReached = (status === 'active' || status === 'trialing') && displayCurrentAnalysisCount >= analysisLimit;
+  // Determinar si el usuario puede analizar más CVs
+  const canAnalyzeMore = (
+    (status === 'active' || status === 'trialing') || // Si el plan mensual/trial está activo
+    (userSubscription?.one_time_plan_details?.status === 'active') // O si el plan puntual está activo
+  ) && displayCurrentAnalysisCount < analysisLimit;
+
+  // Determinar si se ha alcanzado el límite
+  const limitReached = (
+    (status === 'active' || status === 'trialing') || // Si el plan mensual/trial está activo
+    (userSubscription?.one_time_plan_details?.status === 'active') // O si el plan puntual está activo
+  ) && displayCurrentAnalysisCount >= analysisLimit;
 
   const handleZoneClick = () => {
     if (!canAnalyzeMore || isBulkProcessing || isProcessing) {
@@ -66,7 +75,7 @@ function UploadCVTab({
       <h2 className="text-2xl font-semibold text-slate-800 mb-4">Cargar nuevo CV</h2>
       
       {/* Información de Uso y Límite */}
-      {(status === 'active' || status === 'trialing') && (
+      {((status === 'active' || status === 'trialing') || userSubscription?.one_time_plan_details?.status === 'active') && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
           <p>
             CVs analizados este período: <strong className="font-semibold">{displayCurrentAnalysisCount}</strong> de <strong className="font-semibold">{displayAnalysisLimit}</strong>
@@ -91,9 +100,9 @@ function UploadCVTab({
         </div>
       )}
 
-      {limitReached && (status === 'active' || status === 'trialing') && (
-        <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow">
-          <div className="flex">
+      {limitReached && ((status === 'active' || status === 'trialing') || userSubscription?.one_time_plan_details?.status === 'active') && (
+       <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow">
+         <div className="flex">
             <div className="flex-shrink-0">
               <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
             </div>
