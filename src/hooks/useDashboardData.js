@@ -129,8 +129,9 @@ export function useDashboardData() {
     // Calcular los límites efectivos usando la nueva función
     effectiveLimits: calculateEffectivePlan(user?.suscripcion),
     analysisLimit: calculateEffectivePlan(user?.suscripcion).cvLimit,
-    jobLimit: calculateEffectivePlan(user?.suscripcion).jobLimit,
+    jobLimit: calculateEffectivePlan(user?.suscripcion).effectiveJobLimit, // Usar effectiveJobLimit
     currentAnalysisCount: user?.suscripcion?.cvs_analizados_este_periodo || 0,
+    currentJobCount: user?.suscripcion?.jobs_creados_este_periodo || 0, // Añadir currentJobCount
     isSubscriptionActive: calculateEffectivePlan(user?.suscripcion).isSubscriptionActive,
     periodEndsAt: calculateEffectivePlan(user?.suscripcion).periodEndsAt,
   };

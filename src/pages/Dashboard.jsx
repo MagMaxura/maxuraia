@@ -37,6 +37,7 @@ function Dashboard() {
     userSubscription, // Nuevo
     analysisLimit, // Nuevo
     currentAnalysisCount, // Nuevo
+    currentJobCount, // Nuevo: Obtener currentJobCount del hook
     effectiveLimits, // Nuevo: Obtener effectiveLimits del hook
   } = useDashboardData();
 
@@ -455,7 +456,7 @@ function Dashboard() {
             return (
             <CreateNewJobTab
               setActiveTab={setActiveTab}
-              currentJobsCount={jobs ? jobs.length : 0} // Guard already here
+              currentJobsCount={currentJobCount} // Usar currentJobCount de la suscripción
               onJobPublishedOrUpdated={handleJobPublishedOrUpdated}
               editingJob={editingJob}
               setEditingJob={setEditingJob}
