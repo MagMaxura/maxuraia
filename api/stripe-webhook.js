@@ -137,6 +137,7 @@ export default async (req, res) => {
                            one_time_cv_bonus: additionalCvLimit, // Los límites del plan puntual se guardan como bonos
                            one_time_job_bonus: additionalJobLimit,
                        };
+                       console.log('DEBUG: New subscription data for one-time plan:', newSubscriptionData); // Nuevo log
 
                        const { error: insertError } = await supabase
                            .from('suscripciones')
