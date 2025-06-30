@@ -127,18 +127,11 @@ export function useDashboardData() {
     // Nuevo: Devolver información de la suscripción y el límite
     userSubscription: user?.suscripcion,
     // Calcular los límites efectivos usando la nueva función
-    effectiveLimits: calculateEffectivePlan(
-      user?.suscripcion?.current_plan_details, // Pasar el objeto completo del plan mensual
-      user?.suscripcion?.one_time_plan_details // Pasar el objeto completo del plan puntual
-    ),
-    analysisLimit: calculateEffectivePlan(
-      user?.suscripcion?.current_plan_details,
-      user?.suscripcion?.one_time_plan_details
-    ).cvLimit, // Tomar el cvLimit del resultado de effectiveLimits
-    jobLimit: calculateEffectivePlan(
-      user?.suscripcion?.current_plan_details,
-      user?.suscripcion?.one_time_plan_details
-    ).jobLimit, // Tomar el jobLimit del resultado de effectiveLimits
+    effectiveLimits: calculateEffectivePlan(user?.suscripcion),
+    analysisLimit: calculateEffectivePlan(user?.suscripcion).cvLimit,
+    jobLimit: calculateEffectivePlan(user?.suscripcion).jobLimit,
     currentAnalysisCount: user?.suscripcion?.cvs_analizados_este_periodo || 0,
+    isSubscriptionActive: calculateEffectivePlan(user?.suscripcion).isSubscriptionActive,
+    periodEndsAt: calculateEffectivePlan(user?.suscripcion).periodEndsAt,
   };
 }

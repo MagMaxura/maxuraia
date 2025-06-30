@@ -26,22 +26,15 @@ function UploadCVTab({
   const { user } = useAuth();
 
   // Usar las props directamente, con fallbacks seguros
-  const planId = effectiveLimits?.effectiveCurrentPlan?.id || userSubscription?.plan_id || 'basico'; // Usar el plan efectivo
-  const status = userSubscription?.status;
+  const planId = effectiveLimits?.effectiveCurrentPlan?.id || userSubscription?.plan_id || 'basico';
   const displayAnalysisLimit = analysisLimit === Infinity ? 'Ilimitados' : analysisLimit;
-  const displayCurrentAnalysisCount = currentAnalysisCount || 0; // Asegurar que sea al menos 0
+  const displayCurrentAnalysisCount = currentAnalysisCount || 0;
 
   // Determinar si el usuario puede analizar más CVs
-  const canAnalyzeMore = (
-    (status === 'active' || status === 'trialing') || // Si el plan mensual/trial está activo
-    (userSubscription?.one_time_plan_details?.status === 'active') // O si el plan puntual está activo
-  ) && displayCurrentAnalysisCount < analysisLimit;
+  const canAnalyzeMore = effectiveLimits.isSubscriptionActive && displayCurrentAnalysisCount < analysisLimit;
 
   // Determinar si se ha alcanzado el límite
-  const limitReached = (
-    (status === 'active' || status === 'trialing') || // Si el plan mensual/trial está activo
-    (userSubscription?.one_time_plan_details?.status === 'active') // O si el plan puntual está activo
-  ) && displayCurrentAnalysisCount >= analysisLimit;
+  const limitReached = effectiveLimits.isSubscriptionActive && displayCurrentAnalysisCount >= analysisLimit;
 
   const handleZoneClick = () => {
     if (!canAnalyzeMore || isBulkProcessing || isProcessing) {
@@ -75,7 +68,7 @@ function UploadCVTab({
       <h2 className="text-2xl font-semibold text-slate-800 mb-4">Cargar nuevo CV</h2>
       
       {/* Información de Uso y Límite */}
-      {((status === 'active' || status === 'trialing') || userSubscription?.one_time_plan_details?.status === 'active') && (
+      {effectiveLimits.isSubscriptionActive && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
           <p>
             CVs analizados este período: <strong className="font-semibold">{displayCurrentAnalysisCount}</strong> de <strong className="font-semibold">{displayAnalysisLimit}</strong>
@@ -94,13 +87,13 @@ function UploadCVTab({
               </Button>
             </Link>
           )}
-           {planId === 'enterprise_monthly' && limitReached && ( // Usar el ID correcto del plan enterprise
+           {planId === 'enterprise_monthly' && limitReached && (
              <p className="mt-3 text-sm">Has alcanzado el límite de tu plan Enterprise (esto no debería suceder).</p>
            )}
         </div>
       )}
 
-      {limitReached && ((status === 'active' || status === 'trialing') || userSubscription?.one_time_plan_details?.status === 'active') && (
+      {limitReached && effectiveLimits.isSubscriptionActive && (
        <div className="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md shadow">
          <div className="flex">
             <div className="flex-shrink-0">
@@ -119,7 +112,7 @@ function UploadCVTab({
           </div>
         </div>
       )}
-      {!(status === 'active' || status === 'trialing') && user?.suscripcion && (
+      {!effectiveLimits.isSubscriptionActive && user?.suscripcion && (
          <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-md shadow">
           <div className="flex">
             <div className="flex-shrink-0">
@@ -127,7 +120,7 @@ function UploadCVTab({
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-700">
-                Tu suscripción actual (<strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || status || 'desconocido'}</strong>) no te permite analizar nuevos CVs.
+                Tu suscripción actual (<strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || userSubscription?.plan_id || 'desconocido'}</strong>) no te permite analizar nuevos CVs.
                 Por favor, <Link to="/#pricing" className="underline hover:text-red-600 font-semibold">revisa tu plan</Link> o contacta a soporte.
               </p>
             </div>
