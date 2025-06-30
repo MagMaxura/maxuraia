@@ -10,7 +10,7 @@ import { Brain, AlertCircle } from 'lucide-react'; // Importar el icono Brain y 
 import CreateJobAIForm from '../CreateJobAIForm.jsx'; // Importar el componente del formulario AI (ruta corregida)
 import { APP_PLANS } from '@/config/plans'; // Importar APP_PLANS
 
-function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob }) {
+function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob, effectiveLimits }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [jobDetails, setJobDetails] = useState({
