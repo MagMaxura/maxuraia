@@ -20,12 +20,11 @@ const PaymentSuccess = () => {
     const params = new URLSearchParams(location.search);
     // Obtiene el client_secret del PaymentIntent de la URL
     const clientSecret = params.get('payment_intent_client_secret');
+    const sessionId = params.get('session_id');
 
-    if (!clientSecret) {
-      setError('No se encontró el client secret del pago.');
+    if (!clientSecret && !sessionId) {
+      setError('No se encontró el client secret del pago ni el ID de sesión.');
       setLoading(false);
-      // Opcional: redirigir a una página de error o al dashboard
-      // navigate('/dashboard');
       return;
     }
 
@@ -42,21 +41,40 @@ const PaymentSuccess = () => {
             throw new Error('Failed to load Stripe.js');
         }
 
-        // Recupera el PaymentIntent usando el client secret
-        const { paymentIntent: retrievedPaymentIntent, error: stripeError } = await stripe.retrievePaymentIntent(clientSecret);
+        let retrievedPaymentIntent = null;
+        let stripeError = null;
+
+        if (clientSecret) {
+          // Si tenemos clientSecret, intentamos recuperar el PaymentIntent directamente
+          const result = await stripe.retrievePaymentIntent(clientSecret);
+          retrievedPaymentIntent = result.paymentIntent;
+          stripeError = result.error;
+        } else if (sessionId) {
+          // Si tenemos sessionId, recuperamos la Checkout Session y luego el PaymentIntent
+          const { session, error: sessionError } = await stripe.retrieveCheckoutSession(sessionId);
+          if (sessionError) {
+            stripeError = sessionError;
+          } else if (session && session.payment_intent) {
+            // Si la sesión tiene un payment_intent, lo recuperamos
+            const result = await stripe.retrievePaymentIntent(session.payment_intent);
+            retrievedPaymentIntent = result.paymentIntent;
+            stripeError = result.error;
+          } else {
+            // Si no hay payment_intent en la sesión, o la sesión no existe
+            setError('No se pudo encontrar un PaymentIntent asociado a la sesión.');
+            setLoading(false);
+            return;
+          }
+        }
 
         if (stripeError) {
-          console.error('Error retrieving PaymentIntent:', stripeError);
+          console.error('Error retrieving Stripe object:', stripeError);
           setError(stripeError.message || 'Error al verificar el estado del pago.');
         } else if (retrievedPaymentIntent) {
           console.log('PaymentIntent retrieved:', retrievedPaymentIntent);
           setPaymentIntent(retrievedPaymentIntent);
           if (retrievedPaymentIntent.status !== 'succeeded') {
-              // Si el estado no es 'succeeded', podrías mostrar un mensaje diferente
-              // o redirigir a una página de fallo/pendiente.
               console.warn('PaymentIntent status is not succeeded:', retrievedPaymentIntent.status);
-              // setError(`El pago no se completó exitosamente. Estado: ${retrievedPaymentIntent.status}`);
-              // navigate('/payment-cancelled'); // Ejemplo de redirección
           }
         } else {
              setError('No se pudo recuperar el PaymentIntent.');
