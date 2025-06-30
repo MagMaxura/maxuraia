@@ -9,6 +9,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 // Inicializa el cliente de Supabase
+console.log('DEBUG: SUPABASE_URL:', process.env.SUPABASE_URL ? 'Present' : 'Missing');
+console.log('DEBUG: SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? 'Present' : 'Missing');
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_KEY // Usa la Service Key para acceso con privilegios en el backend
@@ -91,6 +93,7 @@ export default async (req, res) => {
 
           if (fetchError && fetchError.code !== 'PGRST116') {
             console.error('❌ Supabase fetch error checking for existing subscription (checkout.session.completed):', fetchError);
+            console.error('DEBUG: Supabase fetch error details:', fetchError); // Nuevo log
             throw new Error('Database error checking subscription.');
           }
 
@@ -132,6 +135,7 @@ export default async (req, res) => {
 
               if (updateError) {
                 console.error('❌ Supabase update error adding one-time limits (checkout.session.completed):', updateError);
+                console.error('DEBUG: Supabase update error details:', updateError); // Nuevo log
                 throw new Error('Database error updating subscription with additional limits.');
               }
               console.log(`🎉 Added ${additionalCvLimit} CVs and ${additionalJobLimit} jobs as bonus to existing subscription for user ${recruiterId}.`);
@@ -162,6 +166,7 @@ export default async (req, res) => {
 
               if (insertError) {
                 console.error('❌ Supabase insert error for new one-time subscription (checkout.session.completed):', insertError);
+                console.error('DEBUG: Supabase insert error details:', insertError); // Nuevo log
                 throw new Error('Database error creating new subscription.');
               }
               console.log(`🎉 New subscription created with one-time plan ${planIdFromMetadata} as base for user ${recruiterId}.`);
