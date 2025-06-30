@@ -8,13 +8,28 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-04-10', // Usa la versión de API más reciente o la que prefieras
 });
 
+// Helper para añadir meses a una fecha (definición global)
+const addMonths = (date, months) => {
+  const d = new Date(date);
+  d.setMonth(d.getMonth() + months);
+  return d;
+};
+
 // Inicializa el cliente de Supabase
-console.log('DEBUG: SUPABASE_URL:', process.env.SUPABASE_URL ? 'Present' : 'Missing');
-console.log('DEBUG: SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? 'Present' : 'Missing');
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY // Usa la Service Key para acceso con privilegios en el backend
-);
+let supabase;
+try {
+  console.log('DEBUG: SUPABASE_URL:', process.env.SUPABASE_URL ? 'Present' : 'Missing');
+  console.log('DEBUG: SUPABASE_SERVICE_KEY:', process.env.SUPABASE_SERVICE_KEY ? 'Present' : 'Missing');
+  supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY // Usa la Service Key para acceso con privilegios en el backend
+  );
+} catch (initError) {
+  console.error('FATAL_ERROR: Error initializing Supabase client:', initError);
+  // En un entorno de producción, esto debería ser un error crítico.
+  // Aquí, simplemente lo logueamos y permitimos que la función continúe,
+  // pero las operaciones de BD subsiguientes fallarán.
+}
 
 // Función para mapear Stripe Product ID a tu plan interno ID
 const getPlanByStripeProductId = (stripeProductId) => {
@@ -108,8 +123,7 @@ export default async (req, res) => {
                        };
                        // Si el plan existente es puntual, extender el current_period_end
                        if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type === 'one-time') {
-                         const currentEndDate = existingSubscription.current_period_end ? new Date(existingSubscription.current_period_end) : now;
-                         updateData.current_period_end = addMonths(currentEndDate, 1).toISOString();
+                         updateData.current_period_end = addMonths(now, 1).toISOString(); // Siempre desde la fecha de compra
                          updateData.status = 'active'; // Asegurar que el estado sea activo
                          updateData.plan_id = planIdFromMetadata; // Mantener el plan puntual como principal
                        } else if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type !== 'one-time') {
