@@ -486,23 +486,36 @@ export const auth = {
         }
       }
       
-      // Combinar el perfil del reclutador con sus suscripciones (si existen)
+      // Combinar el perfil del reclutador con la suscripción más relevante
+      let activeSubscription = null;
+      if (currentPlan) { // Priorizar plan mensual/enterprise
+        activeSubscription = currentPlan;
+      } else if (oneTimePlan) { // Si no hay mensual, usar puntual
+        activeSubscription = oneTimePlan;
+      }
+
+      // Asegurar que los campos de conteo estén presentes en el objeto de suscripción
+      // y que los límites del plan se adjunten para calculateEffectivePlan
+      if (activeSubscription) {
+        activeSubscription.cvs_analizados_este_periodo = activeSubscription.cvs_analizados_este_periodo || 0;
+        activeSubscription.jobs_creados_este_periodo = activeSubscription.jobs_creados_este_periodo || 0;
+        // Adjuntar los límites del plan directamente al objeto de suscripción para fácil acceso
+        const planDetails = APP_PLANS[activeSubscription.plan_id];
+        if (planDetails) {
+          activeSubscription.cvLimit = planDetails.cvLimit;
+          activeSubscription.jobLimit = planDetails.jobLimit;
+          activeSubscription.type = planDetails.type; // Añadir el tipo de plan
+          activeSubscription.name = planDetails.name; // Añadir el nombre del plan
+        }
+      }
+
       return {
         ...recruiterProfile,
-        suscripcion: {
-          current_plan: currentPlan ? currentPlan.plan_id : null,
-          one_time_plan: oneTimePlan ? oneTimePlan.plan_id : null,
-          // Aquí podrías añadir más detalles de las suscripciones si son necesarios en el frontend
-          // Por ejemplo, los objetos completos de las suscripciones, no solo los IDs
-          current_plan_details: currentPlan || null,
-          one_time_plan_details: oneTimePlan || null,
-          cvs_analizados_este_periodo: recruiterProfile.cvs_analizados_este_periodo || 0, // Asegurar que este campo exista
-          jobs_creados_este_periodo: recruiterProfile.jobs_creados_este_periodo || 0, // Asegurar que este campo exista
-        }
+        suscripcion: activeSubscription, // Adjuntar el objeto de suscripción directamente
       };
     } catch (error) {
-      console.error('auth.js: Exception in getRecruiterProfile:', error);
-      return null; // O re-lanzar el error
+      console.error('auth.js: Error fetching recruiter profile or subscriptions:', error);
+      throw error;
     }
   },
 

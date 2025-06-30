@@ -9,9 +9,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
 });
 
 // Helper para añadir meses a una fecha (definición global)
-const addMonths = (date, months) => {
+const addMonthsUTC = (date, months) => {
   const d = new Date(date);
-  d.setMonth(d.getMonth() + months);
+  d.setUTCMonth(d.getUTCMonth() + months);
   return d;
 };
 
@@ -113,7 +113,8 @@ export default async (req, res) => {
 
                    let updateData = {};
                    let newSubscriptionData = {};
-                   const now = new Date();
+                   const now = new Date(); // Fecha actual en la zona horaria del servidor
+                   const nowUtc = new Date(now.toUTCString()); // Convertir a UTC
 
                    if (existingSubscription) {
                        console.log(`ℹ️ Existing subscription found for user ${recruiterId}. Adding one-time plan limits as bonus.`);
@@ -123,7 +124,7 @@ export default async (req, res) => {
                        };
                        // Si el plan existente es puntual, extender el current_period_end
                        if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type === 'one-time') {
-                         updateData.current_period_end = addMonths(now, 1).toISOString(); // Siempre desde la fecha de compra
+                         updateData.current_period_end = addMonthsUTC(nowUtc, 1).toISOString(); // Siempre desde la fecha de compra (UTC)
                          updateData.status = 'active'; // Asegurar que el estado sea activo
                          updateData.plan_id = planIdFromMetadata; // Mantener el plan puntual como principal
                        } else if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type !== 'one-time') {
@@ -151,8 +152,8 @@ export default async (req, res) => {
                            plan_id: planIdFromMetadata, // El plan puntual es el principal si no hay otro
                            status: 'active',
                            trial_ends_at: null,
-                           current_period_start: now.toISOString(),
-                           current_period_end: addMonths(now, 1).toISOString(), // Válido por 1 mes
+                           current_period_start: nowUtc.toISOString(),
+                           current_period_end: addMonthsUTC(nowUtc, 1).toISOString(), // Válido por 1 mes (UTC)
                            stripe_subscription_id: null,
                            cvs_analizados_este_periodo: 0,
                            jobs_creados_este_periodo: 0,
@@ -216,7 +217,8 @@ export default async (req, res) => {
 
           let updateData = {};
           let newSubscriptionData = {};
-          const now = new Date();
+          const now = new Date(); // Fecha actual en la zona horaria del servidor
+          const nowUtc = new Date(now.toUTCString()); // Convertir a UTC
 
           if (purchasedPlanDetails.type === 'one-time') { // Lógica para planes puntuales
             const additionalCvLimit = purchasedPlanDetails.cvLimit || 0;
@@ -233,10 +235,9 @@ export default async (req, res) => {
                 one_time_job_bonus: (existingSubscription.one_time_job_bonus || 0) + additionalJobLimit,
               };
 
-              // Si el plan existente es puntual, extender el current_period_end
+              // Si el plan existente es puntual, extender el current_period_end desde la fecha actual (UTC)
               if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type === 'one-time') {
-                const currentEndDate = existingSubscription.current_period_end ? new Date(existingSubscription.current_period_end) : now;
-                updateData.current_period_end = addMonths(currentEndDate, 1).toISOString();
+                updateData.current_period_end = addMonthsUTC(nowUtc, 1).toISOString(); // Siempre desde la fecha de compra (UTC)
                 updateData.status = 'active'; // Asegurar que el estado sea activo
                 updateData.plan_id = purchasedPlanDetails.id; // Mantener el plan puntual como principal
               } else if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type !== 'one-time') {
@@ -265,8 +266,8 @@ export default async (req, res) => {
                 plan_id: purchasedPlanDetails.id,
                 status: 'active',
                 trial_ends_at: null,
-                current_period_start: now.toISOString(),
-                current_period_end: addMonths(now, 1).toISOString(), // Válido por 1 mes
+                current_period_start: nowUtc.toISOString(),
+                current_period_end: addMonthsUTC(nowUtc, 1).toISOString(), // Válido por 1 mes (UTC)
                 stripe_subscription_id: null,
                 cvs_analizados_este_periodo: 0,
                 jobs_creados_este_periodo: 0,
@@ -291,8 +292,8 @@ export default async (req, res) => {
           } else if (purchasedPlanDetails.type === 'monthly' || purchasedPlanDetails.type === 'enterprise') { // Lógica para planes mensuales/empresariales
             console.log(`ℹ️ User ${recruiterId} purchased a ${purchasedPlanDetails.type} plan.`);
             
-            const currentPeriodStart = now.toISOString();
-            const currentPeriodEnd = addMonths(now, 1).toISOString(); // 1 mes de validez
+            const currentPeriodStart = nowUtc.toISOString();
+            const currentPeriodEnd = addMonthsUTC(nowUtc, 1).toISOString(); // 1 mes de validez (UTC)
 
             let cvBonusToCarryOver = 0;
             let jobBonusToCarryOver = 0;
