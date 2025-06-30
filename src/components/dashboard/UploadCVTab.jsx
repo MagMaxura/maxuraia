@@ -118,7 +118,7 @@ function UploadCVTab({
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-700">
-                Tu suscripción actual (<strong className="font-semibold capitalize">{status || 'desconocido'}</strong>) no te permite analizar nuevos CVs.
+                Tu suscripción actual (<strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || status || 'desconocido'}</strong>) no te permite analizar nuevos CVs.
                 Por favor, <Link to="/#pricing" className="underline hover:text-red-600 font-semibold">revisa tu plan</Link> o contacta a soporte.
               </p>
             </div>
