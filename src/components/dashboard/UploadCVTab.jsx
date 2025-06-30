@@ -20,12 +20,13 @@ function UploadCVTab({
   userSubscription, // Recibir prop
   analysisLimit, // Recibir prop
   currentAnalysisCount, // Recibir prop
+  effectiveLimits, // Nuevo: Recibir prop
   // isLoadingSubscription, // Si useDashboardData devolviera un estado de carga específico para la suscripción
 }) {
   const { user } = useAuth();
 
   // Usar las props directamente, con fallbacks seguros
-  const planId = userSubscription?.plan_id || 'basico';
+  const planId = effectiveLimits?.effectiveCurrentPlan?.id || userSubscription?.plan_id || 'basico'; // Usar el plan efectivo
   const status = userSubscription?.status;
   const displayAnalysisLimit = analysisLimit === Infinity ? 'Ilimitados' : analysisLimit;
   const displayCurrentAnalysisCount = currentAnalysisCount || 0; // Asegurar que sea al menos 0
@@ -98,7 +99,7 @@ function UploadCVTab({
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                Has alcanzado tu límite de <strong className="font-semibold">{displayAnalysisLimit}</strong> análisis de CVs para tu plan <strong className="font-semibold capitalize">{APP_PLANS[planId]?.name || planId}</strong>.
+                Has alcanzado tu límite de <strong className="font-semibold">{displayAnalysisLimit}</strong> análisis de CVs para tu plan <strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || APP_PLANS[planId]?.name || planId}</strong>.
                 {nextPlanDetails ? (
                   <> Para analizar más CVs, por favor considera <Link to="/#pricing" className="underline hover:text-yellow-600 font-semibold">actualizar tu plan a {nextPlanDetails.name}</Link>.</>
                 ) : (

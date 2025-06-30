@@ -37,6 +37,7 @@ function Dashboard() {
     userSubscription, // Nuevo
     analysisLimit, // Nuevo
     currentAnalysisCount, // Nuevo
+    effectiveLimits, // Nuevo: Obtener effectiveLimits del hook
   } = useDashboardData();
 
   // Verificar si la prueba ha expirado después de obtener userSubscription
@@ -423,6 +424,7 @@ function Dashboard() {
               userSubscription={userSubscription} // Pasar la suscripción
               analysisLimit={analysisLimit} // Pasar el límite
               currentAnalysisCount={currentAnalysisCount} // Pasar el contador
+              effectiveLimits={effectiveLimits} // Nuevo: Pasar effectiveLimits
             />
             );
           })()}
