@@ -144,7 +144,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
   const planId = user?.suscripcion?.plan_id || 'basico';
   const status = user?.suscripcion?.status;
   // Obtener jobLimit de APP_PLANS
-  const jobLimit = effectiveLimits?.effectiveJobLimit || 0;
+  const jobLimit = effectiveLimits?.jobLimit; // Usar directamente el jobLimit de effectiveLimits
   // canCreateJob ahora solo se aplica si NO estamos editando. Si estamos editando, siempre se puede intentar guardar.
   const canCreateNewJob = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount < jobLimit;
   const limitReachedForNew = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount >= jobLimit;
