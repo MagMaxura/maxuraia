@@ -470,10 +470,12 @@ function Dashboard() {
             return (
             <PublishedJobsTab
               jobs={jobs}
-              isLoadingJobs={isLoadingJobs} // Corregido el nombre de la prop
+              isLoadingJobs={isLoadingJobs}
               onDeleteJob={handleDeleteJob}
               onEditJob={handleEditJob}
-              setActiveTab={setActiveTab} // Añadir la prop que faltaba
+              setActiveTab={setActiveTab}
+              currentJobCount={currentJobCount}
+              effectiveLimits={effectiveLimits}
             />
             );
           })()}

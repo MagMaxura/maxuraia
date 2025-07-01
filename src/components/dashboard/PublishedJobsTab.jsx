@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Edit, Trash2 } from 'lucide-react'; // Importar iconos
 
-function PublishedJobsTab({ jobs, isLoadingJobs, setActiveTab, onEditJob, onDeleteJob }) { // Añadir props onEditJob, onDeleteJob
+function PublishedJobsTab({ jobs, isLoadingJobs, setActiveTab, onEditJob, onDeleteJob, currentJobCount, effectiveLimits }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -17,6 +17,35 @@ function PublishedJobsTab({ jobs, isLoadingJobs, setActiveTab, onEditJob, onDele
           <Briefcase className="mr-2 h-4 w-4" /> Crear Nuevo Puesto
         </Button>
       </div>
+
+      {/* Barra de progreso de Puestos Publicados */}
+      {effectiveLimits?.jobLimit !== Infinity && effectiveLimits?.jobLimit > 0 && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg relative mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">
+              Puestos publicados este período: {currentJobCount} de {effectiveLimits.jobLimit}
+            </span>
+            <span className="text-sm font-medium">
+              {((currentJobCount / effectiveLimits.jobLimit) * 100).toFixed(0)}%
+            </span>
+          </div>
+          <div className="w-full bg-blue-200 rounded-full h-2.5">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full"
+              style={{ width: `${(currentJobCount / effectiveLimits.jobLimit) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+
+      {effectiveLimits?.jobLimit === Infinity && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg relative mb-6">
+          <span className="text-sm font-medium">
+            Puestos publicados este período: {currentJobCount} (Ilimitados)
+          </span>
+        </div>
+      )}
+      
 
       {isLoadingJobs && (
         <p className="text-slate-500 text-sm text-center py-4">Cargando puestos de trabajo...</p>
