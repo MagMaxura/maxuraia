@@ -151,6 +151,13 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
   const formDisabledOverall = isEditing ? isProcessingJob : (!canCreateNewJob || isProcessingJob);
 
 
+  console.log("CreateNewJobTab Debug - currentJobsCount:", currentJobsCount);
+  console.log("CreateNewJobTab Debug - jobLimit:", jobLimit);
+  console.log("CreateNewJobTab Debug - status:", status);
+  console.log("CreateNewJobTab Debug - isEditing:", isEditing);
+  console.log("CreateNewJobTab Debug - canCreateNewJob:", canCreateNewJob);
+  console.log("CreateNewJobTab Debug - formDisabledOverall:", formDisabledOverall);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
