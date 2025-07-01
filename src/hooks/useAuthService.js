@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ui/use-toast";
 import { auth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
+import { APP_PLANS } from "../config/plans";
 
 export function useAuthService() {
   console.log("useAuthService: Hook initialization");

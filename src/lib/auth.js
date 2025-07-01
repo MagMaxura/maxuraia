@@ -1,5 +1,5 @@
 import { supabase, getRecruiterByEmail } from "./supabase";
-import { APP_PLANS } from '../config/plans'; // Importar APP_PLANS
+import { APP_PLANS } from '../config/plans'; // Importar APP_PLANS - Forzar reevaluación
 
 const STORAGE_KEY = 'auth_user';
 const SITE_URL = 'https://www.employsmartia.com'; // Asegurar consistencia con el dominio canónico y certificado SSL

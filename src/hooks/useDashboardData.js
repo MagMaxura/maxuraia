@@ -129,9 +129,9 @@ export function useDashboardData() {
     // Calcular los límites efectivos usando la nueva función
     effectiveLimits: calculateEffectivePlan(user?.suscripcion),
     analysisLimit: calculateEffectivePlan(user?.suscripcion).cvLimit,
-    jobLimit: calculateEffectivePlan(user?.suscripcion).effectiveJobLimit, // Usar effectiveJobLimit
+    jobLimit: calculateEffectivePlan(user?.suscripcion).jobLimit, // Usar jobLimit directamente de effectiveLimits
     currentAnalysisCount: user?.suscripcion?.cvs_analizados_este_periodo || 0,
-    currentJobCount: effectiveLimits?.effectiveCurrentPlan?.type === 'one-time'
+    currentJobCount: calculateEffectivePlan(user?.suscripcion).effectiveCurrentPlan?.type === 'one-time'
                       ? jobs.length // Para planes one-time, el conteo actual es el número de jobs publicados
                       : user?.suscripcion?.jobs_creados_este_periodo || 0, // Para otros planes, usar el contador de la suscripción
     isSubscriptionActive: calculateEffectivePlan(user?.suscripcion).isSubscriptionActive,
