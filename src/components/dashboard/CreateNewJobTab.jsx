@@ -102,14 +102,18 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
         keywords: jobDetails.keywords, // Incluir palabras clave
       };
 
+      console.log("CreateNewJobTab: jobDataToSave:", jobDataToSave); // Nuevo log
+
       let savedJob;
       if (isEditing && editingJob?.id) {
         console.log("CreateNewJobTab: Updating job with ID:", editingJob.id);
         savedJob = await cvService.updateJobPost(editingJob.id, jobDataToSave);
+        console.log("CreateNewJobTab: updateJobPost result:", savedJob); // Nuevo log
         toast({ title: "Puesto Actualizado", description: "El puesto de trabajo ha sido actualizado." });
       } else {
         console.log("CreateNewJobTab: Creating new job");
         savedJob = await cvService.createJobPost(jobDataToSave);
+        console.log("CreateNewJobTab: createJobPost result:", savedJob); // Nuevo log
         toast({ title: "Puesto Publicado", description: "Se ha creado un nuevo puesto de trabajo." });
       }
 
