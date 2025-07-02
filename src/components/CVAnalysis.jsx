@@ -22,40 +22,35 @@ function CVAnalysis({
   useEffect(() => {
     console.log("CVAnalysis: initialAnalysis prop:", initialAnalysis);
     if (initialAnalysis && typeof initialAnalysis.then !== 'function') {
-      // Asegurar que habilidades sea un objeto con tecnicas y blandas
-      const habilidades = initialAnalysis.habilidades && typeof initialAnalysis.habilidades === 'object' 
-        ? initialAnalysis.habilidades 
-        : { tecnicas: [], blandas: [] };
-      
-      if (Array.isArray(initialAnalysis.habilidades) && initialAnalysis.habilidades.length > 0 && !habilidades.tecnicas.length && !habilidades.blandas.length) {
-        // Si initialAnalysis.habilidades es un array simple (versión antigua), lo asignamos a técnicas por defecto
-        habilidades.tecnicas = initialAnalysis.habilidades;
-      }
+      // Asegurar que habilidades sea un objeto con tecnicas y blandas, y que tecnicas/blandas sean arrays
+      const habilidades = {
+        tecnicas: Array.isArray(initialAnalysis.habilidades?.tecnicas)
+          ? initialAnalysis.habilidades.tecnicas
+          : (Array.isArray(initialAnalysis.habilidades) ? initialAnalysis.habilidades : []), // Compatibilidad con array simple
+        blandas: Array.isArray(initialAnalysis.habilidades?.blandas)
+          ? initialAnalysis.habilidades.blandas
+          : [],
+      };
 
-      setEditableAnalysis({ 
+      setEditableAnalysis({
         ...initialAnalysis,
-        habilidades: {
-          tecnicas: Array.isArray(habilidades.tecnicas) ? habilidades.tecnicas : [],
-          blandas: Array.isArray(habilidades.blandas) ? habilidades.blandas : [],
-        },
+        habilidades: habilidades,
         nivel_escolarizacion: initialAnalysis.nivel_escolarizacion || initialAnalysis.title || "" // Compatibilidad con 'title' si viene de BD
       });
     } else if (initialAnalysis && typeof initialAnalysis.then === 'function') {
       initialAnalysis.then(resolved => {
-        const habilidades = resolved.habilidades && typeof resolved.habilidades === 'object'
-        ? resolved.habilidades
-        : { tecnicas: [], blandas: [] };
+        const habilidades = {
+          tecnicas: Array.isArray(resolved.habilidades?.tecnicas)
+            ? resolved.habilidades.tecnicas
+            : (Array.isArray(resolved.habilidades) ? resolved.habilidades : []),
+          blandas: Array.isArray(resolved.habilidades?.blandas)
+            ? resolved.habilidades.blandas
+            : [],
+        };
 
-        if (Array.isArray(resolved.habilidades) && resolved.habilidades.length > 0 && !habilidades.tecnicas.length && !habilidades.blandas.length) {
-            habilidades.tecnicas = resolved.habilidades;
-        }
-
-        setEditableAnalysis({ 
-            ...resolved, 
-            habilidades: {
-              tecnicas: Array.isArray(habilidades.tecnicas) ? habilidades.tecnicas : [],
-              blandas: Array.isArray(habilidades.blandas) ? habilidades.blandas : [],
-            },
+        setEditableAnalysis({
+            ...resolved,
+            habilidades: habilidades,
             nivel_escolarizacion: resolved.nivel_escolarizacion || resolved.title || ""
         });
       }).catch(err => setEditableAnalysis(null));

@@ -113,9 +113,9 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
         console.log("CreateNewJobTab: updateJobPost result:", savedJob); // Nuevo log
         toast({ title: "Puesto Actualizado", description: "El puesto de trabajo ha sido actualizado." });
       } else {
-        console.log("CreateNewJobTab: Creating new job");
+        console.log("CreateNewJobTab: Calling cvService.createJobPost with data:", jobDataToSave); // Log antes de la llamada
         savedJob = await cvService.createJobPost(jobDataToSave);
-        console.log("CreateNewJobTab: createJobPost successful, result:", savedJob); // Log de éxito
+        console.log("CreateNewJobTab: cvService.createJobPost returned:", savedJob); // Log después de la llamada exitosa
         toast({ title: "Puesto Publicado", description: "Se ha creado un nuevo puesto de trabajo." });
       }
 
@@ -135,7 +135,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       }
 
     } catch (error) {
-      console.error('CreateNewJobTab: Error al guardar/actualizar el puesto:', error); // Log de error más específico
+      console.error('CreateNewJobTab: Error al guardar/actualizar el puesto:', error);
+      console.trace('CreateNewJobTab: Stack trace for error:'); // Añadir stack trace
       toast({
         title: "Error al guardar puesto",
         description: `No se pudo guardar el puesto: ${error.message}`,

@@ -293,7 +293,7 @@ function basicAnalyzeCV(text) {
     telefono: phones[0] || 'No encontrado',
     localidad: locationMatch && locationMatch[1] ? locationMatch[1].trim() : 'No encontrada',
     experiencia: experiencia,
-    habilidades: skills.length > 0 ? skills : ['No encontradas'],
+    habilidades: { tecnicas: skills.length > 0 ? skills : [], blandas: [] }, // Asegurar que habilidades sea un objeto con tecnicas y blandas
     resumen: 'Análisis básico, resumen no generado.',
     textoCompleto: text
   };
