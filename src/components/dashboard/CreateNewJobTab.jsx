@@ -74,7 +74,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       const planId = user.suscripcion?.plan_id || 'basico'; // Fallback a 'basico' si no hay suscripción
       const status = user.suscripcion?.status;
       // Obtener jobLimit de effectiveLimits
-      const jobLimit = effectiveLimits?.effectiveJobLimit || 0; // Asegurar que se usa effectiveJobLimit
+      const jobLimit = effectiveLimits?.jobLimit || 0; // Usar jobLimit directamente
 
       // Verificar estado de suscripción si no estamos editando
       if (!isEditing && (status !== 'active' && status !== 'trialing')) {
@@ -157,7 +157,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
   const planId = user?.suscripcion?.plan_id || 'basico';
   const status = user?.suscripcion?.status;
   // Obtener jobLimit de effectiveLimits
-  const jobLimit = effectiveLimits?.effectiveJobLimit; // Usar consistentemente effectiveJobLimit
+  const jobLimit = effectiveLimits.jobLimit; // Usar consistentemente jobLimit (ya que effectiveLimits ya es el objeto)
   // canCreateJob ahora solo se aplica si NO estamos editando. Si estamos editando, siempre se puede intentar guardar.
   const canCreateNewJob = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount < jobLimit;
   const limitReachedForNew = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount >= jobLimit;
