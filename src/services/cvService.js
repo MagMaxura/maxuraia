@@ -289,6 +289,9 @@ export const cvService = {
     }
     // Eliminar ai_generated_description si existe antes de insertar
     const { ai_generated_description, ...dataToInsert } = jobData;
+    // No es necesario serializar requirements o keywords si la BD los acepta directamente como JSONB y TEXT[]
+    // La validación de formato se hará en Supabase.
+
     try {
       console.log("cvService.createJobPost: Data to insert into 'jobs' table:", dataToInsert); // Nuevo log
       const { data, error } = await supabase
