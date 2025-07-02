@@ -13,6 +13,7 @@ import { APP_PLANS } from '@/config/plans'; // Importar APP_PLANS
 function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob, effectiveLimits }) {
   const { user } = useAuth();
   const { toast } = useToast();
+  console.log("CreateNewJobTab: effectiveLimits recibidos:", effectiveLimits); // Nuevo log para depuración
   const [jobDetails, setJobDetails] = useState({
     title: '',
     description: '',
@@ -72,8 +73,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
     try {
       const planId = user.suscripcion?.plan_id || 'basico'; // Fallback a 'basico' si no hay suscripción
       const status = user.suscripcion?.status;
-      // Obtener jobLimit de APP_PLANS
-      const jobLimit = effectiveLimits?.effectiveJobLimit || 0;
+      // Obtener jobLimit de effectiveLimits
+      const jobLimit = effectiveLimits?.effectiveJobLimit || 0; // Asegurar que se usa effectiveJobLimit
 
       // Verificar estado de suscripción si no estamos editando
       if (!isEditing && (status !== 'active' && status !== 'trialing')) {
@@ -155,8 +156,8 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
   // Determinar si se puede crear un nuevo puesto (solo si NO estamos editando)
   const planId = user?.suscripcion?.plan_id || 'basico';
   const status = user?.suscripcion?.status;
-  // Obtener jobLimit de APP_PLANS
-  const jobLimit = effectiveLimits?.jobLimit; // Usar directamente el jobLimit de effectiveLimits
+  // Obtener jobLimit de effectiveLimits
+  const jobLimit = effectiveLimits?.effectiveJobLimit; // Usar consistentemente effectiveJobLimit
   // canCreateJob ahora solo se aplica si NO estamos editando. Si estamos editando, siempre se puede intentar guardar.
   const canCreateNewJob = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount < jobLimit;
   const limitReachedForNew = !isEditing && (status === 'active' || status === 'trialing') && currentJobsCount >= jobLimit;
