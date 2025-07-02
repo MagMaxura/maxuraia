@@ -209,12 +209,16 @@ function Dashboard() {
     });
   };
 
-  const handleDeleteCV = async (cvDatabaseIdToDelete) => {
-    console.log("Dashboard: Entering handleDeleteCV, cvDatabaseIdToDelete:", cvDatabaseIdToDelete);
+  const handleDeleteCV = async (cvFileToDelete) => {
+    console.log("Dashboard: Entering handleDeleteCV, cvFileToDelete:", cvFileToDelete);
+    const cvDatabaseIdToDelete = cvFileToDelete?.cv_database_id;
+
     if (!cvDatabaseIdToDelete) {
-      toast({ title: "Error", description: "No se proporcionó ID para eliminar el CV.", variant: "destructive" });
+      console.warn("Dashboard: Intento de eliminar CV sin ID de BD. No se puede eliminar de Supabase:", cvFileToDelete);
+      toast({ title: "Error", description: "No se proporcionó ID de base de datos para eliminar el CV. No se puede eliminar de Supabase.", variant: "destructive" });
       return;
     }
+
     console.log("Dashboard: Intentando eliminar CV con ID de BD:", cvDatabaseIdToDelete);
     try {
       await cvService.deleteCV(cvDatabaseIdToDelete);

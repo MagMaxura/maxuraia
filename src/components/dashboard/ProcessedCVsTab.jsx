@@ -241,12 +241,12 @@ function ProcessedCVsTab({
                     className="h-8 w-8 text-red-500 hover:bg-red-100 hover:text-red-700"
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (file.cv_database_id && onDeleteCV) { // Verificar que onDeleteCV exista
+                      if (onDeleteCV) { // Verificar que onDeleteCV exista
                         if (window.confirm(`¿Estás seguro de que quieres eliminar el CV "${file.name}"? Esta acción no se puede deshacer.`)) {
-                          onDeleteCV(file.cv_database_id);
+                          onDeleteCV(file); // Pasar el objeto file completo
                         }
                       } else {
-                        console.warn("Intento de eliminar CV sin ID de BD o función onDeleteCV no disponible:", file);
+                        console.warn("Intento de eliminar CV sin función onDeleteCV disponible:", file);
                       }
                     }}
                     title="Eliminar CV"
