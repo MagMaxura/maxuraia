@@ -290,6 +290,7 @@ export const cvService = {
     // Eliminar ai_generated_description si existe antes de insertar
     const { ai_generated_description, ...dataToInsert } = jobData;
     try {
+      console.log("cvService.createJobPost: Data to insert into 'jobs' table:", dataToInsert); // Nuevo log
       const { data, error } = await supabase
         .from('jobs') // Asumiendo que la tabla se llama 'jobs'
         .insert([dataToInsert])
