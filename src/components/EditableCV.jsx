@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "../components/ui/button";
 import { Save, Plus, X } from "lucide-react";
 
-function EditableCV({ analysis, onSave }) {
+function EditableCV({ analysis, onSave, isSaving }) { // Recibir isSaving como prop
   const [editedAnalysis, setEditedAnalysis] = useState(analysis);
 
   const handleInputChange = (field, value) => {
@@ -150,9 +150,10 @@ function EditableCV({ analysis, onSave }) {
           <Button
             onClick={() => onSave(editedAnalysis)}
             className="linkedin-button"
+            disabled={isSaving} // Deshabilitar el botón si isSaving es true
           >
             <Save className="w-4 h-4 mr-2" />
-            Guardar Cambios
+            {isSaving ? "Guardando..." : "Guardar Cambios"} {/* Cambiar texto del botón */}
           </Button>
         </div>
       </div>

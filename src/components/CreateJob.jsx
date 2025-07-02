@@ -4,9 +4,12 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { Briefcase as BriefcaseIcon, Save } from 'lucide-react';
+import { cvService } from "../services/cvService"; // Importar cvService
+import { useAuth } from "../contexts/AuthContext"; // Importar useAuth
 
 function CreateJob() {
   const { toast } = useToast();
+  const { user } = useAuth(); // Obtener el usuario del contexto de autenticación
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -19,22 +22,31 @@ function CreateJob() {
     e.preventDefault();
     setIsLoading(true);
 
+    if (!user?.id) {
+      toast({
+        title: "Error de autenticación",
+        description: "Debes iniciar sesión para crear un puesto de trabajo.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // Por ahora guardamos en localStorage, después migraremos a Supabase
-      const jobs = JSON.parse(localStorage.getItem('jobs') || '[]');
-      const newJob = {
-        id: Date.now().toString(),
-        ...formData,
-        createdAt: new Date().toISOString(),
-        status: 'active'
+      const jobData = {
+        recruiter_id: user.id,
+        title: formData.title,
+        description: formData.description,
+        requirements: formData.requirements.split('\n').filter(req => req.trim() !== ''), // Convertir a array
+        keywords: formData.keywords.split(',').map(kw => kw.trim()).filter(kw => kw !== ''), // Convertir a array
+        status: 'active' // O el estado inicial que desees
       };
-      
-      jobs.push(newJob);
-      localStorage.setItem('jobs', JSON.stringify(jobs));
+
+      await cvService.createJobPost(jobData);
 
       toast({
         title: "Puesto creado",
-        description: "El puesto de trabajo se ha publicado correctamente.",
+        description: "El puesto de trabajo se ha publicado correctamente en Supabase.",
       });
 
       setFormData({
@@ -44,9 +56,10 @@ function CreateJob() {
         keywords: ""
       });
     } catch (error) {
+      console.error("Error al crear el puesto de trabajo:", error);
       toast({
         title: "Error",
-        description: "No se pudo crear el puesto de trabajo.",
+        description: `No se pudo crear el puesto de trabajo: ${error.message || "Error desconocido"}`,
         variant: "destructive",
       });
     } finally {

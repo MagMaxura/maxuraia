@@ -118,7 +118,7 @@ export const cvService = {
         .select()
         .single();
       if (error) {
-        console.error("Error actualizando candidato:", error);
+        console.error("Error actualizando candidato:", JSON.stringify(error, null, 2));
         throw error;
       }
       candidateResult = data;
@@ -133,7 +133,7 @@ export const cvService = {
         .select()
         .single();
       if (error) {
-        console.error("Error creando candidato:", error);
+        console.error("Error creando candidato:", JSON.stringify(error, null, 2));
         throw error;
       }
       candidateResult = data;
@@ -178,7 +178,7 @@ export const cvService = {
         .select()
         .single();
       if (error) {
-        console.error("Error actualizando CV:", error);
+        console.error("Error actualizando CV:", JSON.stringify(error, null, 2));
         throw error;
       }
       cvResult = data;
@@ -191,7 +191,7 @@ export const cvService = {
         .select()
         .single();
       if (error) {
-        console.error("Error creando CV:", error);
+        console.error("Error creando CV:", JSON.stringify(error, null, 2));
         throw error;
       }
       cvResult = data;
@@ -208,7 +208,7 @@ export const cvService = {
         .single();
 
       if (updateError) {
-        console.error("Error al actualizar el candidato con cv_id:", updateError);
+        console.error("Error al actualizar el candidato con cv_id:", JSON.stringify(updateError, null, 2));
         // Considerar si lanzar el error o continuar
       } else {
         console.log("Candidato actualizado con cv_id:", updatedCandidate);
@@ -269,7 +269,7 @@ export const cvService = {
       .single();
 
     if (error) {
-      console.error("Error actualizando candidato en updateCandidate:", error);
+      console.error("Error actualizando candidato en updateCandidate:", JSON.stringify(error, null, 2));
       throw error;
     }
     console.log("Candidato actualizado en updateCandidate:", data);
@@ -373,7 +373,7 @@ export const cvService = {
         .single();
 
       if (error) {
-        console.error("Error actualizando puesto de trabajo:", error);
+        console.error("Error actualizando puesto de trabajo:", JSON.stringify(error, null, 2));
         throw error;
       }
       console.log("Puesto de trabajo actualizado exitosamente:", data);
@@ -397,7 +397,7 @@ export const cvService = {
         .eq('id', jobId);
 
       if (error) {
-        console.error("Error eliminando puesto de trabajo:", error);
+        console.error("Error eliminando puesto de trabajo:", JSON.stringify(error, null, 2));
         throw error;
       }
       console.log("Puesto de trabajo eliminado exitosamente, ID:", jobId);
@@ -428,7 +428,7 @@ export const cvService = {
         .single();
 
       if (fetchError) {
-        console.error("Error fetching current CV analysis count:", fetchError);
+        console.error("Error fetching current CV analysis count:", JSON.stringify(fetchError, null, 2));
         throw fetchError;
       }
 
@@ -446,7 +446,7 @@ export const cvService = {
         .single();
 
       if (error) {
-        console.error("Error incrementing CV analysis count:", error);
+        console.error("Error incrementing CV analysis count:", JSON.stringify(error, null, 2));
         throw error;
       }
       console.log("CV analysis count incremented. New count:", data?.cvs_analizados_este_periodo);

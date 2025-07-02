@@ -36,6 +36,7 @@ function UploadCV() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState(null);
+  const [isSaving, setIsSaving] = useState(false); // Nuevo estado para el guardado
 
   const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files);
@@ -83,6 +84,7 @@ function UploadCV() {
   };
 
   const handleSaveCV = async (editedAnalysis) => {
+    setIsSaving(true); // Iniciar el estado de guardado
     try {
       if (!uploadedFile || !user?.id) {
         throw new Error('Falta archivo o usuario');
@@ -104,10 +106,12 @@ function UploadCV() {
       console.error('Error al guardar el CV:', error);
       toast({
         title: "Error al guardar",
-        description: "No se pudo guardar el CV. Por favor, inténtalo de nuevo.",
+        description: `No se pudo guardar el CV: ${error.message || "Error desconocido"}. Por favor, inténtalo de nuevo.`,
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setIsSaving(false); // Finalizar el estado de guardado
     }
   };
 
@@ -131,9 +135,10 @@ function UploadCV() {
           animate={{ opacity: 1, y: 0 }}
           className="linkedin-section p-6"
         >
-          <EditableCV 
-            analysis={cvAnalysis} 
+          <EditableCV
+            analysis={cvAnalysis}
             onSave={handleSaveCV}
+            isSaving={isSaving} // Pasar el estado isSaving a EditableCV
           />
         </motion.section>
       )}
