@@ -212,10 +212,11 @@ function Dashboard() {
   const handleDeleteCV = async (cvFileToDelete) => {
     console.log("Dashboard: Entering handleDeleteCV, cvFileToDelete:", cvFileToDelete);
     const cvDatabaseIdToDelete = cvFileToDelete?.cv_database_id;
+    const candidateDatabaseIdToDelete = cvFileToDelete?.candidate_database_id; // Declaración movida aquí
 
-    if (!cvDatabaseIdToDelete) {
-      console.warn("Dashboard: Intento de eliminar CV sin ID de BD. No se puede eliminar de Supabase:", cvFileToDelete);
-      toast({ title: "Error", description: "No se proporcionó ID de base de datos para eliminar el CV. No se puede eliminar de Supabase.", variant: "destructive" });
+    if (!cvDatabaseIdToDelete && !candidateDatabaseIdToDelete) {
+      console.warn("Dashboard: Intento de eliminar CV sin ID de BD o ID de Candidato. No se puede eliminar de Supabase:", cvFileToDelete);
+      toast({ title: "Error", description: "No se proporcionó ID de base de datos de CV ni de Candidato para eliminar. No se puede eliminar de Supabase.", variant: "destructive" });
       return;
     }
 
