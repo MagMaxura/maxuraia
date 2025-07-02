@@ -53,14 +53,17 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
 
   const handleSaveJob = async () => {
     console.log("CreateNewJobTab: handleSaveJob called");
-    console.log("CreateNewJobTab: jobDetails at start:", jobDetails); // Nuevo log
-    console.log("CreateNewJobTab: user.id:", user?.id); // Nuevo log
+    console.log("CreateNewJobTab: jobDetails al inicio:", JSON.stringify(jobDetails, null, 2)); // Log detallado del estado
+    console.log("CreateNewJobTab: user.id:", user?.id);
+
     if (!user?.id) {
+      console.log("CreateNewJobTab: Validación fallida - Usuario no autenticado.");
       toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
       return;
     }
 
     if (!jobDetails.title || (!jobDetails.description && !jobDetails.ai_generated_description)) {
+      console.log("CreateNewJobTab: Validación fallida - Título o descripción faltante.");
       toast({ title: "Error", description: "El título y la descripción (o descripción IA) del puesto son obligatorios.", variant: "destructive" });
       return;
     }
@@ -74,6 +77,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
 
       // Verificar estado de suscripción si no estamos editando
       if (!isEditing && (status !== 'active' && status !== 'trialing')) {
+        console.log("CreateNewJobTab: Validación fallida - Suscripción no activa o en prueba.");
         toast({
           title: "Suscripción no activa",
           description: "Tu suscripción no está activa. Por favor, revisa tu plan.",
@@ -86,6 +90,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       // La verificación de límite solo aplica si NO estamos editando.
       // Si estamos editando, permitimos la actualización sin contar contra el límite de *nuevos* puestos.
       if (!isEditing && currentJobsCount >= jobLimit) {
+        console.log(`CreateNewJobTab: Validación fallida - Límite de puestos alcanzado (${currentJobsCount}/${jobLimit}).`);
         toast({
           title: "Límite de Puestos Alcanzado",
           description: `Has alcanzado el límite de ${jobLimit === Infinity ? 'puestos ilimitados' : `${jobLimit} puestos activos`} para tu plan "${effectiveLimits?.effectiveCurrentPlan?.name || planId}". Considera actualizar tu plan para crear más.`,
