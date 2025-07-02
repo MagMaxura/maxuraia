@@ -150,20 +150,42 @@ export async function analyzeCV(textOrExtractionResult) {
     console.log("analyzeCV: Análisis con GPT exitoso:", gptAnalysis);
 
     // Validar que los datos requeridos estén presentes
-    if (!gptAnalysis.nombre || !gptAnalysis.email || !gptAnalysis.telefono) {
-      console.warn("analyzeCV: Faltan datos requeridos en el análisis de GPT:", gptAnalysis);
-      return basicAnalyzeCV(text); // Usar análisis básico si faltan datos críticos
-    }
+    // Asegurar que habilidades sea un objeto con tecnicas y blandas, y que tecnicas/blandas sean arrays
+    const habilidades = {
+      tecnicas: Array.isArray(gptAnalysis.habilidades?.tecnicas)
+        ? gptAnalysis.habilidades.tecnicas
+        : (Array.isArray(gptAnalysis.habilidades) ? gptAnalysis.habilidades : []), // Compatibilidad con array simple
+      blandas: Array.isArray(gptAnalysis.habilidades?.blandas)
+        ? gptAnalysis.habilidades.blandas
+        : [],
+    };
 
     return {
       ...gptAnalysis,
+      habilidades: habilidades,
+      nivel_escolarizacion: gptAnalysis.nivel_escolarizacion || gptAnalysis.title || "", // Compatibilidad con 'title'
       textoCompleto: text
     };
   } catch (error) {
     console.error('Error en el análisis con GPT:', error);
-    return basicAnalyzeCV(text);
+    // Si hay un error en la llamada a GPT, devolver un objeto con valores por defecto
+    // y el error de extracción para que el UI pueda mostrar la advertencia.
+    return {
+      nombre: 'No encontrado', edad: 'No encontrada', email: 'No encontrado', telefono: 'No encontrado', localidad: 'No encontrada',
+      nivel_escolarizacion: 'No especificado',
+      habilidades: { tecnicas: [], blandas: [] },
+      resumen: 'No se pudo generar el resumen con IA. Por favor, revisa el CV.',
+      textoCompleto: text,
+      extractionError: "gpt_analysis_failed",
+      extractionMessage: error.message || "Error al comunicarse con el servicio de análisis de IA."
+    };
   }
 }
+
+// Las funciones calculateAge, extractExperience y basicAnalyzeCV ya no son necesarias
+// si siempre usamos el análisis de GPT y manejamos los fallos de GPT de forma explícita.
+// Sin embargo, las mantendré por si se decide reintroducir un fallback local en el futuro.
+// Por ahora, no se llamarán desde analyzeCV.
 
 /**
  * Calcula la edad a partir de una cadena de fecha de nacimiento (dd/mm/yyyy o dd-mm-yyyy).
