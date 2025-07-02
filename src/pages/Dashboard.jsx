@@ -265,7 +265,7 @@ function Dashboard() {
   };
 
   const handleJobPublishedOrUpdated = (job) => {
-    console.log("Dashboard: Entering handleJobPublishedOrUpdated, job:", job, "editingJob:", editingJob);
+    console.log("Dashboard: handleJobPublishedOrUpdated called with job:", job); // Log detallado
     if (editingJob) { // Si estábamos editando
       setJobs(prevJobs => prevJobs.map(j => j.id === job.id ? job : j));
       toast({ title: "Puesto Actualizado", description: `${job.title} ha sido actualizado.` });

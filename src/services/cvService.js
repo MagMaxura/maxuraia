@@ -301,14 +301,16 @@ export const cvService = {
         .single(); // Asumiendo que se inserta un solo registro
 
       if (error) {
-        console.error("Error creando puesto de trabajo en Supabase:", JSON.stringify(error, null, 2)); // Log detallado del error de Supabase
-        throw error;
+        console.error("Error creando puesto de trabajo en Supabase:", JSON.stringify(error, null, 2));
+        // Asegurarse de lanzar un Error con un mensaje útil
+        throw new Error(`Supabase error al crear puesto: ${error.message || JSON.stringify(error)}`);
       }
       console.log("Puesto de trabajo creado exitosamente:", data);
       return data; // Devolver el objeto del puesto creado
     } catch (error) {
-      console.error("Excepción general en cvService.createJobPost:", error); // Log para excepciones no relacionadas con Supabase
-      throw error;
+      console.error("Excepción general en cvService.createJobPost:", error);
+      // Asegurarse de lanzar un Error con un mensaje útil
+      throw new Error(`Error inesperado al crear puesto: ${error.message || JSON.stringify(error)}`);
     }
   },
 
