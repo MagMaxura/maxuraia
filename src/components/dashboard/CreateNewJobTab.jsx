@@ -54,6 +54,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
   const handleSaveJob = async () => {
     console.log("CreateNewJobTab: handleSaveJob called");
     console.log("CreateNewJobTab: jobDetails at start:", jobDetails); // Nuevo log
+    console.log("CreateNewJobTab: user.id:", user?.id); // Nuevo log
     if (!user?.id) {
       toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
       return;
