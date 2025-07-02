@@ -62,7 +62,7 @@ export function useDashboardData() {
             originalFile: null, // Esto podría necesitar ajuste si se sube un nuevo CV para un candidato existente
             analysis: analysisData,
             uploadedDate: new Date(cvPrincipal?.created_at || candidato.created_at), // Fecha del CV o del candidato
-            cv_database_id: cvPrincipal?.id || null,
+            cv_database_id: cvPrincipal?.id || candidato.cv_id || null, // Usar candidato.cv_id como fallback
             candidate_database_id: candidato.id,
           };
         });
