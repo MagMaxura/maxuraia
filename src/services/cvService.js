@@ -276,56 +276,70 @@ export const cvService = {
     return data;
   },
   
-  async deleteCV(cvDatabaseId) {
-    console.log(`cvService.deleteCV: Eliminando CV ID: ${cvDatabaseId}`);
-    if (!cvDatabaseId) {
-      throw new Error("ID del CV no proporcionado para eliminar.");
-    }
+  async deleteCV(cvDatabaseId, candidateDatabaseId) {
+    console.log(`cvService.deleteCV: Intentando eliminar. CV ID: ${cvDatabaseId}, Candidato ID: ${candidateDatabaseId}`);
+    
+    let finalCandidateIdToDelete = candidateDatabaseId;
+    let finalCvIdToDelete = cvDatabaseId;
+
     try {
-      // Paso 1: Obtener el candidate_id asociado a este CV
-      const { data: cvData, error: fetchCvError } = await supabase
-        .from('cvs')
-        .select('candidate_id')
-        .eq('id', cvDatabaseId)
-        .single();
+      // Si no tenemos un cvDatabaseId pero sí un candidateDatabaseId, intentamos obtener el cv_id del candidato
+      if (!finalCvIdToDelete && finalCandidateIdToDelete) {
+        console.log(`Buscando cv_id para candidato ID: ${finalCandidateIdToDelete}`);
+        const { data: candidatoData, error: fetchCandidatoError } = await supabase
+          .from('candidatos')
+          .select('cv_id')
+          .eq('id', finalCandidateIdToDelete)
+          .single();
 
-      if (fetchCvError) {
-        console.error("Error obteniendo candidate_id del CV:", JSON.stringify(fetchCvError, null, 2));
-        throw fetchCvError; // Si no se puede obtener el CV, no se puede eliminar el candidato
+        if (fetchCandidatoError) {
+          console.error("Error obteniendo cv_id del candidato:", JSON.stringify(fetchCandidatoError, null, 2));
+          // No lanzar error aquí, ya que podríamos proceder solo con la eliminación del candidato
+        } else if (candidatoData?.cv_id) {
+          finalCvIdToDelete = candidatoData.cv_id;
+          console.log(`cv_id encontrado para candidato ${finalCandidateIdToDelete}: ${finalCvIdToDelete}`);
+        }
       }
 
-      const candidateIdToDelete = cvData?.candidate_id;
+      // Eliminar el CV de la tabla 'cvs' si tenemos un cv_id
+      if (finalCvIdToDelete) {
+        console.log(`Eliminando CV de la tabla 'cvs' con ID: ${finalCvIdToDelete}`);
+        const { error: cvDeleteError } = await supabase
+          .from('cvs')
+          .delete()
+          .eq('id', finalCvIdToDelete);
 
-      // Paso 2: Eliminar el CV de la tabla 'cvs'
-      const { error: cvDeleteError } = await supabase
-        .from('cvs')
-        .delete()
-        .eq('id', cvDatabaseId);
-
-      if (cvDeleteError) {
-        console.error("Error eliminando CV de la base de datos:", JSON.stringify(cvDeleteError, null, 2));
-        throw cvDeleteError;
+        if (cvDeleteError) {
+          console.error("Error eliminando CV de la base de datos:", JSON.stringify(cvDeleteError, null, 2));
+          throw cvDeleteError;
+        }
+        console.log("CV eliminado exitosamente, ID:", finalCvIdToDelete);
+      } else {
+        console.warn("No se encontró un CV ID válido para eliminar de la tabla 'cvs'.");
       }
-      console.log("CV eliminado exitosamente, ID:", cvDatabaseId);
 
-      // Paso 3: Eliminar el candidato asociado (si existe)
-      if (candidateIdToDelete) {
-        console.log(`cvService.deleteCV: Eliminando candidato asociado ID: ${candidateIdToDelete}`);
+      // Eliminar el candidato de la tabla 'candidatos' si tenemos un candidate_id
+      if (finalCandidateIdToDelete) {
+        console.log(`Eliminando candidato de la tabla 'candidatos' con ID: ${finalCandidateIdToDelete}`);
         const { error: candidateDeleteError } = await supabase
           .from('candidatos')
           .delete()
-          .eq('id', candidateIdToDelete);
+          .eq('id', finalCandidateIdToDelete);
 
         if (candidateDeleteError) {
           console.error("Error eliminando candidato asociado:", JSON.stringify(candidateDeleteError, null, 2));
           throw candidateDeleteError;
         }
-        console.log("Candidato asociado eliminado exitosamente, ID:", candidateIdToDelete);
+        console.log("Candidato asociado eliminado exitosamente, ID:", finalCandidateIdToDelete);
       } else {
-        console.warn("cvService.deleteCV: No se encontró candidate_id asociado al CV, solo se eliminó el CV.");
+        console.warn("No se encontró un Candidato ID válido para eliminar de la tabla 'candidatos'.");
       }
       
-      return { success: true, cvId: cvDatabaseId, candidateId: candidateIdToDelete };
+      if (!finalCvIdToDelete && !finalCandidateIdToDelete) {
+        throw new Error("No se proporcionó ningún ID válido (CV o Candidato) para eliminar.");
+      }
+
+      return { success: true, cvId: finalCvIdToDelete, candidateId: finalCandidateIdToDelete };
     } catch (error) {
       console.error("Excepción en cvService.deleteCV:", error);
       throw error;

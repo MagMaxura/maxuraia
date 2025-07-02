@@ -219,16 +219,24 @@ function Dashboard() {
       return;
     }
 
-    console.log("Dashboard: Intentando eliminar CV con ID de BD:", cvDatabaseIdToDelete);
+    console.log("Dashboard: Intentando eliminar CV. CV ID:", cvDatabaseIdToDelete, "Candidato ID:", candidateDatabaseIdToDelete);
     try {
-      await cvService.deleteCV(cvDatabaseIdToDelete);
+      // Llamar a cvService.deleteCV con el ID de CV o el ID de Candidato
+      await cvService.deleteCV(cvDatabaseIdToDelete, candidateDatabaseIdToDelete);
       toast({ title: "CV Eliminado", description: "El CV y los datos asociados han sido eliminados." });
 
-      const updatedCvFiles = cvFiles.filter(cv => cv.cv_database_id !== cvDatabaseIdToDelete);
+      // Actualizar el estado local de cvFiles
+      const updatedCvFiles = cvFiles.filter(cv =>
+        (cvDatabaseIdToDelete && cv.cv_database_id !== cvDatabaseIdToDelete) ||
+        (candidateDatabaseIdToDelete && cv.candidate_database_id !== candidateDatabaseIdToDelete)
+      );
       setCvFiles(updatedCvFiles);
       
+      // Ajustar selectedCV si el CV/Candidato eliminado era el seleccionado
       const currentSelectedCv = cvFiles[selectedCV];
-      if (currentSelectedCv && currentSelectedCv.cv_database_id === cvDatabaseIdToDelete) {
+      if (currentSelectedCv &&
+          ((cvDatabaseIdToDelete && currentSelectedCv.cv_database_id === cvDatabaseIdToDelete) ||
+           (candidateDatabaseIdToDelete && currentSelectedCv.candidate_database_id === candidateDatabaseIdToDelete))) {
         setSelectedCV(null);
         setCvAnalysis(null);
       } else if (selectedCV !== null) {
