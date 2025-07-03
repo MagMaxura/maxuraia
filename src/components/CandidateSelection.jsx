@@ -105,7 +105,7 @@ function CandidateSelection() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-gray-900">{candidate.nombre}</h3>
+                    <h3 className="font-medium text-gray-900">{candidate.name} - {candidate.title || candidate.nivel_escolarizacion || "Sin título"}</h3>
                     <p className="text-sm text-gray-500">{candidate.matchReason}</p>
                   </div>
                   <div className="flex items-center space-x-2">

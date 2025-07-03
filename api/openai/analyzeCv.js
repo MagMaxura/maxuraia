@@ -37,7 +37,7 @@ export default async function handler(req, res) {
 3.  **localidad**: (string) Ciudad y provincia/estado de residencia.
 4.  **email**: (string) Correo electrónico principal.
 5.  **telefono**: (string) Número de teléfono principal.
-6.  **nivel_escolarizacion**: (string) El título o nivel de escolarización más alto alcanzado (ej: "Secundaria Completa", "Técnico en Electrónica", "Licenciado en Administración", "Ingeniero en Sistemas", "Magíster en IA", "Doctorado en Física"). Sé específico.
+6.  **nivel_escolarizacion**: (string) El título o nivel de escolarización más alto alcanzado (ej: "Secundaria Completa", "Técnico en Electrónica", "Licenciado en Administración", "Ingeniero en Sistemas", "Magíster en IA", "Doctorado en Física"). Si no se encuentra un título formal, infiere una profesión o rol basado en la experiencia y habilidades (ej: "Estudiante de secundaria con experiencia en administración", "Administrativo", "Vendedor"). Sé específico y conciso.
 7.  **habilidades**: (object) Un objeto con dos propiedades:
     *   **tecnicas**: (string[]) Array de strings con las habilidades técnicas o duras (herramientas, software, lenguajes de programación, certificaciones técnicas, etc.).
     *   **blandas**: (string[]) Array de strings con las habilidades blandas o interpersonales (comunicación, liderazgo, trabajo en equipo, resolución de problemas, etc.).
