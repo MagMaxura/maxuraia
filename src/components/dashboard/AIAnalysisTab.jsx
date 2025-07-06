@@ -3,6 +3,7 @@ import { processJobMatches } from '../../services/matchingService';
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
 import { supabase } from '../../lib/supabase';
+import { Input } from '../ui/input'; // Importar el componente Input
 
 // Componentes simples para la UI
 const Select = ({ value, onChange, options, placeholder, disabled }) => (
@@ -12,6 +13,17 @@ const Select = ({ value, onChange, options, placeholder, disabled }) => (
       <option key={option.value} value={option.value}>{option.label}</option>
     ))}
   </select>
+);
+
+const TextInput = ({ value, onChange, placeholder, disabled }) => (
+  <Input
+    type="text"
+    value={value}
+    onChange={e => onChange(e.target.value)}
+    placeholder={placeholder}
+    disabled={disabled}
+    className="border p-2 rounded w-full"
+  />
 );
 
 const Checkbox = ({ checked, onChange, label, id, disabled }) => (
@@ -86,6 +98,7 @@ export function AIAnalysisTab({
   const [analysisResults, setAnalysisResults] = useState([]);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [error, setError] = useState('');
+  const [titleFilter, setTitleFilter] = useState(''); // Nuevo estado para el filtro de título
 
   const { toast } = useToast();
 
@@ -103,8 +116,19 @@ export function AIAnalysisTab({
         }
       }
     });
-    return Array.from(uniqueCandidates.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [cvFilesFromDashboard]);
+
+    let filteredCandidates = Array.from(uniqueCandidates.values());
+
+    // Aplicar filtro por título
+    if (titleFilter) {
+      const lowerCaseFilter = titleFilter.toLowerCase();
+      filteredCandidates = filteredCandidates.filter(candidate =>
+        candidate.title.toLowerCase().includes(lowerCaseFilter)
+      );
+    }
+
+    return filteredCandidates.sort((a, b) => a.name.localeCompare(b.name));
+  }, [cvFilesFromDashboard, titleFilter]); // Añadir titleFilter a las dependencias
 
   const fetchExistingMatchesForJob = useCallback(async (jobId) => {
     if (!jobId) {
@@ -273,8 +297,8 @@ export function AIAnalysisTab({
               disabled={isLoadingJobs || isLoadingAnalysis}
             />
           </div>
-          <Button 
-            onClick={handleRunAnalysis} 
+          <Button
+            onClick={handleRunAnalysis}
             disabled={isLoadingAnalysis || !selectedJobId || selectedCandidateIds.size === 0 || Array.from(selectedCandidateIds).every(id => analyzedCandidateIds.has(id))}
           >
             {isLoadingAnalysis ? 'Analizando...' : 'Analizar Candidatos Seleccionados'}
@@ -283,7 +307,17 @@ export function AIAnalysisTab({
         
         {selectedJobId && (
           <div className="mt-4">
-            <h4 className="text-md font-medium mb-2">Seleccionar Candidatos</h4>
+            <h4 className="text-md font-medium mb-2">Filtrar y Seleccionar Candidatos</h4>
+            <div className="mb-3">
+              <label htmlFor="title-filter" className="block text-sm font-medium text-gray-700 mb-1">Filtrar por Título/Profesión</label>
+              <TextInput
+                id="title-filter"
+                value={titleFilter}
+                onChange={setTitleFilter}
+                placeholder="Ej: Ingeniero de Software, Administrativo"
+                disabled={isLoadingCandidates || isLoadingAnalysis}
+              />
+            </div>
             {isLoadingCandidates ? <p>Cargando candidatos...</p> : (
               <>
                 {candidatesForSelection.length > 0 ? (
@@ -308,7 +342,7 @@ export function AIAnalysisTab({
                       );
                     })}
                   </div>
-                ) : <p>No hay candidatos disponibles o CVs cargados.</p>}
+                ) : <p>No hay candidatos disponibles o CVs cargados que coincidan con el filtro.</p>}
               </>
             )}
           </div>
