@@ -5,20 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Briefcase as BriefcaseIcon, Users, Search } from 'lucide-react';
 import CVAnalysis from "@/components/CVAnalysis";
 
-function CandidateSelection() {
+function CandidateSelection({ candidates: propCandidates }) { // Recibe candidatos como prop
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
-  const [candidates, setCandidates] = useState([]);
+  const [candidates, setCandidates] = useState(propCandidates); // Usa la prop para inicializar
   const [rankedCandidates, setRankedCandidates] = useState([]);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
 
   useEffect(() => {
-    // Cargar trabajos y CVs desde localStorage
+    // Cargar trabajos desde localStorage (los CVs ahora vienen por prop)
     const savedJobs = JSON.parse(localStorage.getItem('jobs') || '[]');
-    const savedCVs = JSON.parse(localStorage.getItem('cvs') || '[]');
     setJobs(savedJobs);
-    setCandidates(savedCVs);
   }, []);
+
+  useEffect(() => {
+    setCandidates(propCandidates); // Actualiza los candidatos si la prop cambia
+  }, [propCandidates]);
 
   const handleJobSelect = async (job) => {
     setSelectedJob(job);

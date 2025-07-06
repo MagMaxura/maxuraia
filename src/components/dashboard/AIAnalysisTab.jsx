@@ -97,7 +97,8 @@ export function AIAnalysisTab({
         if (!uniqueCandidates.has(cv.candidate_database_id)) {
           uniqueCandidates.set(cv.candidate_database_id, {
             id: cv.candidate_database_id,
-            name: cv.name 
+            name: cv.name,
+            title: cv.analysis?.title || cv.analysis?.nivel_escolarizacion || "Sin título" // Añadir el título
           });
         }
       }
@@ -301,8 +302,8 @@ export function AIAnalysisTab({
                           id={`candidate-${candidate.id}`}
                           checked={selectedCandidateIds.has(candidate.id)}
                           onChange={() => handleCandidateSelection(candidate.id)}
-                          label={`${candidate.name}${isAnalyzed ? ' (Analizado)' : ''}`}
-                          disabled={isAnalyzed} 
+                          label={`${candidate.name} - ${candidate.title}${isAnalyzed ? ' (Analizado)' : ''}`}
+                          disabled={isAnalyzed}
                         />
                       );
                     })}

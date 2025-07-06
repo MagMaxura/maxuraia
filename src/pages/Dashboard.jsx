@@ -498,9 +498,9 @@ function Dashboard() {
             return (
             <AIAnalysisTab
               jobs={jobs}
-              isLoadingJobs={isLoadingJobs}
               cvFilesFromDashboard={cvFiles}
               isLoadingCandidates={isLoadingCVs}
+              isLoadingJobs={isLoadingJobs}
             />
             );
           })()}
