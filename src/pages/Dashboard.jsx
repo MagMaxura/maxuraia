@@ -498,6 +498,7 @@ function Dashboard() {
             return (
             <AIAnalysisTab
               jobs={jobs}
+              recruiterId={user?.id} // Pasar el ID del reclutador
               cvFilesFromDashboard={cvFiles}
               isLoadingCandidates={isLoadingCVs}
               isLoadingJobs={isLoadingJobs}

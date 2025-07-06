@@ -21,10 +21,9 @@ export const APP_PLANS = {
       "Te damos la posibilidad de probar la mejor herramienta reclutamiento",
       "1 Puesto de trabajo activo",
       "Análisis de CVs: Hasta 10", // Ajustar según la definición real
-      "Macheo de candidatos (match IA): Hasta 10 CVs", // Ajustar según la definición real
-      "Redacción de publicaciones con IA",
-      "Soporte: Email estándar"
-    ]
+      "Macheo de candidatos (match IA): Hasta 10", // Ajustar según la definición real
+    ],
+    matchLimit: 10 // Nuevo: Límite de macheos
   },
   busqueda_puntual: {
     id: 'busqueda_puntual',
@@ -46,7 +45,8 @@ export const APP_PLANS = {
       "Redacción de publicaciones con IA",
       "Preselección por IA: Manual",
       "Soporte: Email estándar"
-    ]
+    ],
+    matchLimit: 75 // Nuevo: Límite de macheos
   },
   profesional_monthly: {
     id: 'profesional_monthly',
@@ -69,7 +69,8 @@ export const APP_PLANS = {
       "Redacción de publicaciones con IA",
       "Preselección por IA: Manual",
       "Soporte: Email estándar"
-    ]
+    ],
+    matchLimit: 100 // Nuevo: Límite de macheos
   },
   empresa_monthly: {
     id: 'empresa_monthly',
@@ -95,7 +96,8 @@ export const APP_PLANS = {
       "Chatbot para entrevistas automatizadas",
       "Soporte: Prioritario",
       "Acceso a métricas e informes avanzados"
-    ]
+    ],
+    matchLimit: 1000 // Nuevo: Límite de macheos
   },
   enterprise_monthly: {
     id: 'enterprise_monthly',
@@ -122,7 +124,8 @@ export const APP_PLANS = {
       "Personalización de la plataforma y reportes: Incluida",
       "Acceso a métricas e informes avanzados: Con consultoría y análisis personalizado",
       "Acceso anticipado a nuevas funcionalidades Beta"
-    ]
+    ],
+    matchLimit: Infinity // Nuevo: Límite de macheos
   }
 };
 

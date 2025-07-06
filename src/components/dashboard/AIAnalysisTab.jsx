@@ -87,11 +87,12 @@ const parseAnalysisText = (analysisText) => {
 };
 
 
-export function AIAnalysisTab({ 
-  jobs = [], 
-  isLoadingJobs = false, 
-  cvFilesFromDashboard = [], 
-  isLoadingCandidates = false 
+export function AIAnalysisTab({
+  jobs = [],
+  isLoadingJobs = false,
+  cvFilesFromDashboard = [],
+  isLoadingCandidates = false,
+  recruiterId // Nueva prop
 }) {
   const [selectedJobId, setSelectedJobId] = useState('');
   const [selectedCandidateIds, setSelectedCandidateIds] = useState(new Set());
@@ -239,7 +240,7 @@ export function AIAnalysisTab({
     });
 
     try {
-      const results = await processJobMatches(selectedJobId, candidatesToActuallyProcess);
+      const results = await processJobMatches(selectedJobId, recruiterId, candidatesToActuallyProcess);
       
       console.log(`[AIAnalysisTab] Resultados crudos de processJobMatches para el puesto "${jobTitle}":`, results);
 

@@ -129,9 +129,11 @@ export function useDashboardData() {
     // Calcular los límites efectivos usando la nueva función
     effectiveLimits: calculateEffectivePlan(user?.suscripcion),
     analysisLimit: calculateEffectivePlan(user?.suscripcion).cvLimit,
-    jobLimit: calculateEffectivePlan(user?.suscripcion).jobLimit, // Usar jobLimit directamente de effectiveLimits
+    jobLimit: calculateEffectivePlan(user?.suscripcion).jobLimit,
+    matchLimit: calculateEffectivePlan(user?.suscripcion).matchLimit, // Nuevo: Obtener matchLimit
     currentAnalysisCount: user?.suscripcion?.cvs_analizados_este_periodo || 0,
-    currentJobCount: jobs.length, // La cantidad de jobs publicados se determina por la longitud del array 'jobs'
+    currentMatchCount: user?.suscripcion?.mach_analizados_este_periodo || 0, // Nuevo: Contador de macheos
+    currentJobCount: jobs.length,
     isSubscriptionActive: calculateEffectivePlan(user?.suscripcion).isSubscriptionActive,
     periodEndsAt: calculateEffectivePlan(user?.suscripcion).periodEndsAt,
   };

@@ -1,19 +1,25 @@
-import { supabase } from '../lib/supabase'; // Asegúrate de que la ruta a tu cliente Supabase sea correcta
-// La importación de compareCvWithJobOpenAI se elimina, ya que ahora se llamará a una API.
+import { supabase } from '../lib/supabase';
+import { calculateEffectivePlan } from '../config/plans'; // Importar la función para calcular límites
 
 /**
  * Procesa y guarda las coincidencias entre candidatos seleccionados (o todos) y un puesto de trabajo específico,
  * llamando a una API de backend para la comparación con OpenAI.
  *
  * @param {string} jobId El UUID del puesto de trabajo a procesar.
+ * @param {string} recruiterId El UUID del reclutador que inicia el proceso.
  * @param {string[]} [candidateIds] Un array opcional de UUIDs de candidatos a procesar. Si no se provee, se procesarán todos los candidatos.
  * @returns {Promise<Array<object>>} Una promesa que resuelve a un array de los resultados (nuevos o existentes) de la tabla 'matches'.
- * @throws {Error} Si el puesto de trabajo no se encuentra o si ocurren errores durante el proceso.
+ * @throws {Error} Si el puesto de trabajo no se encuentra, si el reclutador no tiene suscripción activa o si se excede el límite de macheos.
  */
-export async function processJobMatches(jobId, candidateIds = []) {
+export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
   if (!jobId) {
     console.error("Error: Se requiere un ID de puesto de trabajo (jobId).");
     throw new Error("Se requiere un ID de puesto de trabajo (jobId).");
+  }
+
+  if (!recruiterId) {
+    console.error("Error: Se requiere un ID de reclutador (recruiterId).");
+    throw new Error("Se requiere un ID de reclutador (recruiterId).");
   }
 
   if (candidateIds && !Array.isArray(candidateIds)) {
@@ -21,7 +27,32 @@ export async function processJobMatches(jobId, candidateIds = []) {
     throw new Error("candidateIds debe ser un array.");
   }
 
-  // 1. Obtener los detalles del puesto de trabajo
+  // 1. Obtener la suscripción del reclutador
+  const { data: subscriptionData, error: subscriptionError } = await supabase
+    .from('suscripciones')
+    .select('*')
+    .eq('user_id', recruiterId)
+    .single();
+
+  if (subscriptionError || !subscriptionData) {
+    console.error(`Error al obtener la suscripción para el reclutador ${recruiterId}:`, subscriptionError);
+    throw new Error("No se pudo obtener la información de la suscripción del usuario.");
+  }
+
+  const effectiveLimits = calculateEffectivePlan(subscriptionData);
+
+  if (!effectiveLimits.isSubscriptionActive) {
+    throw new Error("Su suscripción no está activa. Por favor, active su plan para realizar macheos.");
+  }
+
+  const currentMatchCount = subscriptionData.mach_analizados_este_periodo || 0;
+  const matchLimit = effectiveLimits.matchLimit;
+
+  if (matchLimit !== Infinity && currentMatchCount >= matchLimit) {
+    throw new Error(`Ha alcanzado su límite de ${matchLimit} macheos para este período. Por favor, actualice su plan.`);
+  }
+
+  // 2. Obtener los detalles del puesto de trabajo
   const { data: jobData, error: jobError } = await supabase
     .from('jobs')
     .select('id, title, description, requirements, keywords')
@@ -33,7 +64,7 @@ export async function processJobMatches(jobId, candidateIds = []) {
     throw new Error(`Puesto de trabajo con ID ${jobId} no encontrado o error al obtenerlo.`);
   }
 
-  // 2. Obtener los candidatos a procesar.
+  // 3. Obtener los candidatos a procesar.
   let candidatesQuery = supabase
     .from('candidatos')
     .select(`
@@ -53,10 +84,6 @@ export async function processJobMatches(jobId, candidateIds = []) {
   if (candidateIds && candidateIds.length > 0) {
     candidatesQuery = candidatesQuery.in('id', candidateIds);
   }
-  // Podrías añadir filtros aquí, ej. .eq('status', 'activo')
-  // También, si un candidato puede tener múltiples CVs, decidir cuál usar.
-  // Por ejemplo, ordenar por 'created_at' y tomar el más reciente de 'cvs'.
-  // .order('created_at', { foreignTable: 'cvs', ascending: false })
 
   const { data: candidates, error: candidatesError } = await candidatesQuery;
 
@@ -71,41 +98,48 @@ export async function processJobMatches(jobId, candidateIds = []) {
   }
 
   const allResults = [];
+  let matchesProcessedInThisRun = 0;
 
   for (const candidate of candidates) {
-    // 2.1 Verificar si ya existe un match para este candidato y puesto
+    // Verificar si ya existe un match para este candidato y puesto
     const { data: existingMatch, error: existingMatchError } = await supabase
       .from('matches')
       .select('*')
       .eq('job_id', jobId)
       .eq('candidato_id', candidate.id)
-      .maybeSingle(); // Usamos maybeSingle para no tener error si no existe
+      .maybeSingle();
 
     if (existingMatchError) {
       console.error(`Error al verificar match existente para candidato ${candidate.id} y job ${jobId}:`, existingMatchError);
-      // Considerar si continuar o no. Por ahora, se intentará procesar.
     }
 
     if (existingMatch) {
       console.log(`Match ya existente para candidato ${candidate.id} y job ${jobId}. Score: ${existingMatch.match_score}. Omitiendo re-análisis.`);
-      // Extraer la recomendación del texto de análisis si es necesario para la UI
       const recommendation = existingMatch.analysis && existingMatch.analysis.toLowerCase().includes("recomendación: sí");
       allResults.push({ ...existingMatch, recommendation, alreadyExisted: true, error: false });
-      continue; // Saltar al siguiente candidato
+      continue;
     }
 
-    // Preparar cvData
+    // Verificar límite antes de procesar un nuevo macheo
+    if (matchLimit !== Infinity && (currentMatchCount + matchesProcessedInThisRun) >= matchLimit) {
+      console.warn(`Límite de macheos alcanzado para el reclutador ${recruiterId}. Se detiene el procesamiento.`);
+      allResults.push({
+        job_id: jobId,
+        candidato_id: candidate.id,
+        match_score: 0,
+        analysis: `Límite de macheos alcanzado para este período.`,
+        recommendation: false,
+        error: true,
+        limitReached: true,
+      });
+      continue; // Saltar al siguiente candidato si el límite ha sido alcanzado
+    }
+
     let cvTextContent = 'No disponible';
     if (candidate.cvs && candidate.cvs.length > 0) {
-      // Lógica para seleccionar el CV correcto y extraer texto.
-      // Asumimos que el primer CV es el relevante y que 'content' puede ser un objeto.
-      // Si 'content' es JSONB con una estructura como { "text_content": "..." }
-      // cvTextContent = candidate.cvs[0].content?.text_content || JSON.stringify(candidate.cvs[0].content);
-      // Por ahora, si es un objeto, lo pasamos como string para que el prompt lo maneje.
-      // Si es texto plano, se pasa directamente.
       const rawCvContent = candidate.cvs[0].content;
       if (typeof rawCvContent === 'object' && rawCvContent !== null) {
-        cvTextContent = JSON.stringify(rawCvContent); // Simplificación, idealmente extraer texto relevante
+        cvTextContent = JSON.stringify(rawCvContent);
       } else if (typeof rawCvContent === 'string') {
         cvTextContent = rawCvContent;
       }
@@ -129,11 +163,9 @@ export async function processJobMatches(jobId, candidateIds = []) {
 
     console.log(`Comparando CV de ${candidate.name} (${candidate.id}) con el puesto ${jobData.title} (${jobId})...`);
 
-    // 3. Llamar a la API de backend para la comparación con OpenAI
     let comparisonResult;
     try {
-      // Volver a llamar a la API de backend. La ruta ahora es /api/openai/compareCv (desde la raíz)
-      const response = await fetch('/api/openai/compareCv', { // Ruta relativa a la raíz del dominio
+      const response = await fetch('/api/openai/compareCv', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +178,6 @@ export async function processJobMatches(jobId, candidateIds = []) {
         try {
           errorData = await response.json();
         } catch (e) {
-          // Si la respuesta no es JSON (ej. HTML de error 500 sin JSON)
           errorData = { error: `Error del servidor: ${response.status} - ${response.statusText}`, details: await response.text() };
         }
         console.error("Error data from API:", errorData);
@@ -155,25 +186,19 @@ export async function processJobMatches(jobId, candidateIds = []) {
       comparisonResult = await response.json();
       console.log(`[matchingService] comparisonResult desde API para candidato ${candidate.id}:`, comparisonResult);
 
-
     } catch (fetchOrApiError) {
       console.error(`Error al llamar a la API /api/openai/compareCv o procesar su respuesta para candidato ${candidate.id}:`, fetchOrApiError);
       allResults.push({
         job_id: jobId,
         candidato_id: candidate.id,
         match_score: 0,
-        analysis: `Error en la comunicación con el servicio de comparación: ${fetchError.message}`,
+        analysis: `Error en la comunicación con el servicio de comparación: ${fetchOrApiError.message}`,
         recommendation: false,
         error: true,
       });
       continue;
     }
     
-    // El objeto comparisonResult (de la API /api/openai/compareCv) ahora tiene:
-    // { score, summary, recommendation_reasoning, recommendation_decision, recommendation (booleano) }
-    
-    // 4. Guardar el resultado en la tabla 'matches'
-    // Construir el texto de análisis para incluir todos los nuevos campos.
     let decision_text_part = `Decisión de Recomendación: ${comparisonResult.recommendation_decision || 'N/A'}`;
     let reasoning_text_part = comparisonResult.recommendation_reasoning ? `Razonamiento: ${comparisonResult.recommendation_reasoning}` : '';
     let summary_text_part = comparisonResult.summary ? `Resumen General: ${comparisonResult.summary}` : '';
@@ -184,12 +209,10 @@ export async function processJobMatches(jobId, candidateIds = []) {
 
     let analysisText = parts.reduce((acc, part, index) => {
       if (index === 0) return part;
-      // Asegurar un punto y espacio entre partes, a menos que la parte anterior ya termine con puntuación.
       if (acc.match(/[.!?]$/)) return `${acc} ${part}`;
       return `${acc}. ${part}`;
     }, '');
     
-    // Asegurar que el texto final tenga un punto si no lo tiene.
     if (analysisText && !analysisText.match(/[.!?]$/)) {
         analysisText += '.';
     }
@@ -218,53 +241,35 @@ export async function processJobMatches(jobId, candidateIds = []) {
       });
     } else {
       console.log(`Match guardado para candidato ${candidate.id} y job ${jobId}. Score: ${comparisonResult.score}`);
-      // Asegurarse de que el objeto 'savedMatch' (que viene de .select() después del insert)
-      // se combine con los campos textuales y el booleano para consistencia en 'allResults'.
-      // 'savedMatch' contendrá lo que está en la DB (id, job_id, candidato_id, match_score, analysis, created_at).
       allResults.push({
         ...savedMatch,
-        summary: comparisonResult.summary, // Añadir para consistencia si se usa antes de recargar
+        summary: comparisonResult.summary,
         recommendation_reasoning: comparisonResult.recommendation_reasoning,
         recommendation_decision: comparisonResult.recommendation_decision,
-        recommendation: comparisonResult.recommendation, // El booleano
+        recommendation: comparisonResult.recommendation,
         error: false,
         alreadyExisted: false
       });
+      matchesProcessedInThisRun++; // Incrementar el contador solo para nuevos macheos
+    }
+  }
+
+  // Actualizar el contador de macheos en la suscripción del usuario
+  if (matchesProcessedInThisRun > 0) {
+    const { error: updateSubscriptionError } = await supabase
+      .from('suscripciones')
+      .update({ mach_analizados_este_periodo: currentMatchCount + matchesProcessedInThisRun })
+      .eq('user_id', recruiterId);
+
+    if (updateSubscriptionError) {
+      console.error(`Error al actualizar el contador de macheos para el reclutador ${recruiterId}:`, updateSubscriptionError);
+      // No lanzar error fatal aquí, ya que los macheos ya se guardaron.
+    } else {
+      console.log(`Contador de macheos actualizado para el reclutador ${recruiterId}. Nuevos macheos: ${matchesProcessedInThisRun}. Total: ${currentMatchCount + matchesProcessedInThisRun}`);
     }
   }
 
   console.log(`Proceso de matching completado para el puesto ${jobId}.`);
-  // Ordenar los resultados por 'match_score' descendente antes de devolverlos
   allResults.sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
   return allResults;
 }
-
-// Ejemplo de cómo se podría llamar a esta función:
-/*
-async function runMatching() {
-  const exampleJobId = 'uuid-del-puesto-de-trabajo'; // Reemplazar con un ID de job real de tu DB
-  try {
-    // Ejemplo con IDs de candidatos específicos:
-    // const specificCandidateIds = ['uuid-candidato-1', 'uuid-candidato-2'];
-    // const results = await processJobMatches(exampleJobId, specificCandidateIds);
-
-    const results = await processJobMatches(exampleJobId); // Procesa todos o los especificados
-    console.log("Resultados finales del matching (ordenados por score):", results);
-
-    results.forEach(result => {
-      if (result.error) {
-        console.warn(`Hubo un problema con el candidato ${result.candidato_id}: ${result.saveError || result.analysis}`);
-      } else if (result.alreadyExisted) {
-        console.log(`Candidato: ${result.candidato_id}, Score: ${result.match_score} (ya existía), Recomendado: ${result.recommendation}`);
-      }
-      else {
-        console.log(`Candidato: ${result.candidato_id}, Score: ${result.match_score} (nuevo análisis), Recomendado: ${result.recommendation}`);
-      }
-    });
-  } catch (error) {
-    console.error("Error general en el proceso de matching:", error.message);
-  }
-}
-
-// runMatching(); // Descomentar para probar (asegúrate de tener un jobId válido y la DB configurada)
-*/
