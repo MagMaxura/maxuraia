@@ -58,7 +58,7 @@ export function useAuthService() {
         }
 
         // Lógica para asegurar que el usuario tenga una suscripción de prueba si no tiene ninguna activa
-        if (userToSet && (!userToSet.suscripcion || (!userToSet.suscripcion.current_plan_details && !userToSet.suscripcion.one_time_plan_details))) {
+        if (userToSet && (!userToSet.suscripcion || (userToSet.suscripcion.status !== 'active' && userToSet.suscripcion.status !== 'trialing'))) {
           console.log("[DEBUG] useAuthService: User has profile but no active monthly/one-time subscription. Attempting to create trial subscription.");
           try {
             const defaultPlanId = 'trial';
@@ -88,7 +88,6 @@ export function useAuthService() {
                 current_period_start: new Date().toISOString(),
                 current_period_end: trialEnds.toISOString(),
                 cvs_analizados_este_periodo: 0,
-                jobs_creados_este_periodo: 0,
                 CV_Max_plan: trialCvLimit,
                 Jobs_Max_plan: trialJobLimit,
                 one_time_cv_bonus: 0,
@@ -109,7 +108,6 @@ export function useAuthService() {
                 current_plan_details: APP_PLANS[newSubscription.plan_id],
                 one_time_plan_details: null,
                 cvs_analizados_este_periodo: newSubscription.cvs_analizados_este_periodo,
-                jobs_creados_este_periodo: newSubscription.jobs_creados_este_periodo,
               };
             }
           } catch (subCreationError) {
