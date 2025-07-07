@@ -211,17 +211,17 @@ export const calculateEffectivePlan = (suscripcion) => {
       effectiveJobLimit = basePlan.jobLimit || 0;
       effectiveMatchLimit = basePlan.matchLimit || 0; // Nuevo: Límite de macheos
     } else if (basePlan.type === 'one-time') {
-      // Si el plan base es puntual, sus límites base son 0, los límites vienen de los bonos
-      effectiveCvLimit = 0;
-      effectiveJobLimit = 0;
-      effectiveMatchLimit = 0; // Nuevo: Límite de macheos
+      // Para planes puntuales, los límites base vienen directamente del plan
+      effectiveCvLimit = basePlan.cvLimit || 0;
+      effectiveJobLimit = basePlan.jobLimit || 0;
+      effectiveMatchLimit = basePlan.matchLimit || 0; // Tomar el límite de macheos del plan
     }
   }
 
-  // Sumar los bonos puntuales
+  // Sumar los bonos puntuales (si existen y aplican)
   effectiveCvLimit += suscripcion.one_time_cv_bonus || 0;
   effectiveJobLimit += suscripcion.one_time_job_bonus || 0;
-  effectiveMatchLimit += suscripcion.one_time_match_bonus || 0; // Nuevo: Sumar bonos de macheos
+  effectiveMatchLimit += suscripcion.one_time_match_bonus || 0; // Sumar bonos de macheos
 
   console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveCvLimit:", effectiveCvLimit);
   console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveJobLimit:", effectiveJobLimit);

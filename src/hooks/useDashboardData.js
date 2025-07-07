@@ -115,6 +115,31 @@ export function useDashboardData() {
       if (jobs.length === 0 && isLoadingJobs) setIsLoadingJobs(false);
     }
 
+    // Lógica para reiniciar contadores de planes de pago único
+    if (user?.suscripcion && user.suscripcion.plan_id) {
+      const subscription = user.suscripcion;
+      const planDetails = APP_PLANS[subscription.plan_id];
+      const now = new Date();
+      const periodEndsAt = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
+
+      // Solo reiniciar si es un plan de pago único y el período ha terminado
+      if (planDetails?.type === 'one-time' && periodEndsAt && periodEndsAt < now) {
+        console.log(`[DEBUG] useDashboardData: Plan de pago único expirado para suscripción ${subscription.id}. Reiniciando contadores.`);
+        cvService.resetOneTimePlanCounters(subscription.id)
+          .then(() => {
+            console.log(`[DEBUG] useDashboardData: Contadores reiniciados para suscripción ${subscription.id}.`);
+            // Opcional: Forzar una recarga de los datos del usuario para reflejar los contadores reiniciados
+            // Esto podría hacerse llamando a una función de recarga de user en AuthContext,
+            // o simplemente confiando en que el próximo fetch de suscripción traerá los nuevos valores.
+            // Por ahora, no se fuerza una recarga explícita del user object.
+          })
+          .catch(error => {
+            console.error(`[DEBUG] useDashboardData: Error al reiniciar contadores para suscripción ${subscription.id}:`, error);
+            toast({ title: "Error", description: "No se pudieron reiniciar los contadores de su plan.", variant: "destructive" });
+          });
+      }
+    }
+
   }, [user?.id, toast, user?.suscripcion]); // Añadir user.suscripcion a las dependencias
 
   return {

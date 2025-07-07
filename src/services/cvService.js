@@ -473,19 +473,47 @@ export const cvService = {
     }
   },
 
-  // Nueva función para incrementar el contador de análisis de CVs
+  // Nueva función para reiniciar los contadores de planes de pago único
+  async resetOneTimePlanCounters(suscripcionId) {
+    if (!suscripcionId) {
+      console.error("cvService.resetOneTimePlanCounters: suscripcionId es requerido.");
+      throw new Error("ID de suscripción no proporcionado para reiniciar contadores.");
+    }
+    try {
+      console.log(`cvService.resetOneTimePlanCounters: Reiniciando contadores para suscripción ID: ${suscripcionId}`);
+      const { data, error } = await supabase
+        .from('suscripciones')
+        .update({
+          cvs_analizados_este_periodo: 0,
+          mach_analizados_este_periodo: 0,
+          // También podrías actualizar current_period_end para el próximo mes si es un plan recurrente
+          // Pero para "pago único" se asume que el período se define por el uso o un bono.
+          // Si el "mes" es un concepto fijo, necesitarías una lógica para calcular el próximo period_end.
+          // Por ahora, solo reiniciamos los contadores.
+        })
+        .eq('id', suscripcionId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error al reiniciar contadores de suscripción:", JSON.stringify(error, null, 2));
+        throw error;
+      }
+      console.log("Contadores de suscripción reiniciados exitosamente:", data);
+      return data;
+    } catch (e) {
+      console.error("Excepción en cvService.resetOneTimePlanCounters:", e);
+      throw e;
+    }
+  },
+
+  // Función para incrementar el contador de análisis de CVs (existente)
   async incrementCvAnalysisCount(suscripcionId) {
     if (!suscripcionId) {
       console.error("cvService.incrementCvAnalysisCount: suscripcionId es requerido.");
       throw new Error("ID de suscripción no proporcionado.");
     }
     try {
-      // Obtener el valor actual primero podría ser más seguro si hay concurrencia,
-      // pero para un solo usuario, un incremento directo suele ser suficiente.
-      // Supabase no tiene un operador de incremento atómico directo en el cliente JS para RPC o update.
-      // La forma más segura es usar una RPC function en Supabase.
-      // Alternativa más simple (menos robusta ante concurrencia extrema, pero ok para este caso):
-      
       const { data: currentSubscription, error: fetchError } = await supabase
         .from('suscripciones')
         .select('cvs_analizados_este_periodo')
