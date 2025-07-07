@@ -184,23 +184,31 @@ export const calculateEffectivePlan = (suscripcion) => {
   const now = new Date();
   const periodEndsAt = suscripcion.current_period_end ? new Date(suscripcion.current_period_end) : null;
 
-  // Determinar si la suscripción está activa por fecha
-  if (suscripcion.status === 'active' && (!periodEndsAt || periodEndsAt > now)) {
-    isSubscriptionActive = true;
-  } else {
+  // Determinar si la suscripción está activa
+  const basePlan = APP_PLANS[suscripcion.plan_id];
+
+  if (suscripcion.status === 'active') {
+    if (basePlan && basePlan.type === 'one-time') {
+      // Para planes one-time, solo el status 'active' es suficiente
+      isSubscriptionActive = true;
+    } else if (periodEndsAt && periodEndsAt > now) {
+      // Para planes mensuales o de prueba, el status 'active' y la fecha de fin son necesarios
+      isSubscriptionActive = true;
+    }
+  }
+
+  if (!isSubscriptionActive) {
     console.log("[DEBUG] calculateEffectivePlan - Subscription not active by date or status.");
     return {
       cvLimit: 0,
       jobLimit: 0,
-      matchLimit: 0, // Nuevo: Límite de macheos
+      matchLimit: 0,
       effectiveCurrentPlan: null,
       isSubscriptionActive: false,
       periodEndsAt: suscripcion.current_period_end,
     };
   }
 
-  // Obtener el plan base de la suscripción
-  const basePlan = APP_PLANS[suscripcion.plan_id];
 
   if (basePlan) {
     effectiveCurrentPlan = basePlan;

@@ -157,7 +157,6 @@ export default async (req, res) => {
                            current_period_end: addMonthsUTC(nowUtc, 1).toISOString(), // Válido por 1 mes (UTC)
                            stripe_subscription_id: null,
                            cvs_analizados_este_periodo: 0,
-                           jobs_creados_este_periodo: 0,
                            CV_Max_plan: 0, // Los límites base son 0, los límites del plan puntual van a los bonos
                            Jobs_Max_plan: 0,
                            one_time_cv_bonus: additionalCvLimit, // Los límites del plan puntual se guardan como bonos
@@ -275,7 +274,6 @@ export default async (req, res) => {
                 current_period_end: addMonthsUTC(nowUtc, 1).toISOString(), // Válido por 1 mes (UTC)
                 stripe_subscription_id: null,
                 cvs_analizados_este_periodo: 0,
-                jobs_creados_este_periodo: 0,
                 CV_Max_plan: 0, // Los límites base son 0 para planes one-time
                 Jobs_Max_plan: 0,
                 one_time_cv_bonus: additionalCvLimit,
@@ -391,7 +389,6 @@ export default async (req, res) => {
                        current_period_end: new Date(subscriptionCreated.current_period_end * 1000).toISOString(),
                        trial_ends_at: subscriptionCreated.trial_end ? new Date(subscriptionCreated.trial_end * 1000).toISOString() : null,
                        cvs_analizados_este_periodo: 0, // Reiniciar contador
-                       jobs_creados_este_periodo: 0, // Reiniciar contador
                        CV_Max_plan: subscriptionPlanDetails.cvLimit, // Límites base del plan mensual
                        Jobs_Max_plan: subscriptionPlanDetails.jobLimit, // Límites base del plan mensual
                        one_time_cv_bonus: oneTimeCvBonus, // Mantener los bonos existentes
@@ -451,7 +448,6 @@ export default async (req, res) => {
                            current_period_end: new Date(subscriptionUpdated.current_period_end * 1000).toISOString(),
                            trial_ends_at: subscriptionUpdated.trial_end ? new Date(subscriptionUpdated.trial_end * 1000).toISOString() : null,
                            cvs_analizados_este_periodo: 0, // Reiniciar contador de CVs
-                           jobs_creados_este_periodo: 0, // Reiniciar contador de puestos
                            CV_Max_plan: updatedSubscriptionPlanDetails.cvLimit, // Límites base del plan mensual
                            Jobs_Max_plan: updatedSubscriptionPlanDetails.jobLimit, // Límites base del plan mensual
                            one_time_cv_bonus: 0, // Reiniciar bonos puntuales a 0
