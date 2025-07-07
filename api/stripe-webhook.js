@@ -101,7 +101,7 @@ export default async (req, res) => {
                    // Consultar el registro de suscripción existente
                    const { data: existingSubscription, error: fetchError } = await supabase
                        .from('suscripciones')
-                       .select('plan_id, CV_Max_plan, Jobs_Max_plan, one_time_cv_bonus, one_time_job_bonus') // Incluir nuevos campos
+                       .select('plan_id, CV_Max_plan, Jobs_Max_plan, one_time_cv_bonus, one_time_job_bonus, one_time_match_bonus') // Incluir nuevos campos
                        .eq('recruiter_id', recruiterId)
                        .maybeSingle(); // Usar maybeSingle para manejar caso de no encontrar
 
@@ -121,6 +121,7 @@ export default async (req, res) => {
                        updateData = {
                            one_time_cv_bonus: (existingSubscription.one_time_cv_bonus || 0) + additionalCvLimit,
                            one_time_job_bonus: (existingSubscription.one_time_job_bonus || 0) + additionalJobLimit,
+                           one_time_match_bonus: (existingSubscription.one_time_match_bonus || 0) + (oneTimePlanDetails.matchLimit || 0), // Añadir el bono de macheos
                        };
                        // Si el plan existente es puntual, extender el current_period_end
                        if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type === 'one-time') {
@@ -161,6 +162,7 @@ export default async (req, res) => {
                            Jobs_Max_plan: 0,
                            one_time_cv_bonus: additionalCvLimit, // Los límites del plan puntual se guardan como bonos
                            one_time_job_bonus: additionalJobLimit,
+                           one_time_match_bonus: oneTimePlanDetails.matchLimit || 0, // Los límites de macheos del plan puntual se guardan como bonos
                        };
                        console.log('DEBUG: New subscription data for one-time plan (payment_intent.succeeded):', newSubscriptionData);
 
@@ -223,7 +225,9 @@ export default async (req, res) => {
           if (purchasedPlanDetails.type === 'one-time') { // Lógica para planes puntuales
             const additionalCvLimit = purchasedPlanDetails.cvLimit || 0;
             const additionalJobLimit = purchasedPlanDetails.jobLimit || 0;
-
+            const additionalMatchLimit = purchasedPlanDetails.matchLimit || 0; // Nuevo: Límite de macheos
+ 
+ 
             if (existingSubscription) {
               // Usuario con plan existente (puntual o mensual) compra otro plan puntual
               console.log(`ℹ️ Existing subscription found for user ${recruiterId}. Adding one-time plan limits as bonus.`);
@@ -233,6 +237,7 @@ export default async (req, res) => {
               updateData = {
                 one_time_cv_bonus: (existingSubscription.one_time_cv_bonus || 0) + additionalCvLimit,
                 one_time_job_bonus: (existingSubscription.one_time_job_bonus || 0) + additionalJobLimit,
+                one_time_match_bonus: (existingSubscription.one_time_match_bonus || 0) + additionalMatchLimit, // Añadir el bono de macheos
               };
 
               // Si el plan existente es puntual, extender el current_period_end desde la fecha actual (UTC)
@@ -275,6 +280,7 @@ export default async (req, res) => {
                 Jobs_Max_plan: 0,
                 one_time_cv_bonus: additionalCvLimit,
                 one_time_job_bonus: additionalJobLimit,
+                one_time_match_bonus: additionalMatchLimit, // Los límites de macheos del plan puntual se guardan como bonos
               };
               console.log('DEBUG: New subscription data for one-time plan (checkout.session.completed):', newSubscriptionData);
 
@@ -358,7 +364,7 @@ export default async (req, res) => {
                // Obtener la suscripción existente para mantener los bonos puntuales
                const { data: existingSubscription, error: fetchError } = await supabase
                    .from('suscripciones')
-                   .select('one_time_cv_bonus, one_time_job_bonus')
+                   .select('one_time_cv_bonus, one_time_job_bonus, one_time_match_bonus')
                    .eq('recruiter_id', recruiterIdCreated)
                    .maybeSingle();
 
@@ -369,6 +375,9 @@ export default async (req, res) => {
 
                const oneTimeCvBonus = existingSubscription?.one_time_cv_bonus || 0;
                const oneTimeJobBonus = existingSubscription?.one_time_job_bonus || 0;
+               const oneTimeMatchBonus = existingSubscription?.one_time_match_bonus || 0; // Obtener bono de macheos existente
+ 
+
 
                // Crea o actualiza la suscripción en tu base de datos
                const { data, error } = await supabase
@@ -418,7 +427,7 @@ export default async (req, res) => {
                    // Obtener la suscripción existente para mantener los bonos puntuales
                    const { data: existingSubscription, error: fetchError } = await supabase
                        .from('suscripciones')
-                       .select('one_time_cv_bonus, one_time_job_bonus')
+                       .select('one_time_cv_bonus, one_time_job_bonus, one_time_match_bonus')
                        .eq('recruiter_id', recruiterIdUpdated)
                        .maybeSingle();
 
@@ -429,6 +438,9 @@ export default async (req, res) => {
 
                    const oneTimeCvBonus = existingSubscription?.one_time_cv_bonus || 0;
                    const oneTimeJobBonus = existingSubscription?.one_time_job_bonus || 0;
+
+                   const oneTimeMatchBonus = existingSubscription?.one_time_match_bonus || 0; // Obtener bono de macheos existente
+
 
                    const { data, error } = await supabase
                        .from('suscripciones')
@@ -444,6 +456,7 @@ export default async (req, res) => {
                            Jobs_Max_plan: updatedSubscriptionPlanDetails.jobLimit, // Límites base del plan mensual
                            one_time_cv_bonus: 0, // Reiniciar bonos puntuales a 0
                            one_time_job_bonus: 0, // Reiniciar bonos puntuales a 0
+                           one_time_match_bonus: 0, // Reiniciar bonos de macheos puntuales a 0
                        })
                        .eq('recruiter_id', recruiterIdUpdated);
 
