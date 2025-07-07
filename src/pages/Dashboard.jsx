@@ -39,6 +39,8 @@ function Dashboard() {
     currentAnalysisCount, // Nuevo
     currentJobCount, // Nuevo: Obtener currentJobCount del hook
     effectiveLimits, // Nuevo: Obtener effectiveLimits del hook
+    matchLimit, // Nuevo: Límite de macheos
+    currentMatchCount, // Nuevo: Contador de macheos
   } = useDashboardData();
 
   // Verificar si la prueba ha expirado después de obtener userSubscription
@@ -498,7 +500,12 @@ function Dashboard() {
             return (
             <AIAnalysisTab
               jobs={jobs}
-              recruiterId={user?.id} // Pasar el ID del reclutador
+              recruiterId={user?.id}
+              matchLimit={matchLimit}
+              currentMatchCount={currentMatchCount}
+              recruiterId={user?.id}
+              matchLimit={matchLimit} // Pasar el límite de macheos
+              currentMatchCount={currentMatchCount} // Pasar el contador de macheos
               cvFilesFromDashboard={cvFiles}
               isLoadingCandidates={isLoadingCVs}
               isLoadingJobs={isLoadingJobs}

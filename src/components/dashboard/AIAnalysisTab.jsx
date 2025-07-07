@@ -92,7 +92,9 @@ export function AIAnalysisTab({
   isLoadingJobs = false,
   cvFilesFromDashboard = [],
   isLoadingCandidates = false,
-  recruiterId // Nueva prop
+  recruiterId, // Nueva prop
+  matchLimit, // Límite de macheos
+  currentMatchCount // Contador de macheos
 }) {
   const [selectedJobId, setSelectedJobId] = useState('');
   const [selectedCandidateIds, setSelectedCandidateIds] = useState(new Set());
@@ -286,6 +288,20 @@ export function AIAnalysisTab({
 
       <div className="space-y-4 p-4 border rounded-md">
         <h3 className="text-lg font-medium">Selección de Puesto y Candidatos</h3>
+        
+        {/* Contador de Macheos */}
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-md mb-4">
+          <p className="text-sm font-medium">
+            Macheos realizados este período: {currentMatchCount} de {matchLimit === Infinity ? 'Ilimitados' : matchLimit}
+          </p>
+          <div className="w-full bg-blue-200 rounded-full h-2.5 mt-1">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full"
+              style={{ width: `${(currentMatchCount / matchLimit) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
           <div>
             <label htmlFor="job-select" className="block text-sm font-medium text-gray-700 mb-1">Puesto de Trabajo</label>
