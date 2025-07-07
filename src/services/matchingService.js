@@ -31,7 +31,7 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
   const { data: subscriptionData, error: subscriptionError } = await supabase
     .from('suscripciones')
     .select('*')
-    .eq('user_id', recruiterId)
+    .eq('recruiter_id', recruiterId)
     .single();
 
   if (subscriptionError || !subscriptionData) {
@@ -260,7 +260,7 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
     const { error: updateSubscriptionError } = await supabase
       .from('suscripciones')
       .update({ mach_analizados_este_periodo: currentMatchCount + matchesProcessedInThisRun })
-      .eq('user_id', recruiterId);
+      .eq('recruiter_id', recruiterId);
 
     if (updateSubscriptionError) {
       console.error(`Error al actualizar el contador de macheos para el reclutador ${recruiterId}:`, updateSubscriptionError);
