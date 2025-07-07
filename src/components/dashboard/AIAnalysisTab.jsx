@@ -292,14 +292,17 @@ export function AIAnalysisTab({
         {/* Contador de Macheos */}
         <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-md mb-4">
           <p className="text-sm font-medium">
-            Macheos realizados este período: {currentMatchCount} de {matchLimit === Infinity ? 'Ilimitados' : matchLimit}
+            Macheos realizados este período: {currentMatchCount} de {matchLimit === Infinity ? 'Ilimitados' : (matchLimit || 'N/A')}
           </p>
           <div className="w-full bg-blue-200 rounded-full h-2.5 mt-1">
             <div
               className="bg-blue-600 h-2.5 rounded-full"
-              style={{ width: `${(currentMatchCount / matchLimit) * 100}%` }}
+              style={{ width: `${matchLimit > 0 ? (currentMatchCount / matchLimit) * 100 : 0}%` }}
             ></div>
           </div>
+          {matchLimit === 0 && (
+            <p className="text-xs text-red-600 mt-1">No hay límite de macheos disponible. Verifique su suscripción.</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">

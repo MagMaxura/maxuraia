@@ -36,7 +36,8 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
 
   if (subscriptionError || !subscriptionData) {
     console.error(`Error al obtener la suscripción para el reclutador ${recruiterId}:`, subscriptionError);
-    throw new Error("No se pudo obtener la información de la suscripción del usuario.");
+    // Lanzar un error más específico si es posible, o el error original de Supabase
+    throw new Error(`No se pudo obtener la información de la suscripción del usuario. Detalles: ${subscriptionError?.message || JSON.stringify(subscriptionError)}`);
   }
 
   const effectiveLimits = calculateEffectivePlan(subscriptionData);
