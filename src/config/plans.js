@@ -163,6 +163,7 @@ export const getAllPlans = () => {
 export const calculateEffectivePlan = (suscripcion) => {
   let effectiveCvLimit = 0;
   let effectiveJobLimit = 0;
+  let effectiveMatchLimit = 0; // Nuevo: Límite de macheos
   let effectiveCurrentPlan = null;
   let isSubscriptionActive = false;
 
@@ -173,6 +174,7 @@ export const calculateEffectivePlan = (suscripcion) => {
     return {
       cvLimit: 0,
       jobLimit: 0,
+      matchLimit: 0, // Nuevo: Límite de macheos
       effectiveCurrentPlan: null,
       isSubscriptionActive: false,
       periodEndsAt: null,
@@ -190,6 +192,7 @@ export const calculateEffectivePlan = (suscripcion) => {
     return {
       cvLimit: 0,
       jobLimit: 0,
+      matchLimit: 0, // Nuevo: Límite de macheos
       effectiveCurrentPlan: null,
       isSubscriptionActive: false,
       periodEndsAt: suscripcion.current_period_end,
@@ -206,19 +209,23 @@ export const calculateEffectivePlan = (suscripcion) => {
     if (basePlan.type === 'monthly' || basePlan.type === 'enterprise') {
       effectiveCvLimit = basePlan.cvLimit || 0;
       effectiveJobLimit = basePlan.jobLimit || 0;
+      effectiveMatchLimit = basePlan.matchLimit || 0; // Nuevo: Límite de macheos
     } else if (basePlan.type === 'one-time') {
       // Si el plan base es puntual, sus límites base son 0, los límites vienen de los bonos
       effectiveCvLimit = 0;
       effectiveJobLimit = 0;
+      effectiveMatchLimit = 0; // Nuevo: Límite de macheos
     }
   }
 
   // Sumar los bonos puntuales
   effectiveCvLimit += suscripcion.one_time_cv_bonus || 0;
   effectiveJobLimit += suscripcion.one_time_job_bonus || 0;
+  effectiveMatchLimit += suscripcion.one_time_match_bonus || 0; // Nuevo: Sumar bonos de macheos
 
   console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveCvLimit:", effectiveCvLimit);
   console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveJobLimit:", effectiveJobLimit);
+  console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveMatchLimit:", effectiveMatchLimit); // Nuevo log
   console.log("[DEBUG] calculateEffectivePlan - Effective Current Plan:", effectiveCurrentPlan);
   console.log("[DEBUG] calculateEffectivePlan - Is Subscription Active:", isSubscriptionActive);
   console.log("[DEBUG] calculateEffectivePlan - Period Ends At:", periodEndsAt);
@@ -226,6 +233,7 @@ export const calculateEffectivePlan = (suscripcion) => {
   return {
     cvLimit: effectiveCvLimit,
     jobLimit: effectiveJobLimit,
+    matchLimit: effectiveMatchLimit, // Nuevo: Devolver matchLimit
     effectiveCurrentPlan: effectiveCurrentPlan,
     isSubscriptionActive: isSubscriptionActive,
     periodEndsAt: suscripcion.current_period_end,
