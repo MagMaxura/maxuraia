@@ -163,77 +163,72 @@ export const getAllPlans = () => {
 export const calculateEffectivePlan = (suscripcion) => {
   let effectiveCvLimit = 0;
   let effectiveJobLimit = 0;
-  let effectiveMatchLimit = 0; // Nuevo: Límite de macheos
+  let effectiveMatchLimit = 0;
   let effectiveCurrentPlan = null;
   let isSubscriptionActive = false;
 
   console.log("[DEBUG] calculateEffectivePlan - suscripcion:", suscripcion);
 
-  if (!suscripcion || suscripcion.status !== 'active') {
-    console.log("[DEBUG] calculateEffectivePlan - No active subscription found.");
-    return {
-      cvLimit: 0,
-      jobLimit: 0,
-      matchLimit: 0, // Nuevo: Límite de macheos
-      effectiveCurrentPlan: null,
-      isSubscriptionActive: false,
-      periodEndsAt: null,
-    };
-  }
-
-  const now = new Date();
-  const periodEndsAt = suscripcion.current_period_end ? new Date(suscripcion.current_period_end) : null;
-
-  // Determinar si la suscripción está activa
-  const basePlan = APP_PLANS[suscripcion.plan_id];
-
-  if (suscripcion.status === 'active') {
-    if (basePlan && basePlan.type === 'one-time') {
-      // Para planes one-time, solo el status 'active' es suficiente
-      isSubscriptionActive = true;
-    } else if (periodEndsAt && periodEndsAt > now) {
-      // Para planes mensuales o de prueba, el status 'active' y la fecha de fin son necesarios
-      isSubscriptionActive = true;
-    }
-  }
-
-  if (!isSubscriptionActive) {
-    console.log("[DEBUG] calculateEffectivePlan - Subscription not active by date or status.");
+  if (!suscripcion) {
+    console.log("[DEBUG] calculateEffectivePlan - No subscription object found.");
     return {
       cvLimit: 0,
       jobLimit: 0,
       matchLimit: 0,
       effectiveCurrentPlan: null,
       isSubscriptionActive: false,
-      periodEndsAt: suscripcion.current_period_end,
+      periodEndsAt: null,
     };
   }
 
-
-  if (basePlan) {
-    effectiveCurrentPlan = basePlan;
-
-    // Si el plan base es mensual/enterprise, usar sus límites
-    if (basePlan.type === 'monthly' || basePlan.type === 'enterprise') {
-      effectiveCvLimit = basePlan.cvLimit || 0;
-      effectiveJobLimit = basePlan.jobLimit || 0;
-      effectiveMatchLimit = basePlan.matchLimit || 0; // Nuevo: Límite de macheos
-    } else if (basePlan.type === 'one-time') {
-      // Para planes puntuales, los límites base vienen directamente del plan
-      effectiveCvLimit = basePlan.cvLimit || 0;
-      effectiveJobLimit = basePlan.jobLimit || 0;
-      effectiveMatchLimit = basePlan.matchLimit || 0; // Tomar el límite de macheos del plan
-    }
-  }
-
-  // Sumar los bonos puntuales (si existen y aplican)
+  // Siempre sumar los bonos puntuales si existen, independientemente del estado del plan base
   effectiveCvLimit += suscripcion.one_time_cv_bonus || 0;
   effectiveJobLimit += suscripcion.one_time_job_bonus || 0;
-  effectiveMatchLimit += suscripcion.one_time_match_bonus || 0; // Sumar bonos de macheos
+  effectiveMatchLimit += suscripcion.one_time_match_bonus || 0;
+
+  const now = new Date();
+  const periodEndsAt = suscripcion.current_period_end ? new Date(suscripcion.current_period_end) : null;
+  const basePlan = APP_PLANS[suscripcion.plan_id];
+
+  if (suscripcion.status === 'active') {
+    if (basePlan && basePlan.type === 'one-time') {
+      // Para planes one-time, el status 'active' es suficiente.
+      // Si tienen un current_period_end, también se puede considerar.
+      isSubscriptionActive = true;
+    } else if (basePlan && (basePlan.type === 'monthly' || basePlan.type === 'enterprise')) {
+      // Para planes mensuales/empresariales, el status 'active' y la fecha de fin son necesarios.
+      if (periodEndsAt && periodEndsAt > now) {
+        isSubscriptionActive = true;
+      } else {
+        console.log("[DEBUG] calculateEffectivePlan - Monthly/Enterprise subscription expired by date.");
+      }
+    } else if (suscripcion.plan_id === 'trial' && periodEndsAt && periodEndsAt > now) {
+      // Para planes de prueba, el status 'active' y la fecha de fin son necesarios.
+      isSubscriptionActive = true;
+    } else {
+      console.log("[DEBUG] calculateEffectivePlan - Subscription status is active, but plan type or period end date is not valid for active status.");
+    }
+  } else {
+    console.log("[DEBUG] calculateEffectivePlan - Subscription status is not active:", suscripcion.status);
+  }
+
+  if (isSubscriptionActive) {
+    if (basePlan) {
+      effectiveCurrentPlan = basePlan;
+      // Sumar los límites del plan base solo si el plan base está activo
+      effectiveCvLimit += basePlan.cvLimit || 0;
+      effectiveJobLimit += basePlan.jobLimit || 0;
+      effectiveMatchLimit += basePlan.matchLimit || 0;
+    }
+  } else {
+    console.log("[DEBUG] calculateEffectivePlan - Effective plan is not active, only bonuses will apply (if any).");
+    // Si el plan base no está activo, effectiveCurrentPlan debe ser null
+    effectiveCurrentPlan = null;
+  }
 
   console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveCvLimit:", effectiveCvLimit);
   console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveJobLimit:", effectiveJobLimit);
-  console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveMatchLimit:", effectiveMatchLimit); // Nuevo log
+  console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveMatchLimit:", effectiveMatchLimit);
   console.log("[DEBUG] calculateEffectivePlan - Effective Current Plan:", effectiveCurrentPlan);
   console.log("[DEBUG] calculateEffectivePlan - Is Subscription Active:", isSubscriptionActive);
   console.log("[DEBUG] calculateEffectivePlan - Period Ends At:", periodEndsAt);
@@ -241,7 +236,7 @@ export const calculateEffectivePlan = (suscripcion) => {
   return {
     cvLimit: effectiveCvLimit,
     jobLimit: effectiveJobLimit,
-    matchLimit: effectiveMatchLimit, // Nuevo: Devolver matchLimit
+    matchLimit: effectiveMatchLimit,
     effectiveCurrentPlan: effectiveCurrentPlan,
     isSubscriptionActive: isSubscriptionActive,
     periodEndsAt: suscripcion.current_period_end,
