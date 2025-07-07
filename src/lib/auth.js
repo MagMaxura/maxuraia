@@ -488,10 +488,17 @@ export const auth = {
       
       // Combinar el perfil del reclutador con la suscripción más relevante
       let activeSubscription = null;
-      if (currentPlan) { // Priorizar plan mensual/enterprise
+      const now = new Date();
+      
+      // Determinar si el currentPlan (mensual/enterprise) está realmente activo por fecha
+      const isCurrentPlanActiveByDate = currentPlan && new Date(currentPlan.current_period_end) > now;
+
+      if (isCurrentPlanActiveByDate) { // Priorizar plan mensual/enterprise si está activo por fecha
         activeSubscription = currentPlan;
-      } else if (oneTimePlan) { // Si no hay mensual, usar puntual
+      } else if (oneTimePlan && oneTimePlan.status === 'active' && new Date(oneTimePlan.current_period_end) > now) { // Si no, usar puntual si está activo por fecha
         activeSubscription = oneTimePlan;
+      } else if (currentPlan) { // Si el plan mensual existe pero está expirado, aún lo asignamos para que se muestre su nombre, pero se indicará como expirado
+        activeSubscription = currentPlan;
       }
 
       // Asegurar que los campos de conteo estén presentes en el objeto de suscripción

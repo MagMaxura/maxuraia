@@ -222,8 +222,13 @@ export const calculateEffectivePlan = (suscripcion) => {
     }
   } else {
     console.log("[DEBUG] calculateEffectivePlan - Effective plan is not active, only bonuses will apply (if any).");
-    // Si el plan base no está activo, effectiveCurrentPlan debe ser null
-    effectiveCurrentPlan = null;
+    // Si el plan base no está activo, pero hay bonos de un plan puntual,
+    // el plan efectivo debería ser el plan puntual.
+    if (suscripcion.one_time_cv_bonus > 0 || suscripcion.one_time_job_bonus > 0 || suscripcion.one_time_match_bonus > 0) {
+      effectiveCurrentPlan = APP_PLANS['busqueda_puntual'];
+    } else {
+      effectiveCurrentPlan = null;
+    }
   }
 
   console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveCvLimit:", effectiveCvLimit);
