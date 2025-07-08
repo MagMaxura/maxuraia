@@ -122,16 +122,19 @@ export default async (req, res) => {
                            one_time_cv_bonus: (existingSubscription.one_time_cv_bonus || 0) + additionalCvLimit,
                            one_time_job_bonus: (existingSubscription.one_time_job_bonus || 0) + additionalJobLimit,
                            one_time_match_bonus: (existingSubscription.one_time_match_bonus || 0) + (oneTimePlanDetails.matchLimit || 0), // Añadir el bono de macheos
+                           bonus_periodo_start: nowUtc.toISOString(), // Establecer la fecha de inicio del bono
+                           bonus_periodo_end: addMonthsUTC(nowUtc, 1).toISOString(), // Establecer la fecha de fin del bono (1 mes)
                        };
-                       // Si el plan existente es puntual, extender el current_period_end
+                       // Si el plan existente es puntual, no se modifica el current_period_end ni el plan_id
+                       // porque el plan puntual no tiene un "periodo" recurrente en current_period_end.
+                       // Los bonos se gestionan con bonus_periodo_start/end.
                        if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type === 'one-time') {
-                         updateData.current_period_end = addMonthsUTC(nowUtc, 1).toISOString(); // Siempre desde la fecha de compra (UTC)
                          updateData.status = 'active'; // Asegurar que el estado sea activo
-                         updateData.plan_id = planIdFromMetadata; // Mantener el plan puntual como principal
+                         // No se cambia plan_id si ya es one-time, solo se suman bonos
                        } else if (existingSubscription.plan_id && APP_PLANS[existingSubscription.plan_id]?.type !== 'one-time') {
                          // Si tiene un plan mensual, no se modifica el current_period_end ni el plan_id
-                         // Los bonos se suman y se reiniciarán con el ciclo mensual.
-                         console.log(`ℹ️ User ${recruiterId} with monthly plan purchased one-time plan. Bonuses added.`);
+                         // Los bonos se suman y tienen su propio período de validez.
+                         console.log(`ℹ️ User ${recruiterId} with monthly plan purchased one-time plan. Bonuses added with their own validity period.`);
                        }
 
                        const { error: updateError } = await supabase
@@ -153,8 +156,8 @@ export default async (req, res) => {
                            plan_id: planIdFromMetadata, // El plan puntual es el principal si no hay otro
                            status: 'active',
                            trial_ends_at: null,
-                           current_period_start: nowUtc.toISOString(),
-                           current_period_end: addMonthsUTC(nowUtc, 1).toISOString(), // Válido por 1 mes (UTC)
+                           current_period_start: nowUtc.toISOString(), // Fecha de inicio de la suscripción
+                           current_period_end: null, // No hay periodo recurrente para one-time aquí
                            stripe_subscription_id: null,
                            cvs_analizados_este_periodo: 0,
                            CV_Max_plan: 0, // Los límites base son 0, los límites del plan puntual van a los bonos
@@ -162,6 +165,8 @@ export default async (req, res) => {
                            one_time_cv_bonus: additionalCvLimit, // Los límites del plan puntual se guardan como bonos
                            one_time_job_bonus: additionalJobLimit,
                            one_time_match_bonus: oneTimePlanDetails.matchLimit || 0, // Los límites de macheos del plan puntual se guardan como bonos
+                           bonus_periodo_start: nowUtc.toISOString(), // Establecer la fecha de inicio del bono
+                           bonus_periodo_end: addMonthsUTC(nowUtc, 1).toISOString(), // Establecer la fecha de fin del bono (1 mes)
                        };
                        console.log('DEBUG: New subscription data for one-time plan (payment_intent.succeeded):', newSubscriptionData);
 
@@ -374,8 +379,8 @@ export default async (req, res) => {
                const oneTimeCvBonus = existingSubscription?.one_time_cv_bonus || 0;
                const oneTimeJobBonus = existingSubscription?.one_time_job_bonus || 0;
                const oneTimeMatchBonus = existingSubscription?.one_time_match_bonus || 0; // Obtener bono de macheos existente
- 
-
+               const bonusPeriodStart = existingSubscription?.bonus_periodo_start || null; // Obtener fecha de inicio de bono existente
+               const bonusPeriodEnd = existingSubscription?.bonus_periodo_end || null; // Obtener fecha de fin de bono existente
 
                // Crea o actualiza la suscripción en tu base de datos
                const { data, error } = await supabase
@@ -393,6 +398,9 @@ export default async (req, res) => {
                        Jobs_Max_plan: subscriptionPlanDetails.jobLimit, // Límites base del plan mensual
                        one_time_cv_bonus: oneTimeCvBonus, // Mantener los bonos existentes
                        one_time_job_bonus: oneTimeJobBonus, // Mantener los bonos existentes
+                       one_time_match_bonus: oneTimeMatchBonus, // Mantener los bonos de macheos existentes
+                       bonus_periodo_start: bonusPeriodStart, // Mantener la fecha de inicio de bono existente
+                       bonus_periodo_end: bonusPeriodEnd, // Mantener la fecha de fin de bono existente
                    }, { onConflict: 'recruiter_id', ignoreDuplicates: false }); // Conflict on recruiter_id
 
                    if (error) {
@@ -424,7 +432,7 @@ export default async (req, res) => {
                    // Obtener la suscripción existente para mantener los bonos puntuales
                    const { data: existingSubscription, error: fetchError } = await supabase
                        .from('suscripciones')
-                       .select('one_time_cv_bonus, one_time_job_bonus, one_time_match_bonus')
+                       .select('one_time_cv_bonus, one_time_job_bonus, one_time_match_bonus, bonus_periodo_start, bonus_periodo_end') // Incluir fechas de bono
                        .eq('recruiter_id', recruiterIdUpdated)
                        .maybeSingle();
 
@@ -435,8 +443,9 @@ export default async (req, res) => {
 
                    const oneTimeCvBonus = existingSubscription?.one_time_cv_bonus || 0;
                    const oneTimeJobBonus = existingSubscription?.one_time_job_bonus || 0;
-
                    const oneTimeMatchBonus = existingSubscription?.one_time_match_bonus || 0; // Obtener bono de macheos existente
+                   const bonusPeriodStart = existingSubscription?.bonus_periodo_start || null; // Obtener fecha de inicio de bono existente
+                   const bonusPeriodEnd = existingSubscription?.bonus_periodo_end || null; // Obtener fecha de fin de bono existente
 
 
                    const { data, error } = await supabase
@@ -448,11 +457,13 @@ export default async (req, res) => {
                            current_period_end: new Date(subscriptionUpdated.current_period_end * 1000).toISOString(),
                            trial_ends_at: subscriptionUpdated.trial_end ? new Date(subscriptionUpdated.trial_end * 1000).toISOString() : null,
                            cvs_analizados_este_periodo: 0, // Reiniciar contador de CVs
-                           CV_Max_plan: updatedSubscriptionPlanDetails.cvLimit, // Límites base del plan mensual
                            Jobs_Max_plan: updatedSubscriptionPlanDetails.jobLimit, // Límites base del plan mensual
-                           one_time_cv_bonus: 0, // Reiniciar bonos puntuales a 0
-                           one_time_job_bonus: 0, // Reiniciar bonos puntuales a 0
-                           one_time_match_bonus: 0, // Reiniciar bonos de macheos puntuales a 0
+                           CV_Max_plan: updatedSubscriptionPlanDetails.cvLimit, // Límites base del plan mensual
+                           one_time_cv_bonus: oneTimeCvBonus, // Mantener bonos puntuales existentes
+                           one_time_job_bonus: oneTimeJobBonus, // Mantener bonos puntuales existentes
+                           one_time_match_bonus: oneTimeMatchBonus, // Mantener bonos de macheos puntuales existentes
+                           bonus_periodo_start: bonusPeriodStart, // Mantener la fecha de inicio de bono existente
+                           bonus_periodo_end: bonusPeriodEnd, // Mantener la fecha de fin de bono existente
                        })
                        .eq('recruiter_id', recruiterIdUpdated);
 

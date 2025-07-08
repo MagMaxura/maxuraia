@@ -491,14 +491,18 @@ export const auth = {
       const now = new Date();
       
       // Determinar si el currentPlan (mensual/enterprise) está realmente activo por fecha
-      const isCurrentPlanActiveByDate = currentPlan && new Date(currentPlan.current_period_end) > now;
+      const isCurrentPlanActiveByDate = currentPlan && currentPlan.status === 'active' && new Date(currentPlan.current_period_end) > now;
+      // Determinar si el oneTimePlan está realmente activo por fecha
+      const isOneTimePlanActiveByDate = oneTimePlan && oneTimePlan.status === 'active' && new Date(oneTimePlan.current_period_end) > now;
 
       if (isCurrentPlanActiveByDate) { // Priorizar plan mensual/enterprise si está activo por fecha
         activeSubscription = currentPlan;
-      } else if (oneTimePlan && oneTimePlan.status === 'active' && new Date(oneTimePlan.current_period_end) > now) { // Si no, usar puntual si está activo por fecha
+      } else if (isOneTimePlanActiveByDate) { // Si no, usar puntual si está activo por fecha
         activeSubscription = oneTimePlan;
       } else if (currentPlan) { // Si el plan mensual existe pero está expirado, aún lo asignamos para que se muestre su nombre, pero se indicará como expirado
         activeSubscription = currentPlan;
+      } else if (oneTimePlan) { // Si el plan puntual existe pero está expirado, lo asignamos
+        activeSubscription = oneTimePlan;
       }
 
       // Asegurar que los campos de conteo estén presentes en el objeto de suscripción
