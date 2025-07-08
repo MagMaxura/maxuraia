@@ -65,11 +65,17 @@ function CurrentPlanTab() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-700">
           {/* Columna 1: Plan de Suscripción Mensual/Empresarial/Trial */}
           {basePlan && ( // Mostrar siempre si hay un plan base, activo o no
-            <div className="border p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3">Plan de Suscripción: <span className="capitalize text-blue-600">{basePlan.name}</span></h3>
+            <div className={`p-4 rounded-lg ${isBasePlanActive ? 'border-2 border-blue-500 shadow-md' : 'border border-red-500'}`}>
+              <h3 className="text-lg font-semibold mb-3 flex items-center">
+                Plan de Suscripción: <span className="capitalize text-blue-600">{basePlan.name}</span>
+                {isBasePlanActive && <span className="ml-2 text-blue-500"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>}
+              </h3>
               <div className="space-y-3">
                 {!isBasePlanActive && (
-                  <p className="text-red-600 font-medium">Este plan está actualmente inactivo o vencido.</p>
+                  <p className="text-red-600 font-medium flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    Este plan está actualmente inactivo o vencido.
+                  </p>
                 )}
                 <div>
                   <p className="text-sm font-medium text-slate-500">Límite de CVs (mensual):</p>
@@ -101,10 +107,16 @@ function CurrentPlanTab() {
 
           {/* Columna para Bonos Puntuales */}
           {(baseSubscription.one_time_cv_bonus > 0 || baseSubscription.one_time_job_bonus > 0 || baseSubscription.one_time_match_bonus > 0) && ( // Mostrar si hay bonos, activos o no
-            <div className="border p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3">Bonos de Búsqueda Puntual</h3>
+            <div className={`p-4 rounded-lg ${isBonusPlanActive ? 'border-2 border-green-500 shadow-md' : 'border border-red-500'}`}>
+              <h3 className="text-lg font-semibold mb-3 flex items-center">
+                Bonos de Búsqueda Puntual
+                {isBonusPlanActive && <span className="ml-2 text-green-500"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>}
+              </h3>
               {!isBonusPlanActive && (
-                <p className="text-red-600 font-medium">Estos bonos están actualmente inactivos o vencidos.</p>
+                <p className="text-red-600 font-medium flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  Estos bonos están actualmente inactivos o vencidos.
+                </p>
               )}
               <p className="text-sm text-green-600 font-medium mb-3">¡Límites adicionales por única vez!</p>
               <div className="space-y-3">
@@ -159,82 +171,12 @@ function CurrentPlanTab() {
 
           {/* Columna para Comprar Búsqueda Puntual (siempre visible, a menos que el plan base sea ilimitado) */}
           {/* Columna para Comprar Búsqueda Puntual (siempre visible) */}
-          {(
-            <div className="border p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3">{APP_PLANS['busqueda_puntual'].name}</h3>
-              <p className="text-sm text-green-600 font-medium mb-3">¡Aumenta tu límite por única vez!</p>
-              <div className="space-y-3">
-                <p className="text-md">{APP_PLANS['busqueda_puntual'].description}</p>
-                <Button
-                  onClick={() => handleCheckout(APP_PLANS['busqueda_puntual'], user)}
-                  disabled={loadingCheckout || loadingUser || !user?.id}
-                  className="w-full bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Comprar {APP_PLANS['busqueda_puntual'].priceDisplay}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Columna para Mejorar Plan (siempre visible, a menos que sea Enterprise) */}
-          {nextPlanToShow && nextPlanToShow.id !== 'enterprise_monthly' && (
-            <div className="border p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3">Mejorar Plan</h3>
-              <div className="space-y-3">
-                <p className="text-md font-semibold capitalize text-purple-600">{nextPlanToShow.name}</p>
-                <p className="text-md">{nextPlanToShow.description}</p>
-                <Button
-                  onClick={() => handleCheckout(nextPlanToShow, user)}
-                  disabled={loadingCheckout || loadingUser || !user?.id}
-                  className="w-full bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Comprar {nextPlanToShow.priceDisplay}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Columna para Contactar a Soporte (si es Enterprise o no hay plan superior) */}
-          {(!nextPlanToShow || nextPlanToShow.id === 'enterprise_monthly') && (
-            <div className="border p-4 rounded-lg">
-              <h3 className="text-lg font-semibold mb-3">Opciones Enterprise</h3>
-              <div className="space-y-3">
-                <p className="text-md font-semibold text-slate-500">Para soluciones personalizadas y planes Enterprise, contacta a nuestro equipo de ventas.</p>
-                <Button
-                  onClick={() => window.location.href = 'mailto:soporte@employsmartia.com'} // Ejemplo de contacto
-                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
-                >
-                  Contactar a Soporte
-                </Button>
-              </div>
-            </div>
-          )}
-
         </div>
       ) : (
         <p className="text-slate-500">Cargando información del plan o no hay plan disponible. Si el problema persiste, contacta a soporte.</p>
       )}
       {/* El ToastProvider y Toast ya no son necesarios aquí para el botón "Mejorar Plan" */}
       {/* Se pueden mantener si se usan para otras notificaciones */}
-      {/* <ToastProvider>
-        <Toast open={open} onOpenChange={setOpen} nextPlan={nextPlan}>
-          <ToastTitle>{nextPlan ? nextPlan.name : 'No hay plan superior'}</ToastTitle>
-          <ToastDescription>
-            {nextPlan ? nextPlan.description : 'Contacta a soporte para más información.'}
-          </ToastDescription>
-          <Button
-            onClick={() => handleCheckout(nextPlan, user)}
-            disabled={loadingCheckout}
-          >
-            {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Comprar Plan
-          </Button>
-          <ToastClose />
-        </Toast>
-        <ToastViewport />
-      </ToastProvider> */}
     </motion.div>
   );
 }

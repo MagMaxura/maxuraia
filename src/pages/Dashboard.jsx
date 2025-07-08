@@ -503,9 +503,6 @@ function Dashboard() {
               recruiterId={user?.id}
               matchLimit={matchLimit}
               currentMatchCount={currentMatchCount}
-              recruiterId={user?.id}
-              matchLimit={matchLimit} // Pasar el límite de macheos
-              currentMatchCount={currentMatchCount} // Pasar el contador de macheos
               cvFilesFromDashboard={cvFiles}
               isLoadingCandidates={isLoadingCVs}
               isLoadingJobs={isLoadingJobs}
