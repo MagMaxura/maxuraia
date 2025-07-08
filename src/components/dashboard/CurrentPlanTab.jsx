@@ -158,7 +158,8 @@ function CurrentPlanTab() {
           )}
 
           {/* Columna para Comprar Búsqueda Puntual (siempre visible, a menos que el plan base sea ilimitado) */}
-          {!(basePlan && basePlan.cvLimit === Infinity && basePlan.jobLimit === Infinity) && (
+          {/* Columna para Comprar Búsqueda Puntual (siempre visible) */}
+          {(
             <div className="border p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-3">{APP_PLANS['busqueda_puntual'].name}</h3>
               <p className="text-sm text-green-600 font-medium mb-3">¡Aumenta tu límite por única vez!</p>
