@@ -64,10 +64,13 @@ function CurrentPlanTab() {
       {user && baseSubscription ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-700">
           {/* Columna 1: Plan de Suscripción Mensual/Empresarial/Trial */}
-          {isBasePlanActive && (
+          {basePlan && ( // Mostrar siempre si hay un plan base, activo o no
             <div className="border p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-3">Plan de Suscripción: <span className="capitalize text-blue-600">{basePlan.name}</span></h3>
               <div className="space-y-3">
+                {!isBasePlanActive && (
+                  <p className="text-red-600 font-medium">Este plan está actualmente inactivo o vencido.</p>
+                )}
                 <div>
                   <p className="text-sm font-medium text-slate-500">Límite de CVs (mensual):</p>
                   <p className="text-lg">{basePlan.cvLimit === Infinity ? "Ilimitados" : basePlan.cvLimit}</p>
@@ -80,13 +83,13 @@ function CurrentPlanTab() {
                   <p className="text-sm font-medium text-slate-500">Límite de Matches (mensual):</p>
                   <p className="text-lg">{basePlan.matchLimit === Infinity ? "Ilimitados" : basePlan.matchLimit}</p>
                 </div>
-                {basePlan.type === 'trial' && (
+                {baseSubscription.trial_ends_at && (
                   <div>
                     <p className="text-sm font-medium text-slate-500">Tu prueba gratuita finaliza el:</p>
                     <p className="text-lg">{new Date(baseSubscription.trial_ends_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   </div>
                 )}
-                {(basePlan.type === 'monthly' || basePlan.type === 'enterprise') && (
+                {baseSubscription.current_period_end && (
                   <div>
                     <p className="text-sm font-medium text-slate-500">Próxima fecha de renovación:</p>
                     <p className="text-lg">{new Date(baseSubscription.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
@@ -97,9 +100,12 @@ function CurrentPlanTab() {
           )}
 
           {/* Columna para Bonos Puntuales */}
-          {isBonusPlanActive && (
+          {(baseSubscription.one_time_cv_bonus > 0 || baseSubscription.one_time_job_bonus > 0 || baseSubscription.one_time_match_bonus > 0) && ( // Mostrar si hay bonos, activos o no
             <div className="border p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-3">Bonos de Búsqueda Puntual</h3>
+              {!isBonusPlanActive && (
+                <p className="text-red-600 font-medium">Estos bonos están actualmente inactivos o vencidos.</p>
+              )}
               <p className="text-sm text-green-600 font-medium mb-3">¡Límites adicionales por única vez!</p>
               <div className="space-y-3">
                 <div>
@@ -114,16 +120,18 @@ function CurrentPlanTab() {
                   <p className="text-sm font-medium text-slate-500">Matches adicionales:</p>
                   <p className="text-lg">{baseSubscription.one_time_match_bonus || 0}</p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Vencimiento de bonos:</p>
-                  <p className="text-lg">{new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                </div>
+                {baseSubscription.bonus_periodo_end && (
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">Vencimiento de bonos:</p>
+                    <p className="text-lg">{new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {/* Columna para Límites Efectivos Totales */}
-          {(isBasePlanActive || isBonusPlanActive) && (
+          {/* Columna para Límites Efectivos Totales (solo si hay algún plan activo) */}
+          {(effectiveLimits?.isSubscriptionActive) && (
             <div className="border p-4 rounded-lg bg-blue-50">
               <h3 className="text-lg font-semibold mb-3 text-blue-700">Tus Límites Totales Actuales</h3>
               <div className="space-y-3">
@@ -149,8 +157,8 @@ function CurrentPlanTab() {
             </div>
           )}
 
-          {/* Columna para Comprar Búsqueda Puntual (si no está activa o si el plan base no es ilimitado) */}
-          {(!isBonusPlanActive || (basePlan && basePlan.cvLimit !== Infinity && basePlan.jobLimit !== Infinity)) && (
+          {/* Columna para Comprar Búsqueda Puntual (siempre visible, a menos que el plan base sea ilimitado) */}
+          {!(basePlan && basePlan.cvLimit === Infinity && basePlan.jobLimit === Infinity) && (
             <div className="border p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-3">{APP_PLANS['busqueda_puntual'].name}</h3>
               <p className="text-sm text-green-600 font-medium mb-3">¡Aumenta tu límite por única vez!</p>
@@ -168,7 +176,7 @@ function CurrentPlanTab() {
             </div>
           )}
 
-          {/* Columna para Mejorar Plan (si no es Enterprise o si no hay plan base activo) */}
+          {/* Columna para Mejorar Plan (siempre visible, a menos que sea Enterprise) */}
           {nextPlanToShow && nextPlanToShow.id !== 'enterprise_monthly' && (
             <div className="border p-4 rounded-lg">
               <h3 className="text-lg font-semibold mb-3">Mejorar Plan</h3>
