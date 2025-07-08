@@ -177,6 +177,23 @@ function CurrentPlanTab() {
       )}
       {/* El ToastProvider y Toast ya no son necesarios aquí para el botón "Mejorar Plan" */}
       {/* Se pueden mantener si se usan para otras notificaciones */}
+<ToastProvider>
+        <Toast open={open} onOpenChange={setOpen} nextPlan={nextPlan}>
+          <ToastTitle>{nextPlan ? nextPlan.name : 'No hay plan superior'}</ToastTitle>
+          <ToastDescription>
+            {nextPlan ? nextPlan.description : 'Contacta a soporte para más información.'}
+          </ToastDescription>
+          <Button
+            onClick={() => handleCheckout(nextPlan, user)}
+            disabled={loadingCheckout}
+          >
+            {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Comprar Plan
+          </Button>
+          <ToastClose />
+        </Toast>
+        <ToastViewport />
+      </ToastProvider>
     </motion.div>
   );
 }
