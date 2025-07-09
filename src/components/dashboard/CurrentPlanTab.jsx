@@ -61,7 +61,7 @@ function CurrentPlanTab() {
       className="bg-white p-6 md:p-8 rounded-xl shadow-xl"
     >
       <h2 className="text-2xl font-semibold text-slate-800 mb-6">Detalles de tu Plan</h2>
-      {plans && plans.length > 0 ? (
+      {Object.values(APP_PLANS).length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
         {Object.values(APP_PLANS).map((plan, index) => {
           const isCurrentPlan = basePlan && basePlan.id === plan.id;
