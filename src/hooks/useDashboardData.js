@@ -149,7 +149,7 @@ export function useDashboardData() {
 
   const hasBonusLimits = (user?.suscripcion?.one_time_cv_bonus || 0) > 0 || (user?.suscripcion?.one_time_job_bonus || 0) > 0 || (user?.suscripcion?.one_time_match_bonus || 0) > 0;
   const hasConsumedBonusCv = (user?.suscripcion?.cvs_analizados_este_periodo || 0) >= (user?.suscripcion?.one_time_cv_bonus || 0);
-  const hasConsumedBonusJobs = currentJobCount >= (user?.suscripcion?.one_time_job_bonus || 0);
+  const hasConsumedBonusJobs = jobs.length >= (user?.suscripcion?.one_time_job_bonus || 0);
   const hasConsumedBonusMatches = (user?.suscripcion?.mach_analizados_este_periodo || 0) >= (user?.suscripcion?.one_time_match_bonus || 0);
 
   const isBonusPlanActiveCalculated = hasBonusLimits && bonusPeriodStart && bonusPeriodEnd && now >= bonusPeriodStart && now <= bonusPeriodEnd && (!hasConsumedBonusCv || !hasConsumedBonusJobs || !hasConsumedBonusMatches);
