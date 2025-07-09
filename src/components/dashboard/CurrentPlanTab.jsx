@@ -118,21 +118,17 @@ function CurrentPlanTab() {
                 </div>
               )}
 
-              {isCurrentPlan && baseSubscription && basePlan?.id === 'busqueda_puntual' && (
+              {isCurrentPlan && effectiveLimits && (
                 <div className="mb-4 text-sm text-slate-600 text-center">
-                  <p>Adquirido: {new Date(baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  {baseSubscription.bonus_periodo_end && (
-                    <p>Vencimiento: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p className="mt-2 font-semibold">Límites de tu Plan:</p>
+                  {effectiveLimits.cvs !== undefined && (
+                    <p>CVs: {effectiveLimits.cvs_used} / {effectiveLimits.cvs === -1 ? 'Ilimitados' : effectiveLimits.cvs}</p>
                   )}
-                  <p className="mt-2 font-semibold">Límites y Uso:</p>
-                  {bonusCvTotal > 0 && (
-                    <p>CVs: {bonusCvUsed} / {bonusCvTotal}</p>
+                  {effectiveLimits.jobs !== undefined && (
+                    <p>Ofertas: {effectiveLimits.jobs_used} / {effectiveLimits.jobs === -1 ? 'Ilimitadas' : effectiveLimits.jobs}</p>
                   )}
-                  {bonusJobTotal > 0 && (
-                    <p>Ofertas: {bonusJobUsed} / {bonusJobTotal}</p>
-                  )}
-                  {bonusMatchTotal > 0 && (
-                    <p>Matches: {bonusMatchUsed} / {bonusMatchTotal}</p>
+                  {effectiveLimits.matches !== undefined && (
+                    <p>Matches: {effectiveLimits.matches_used} / {effectiveLimits.matches === -1 ? 'Ilimitados' : effectiveLimits.matches}</p>
                   )}
                 </div>
               )}
