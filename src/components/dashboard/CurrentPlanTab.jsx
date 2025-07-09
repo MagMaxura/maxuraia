@@ -118,7 +118,24 @@ function CurrentPlanTab() {
                 </div>
               )}
 
-              {/* Este bloque se elimina porque la información de bonos se manejará en una sección separada */}
+              {isCurrentPlan && baseSubscription && basePlan?.id === 'busqueda_puntual' && (
+                <div className="mb-4 text-sm text-slate-600 text-center">
+                  <p>Adquirido: {new Date(baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  {baseSubscription.bonus_periodo_end && (
+                    <p>Vencimiento: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  )}
+                  <p className="mt-2 font-semibold">Límites y Uso:</p>
+                  {bonusCvTotal > 0 && (
+                    <p>CVs: {bonusCvUsed} / {bonusCvTotal}</p>
+                  )}
+                  {bonusJobTotal > 0 && (
+                    <p>Ofertas: {bonusJobUsed} / {bonusJobTotal}</p>
+                  )}
+                  {bonusMatchTotal > 0 && (
+                    <p>Matches: {bonusMatchUsed} / {bonusMatchTotal}</p>
+                  )}
+                </div>
+              )}
 
               <ul className="space-y-3 text-slate-700 mb-8 flex-grow text-sm">
                 {plan.features.map((feature, fIndex) => (
