@@ -168,6 +168,8 @@ export function useDashboardData() {
     userSubscription: user?.suscripcion,
     effectiveLimits: calculateEffectivePlan(user?.suscripcion, jobs.length),
     isBonusPlanActive: isBonusPlanActiveCalculated, // Devolver el estado calculado de los bonos
+    isBasePlanActive: calculateEffectivePlan(user?.suscripcion, jobs.length).isBasePlanActive, // Nuevo
+    basePlan: calculateEffectivePlan(user?.suscripcion, jobs.length).basePlan, // Nuevo
     bonusCvUsed: user?.suscripcion?.cvs_analizados_este_periodo || 0,
     bonusJobUsed: user?.suscripcion?.jobs_analizados_este_periodo || 0, // Asumiendo que jobs_analizados_este_periodo existe
     bonusMatchUsed: user?.suscripcion?.mach_analizados_este_periodo || 0,

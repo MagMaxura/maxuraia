@@ -48,6 +48,8 @@ function Dashboard() {
     bonusCvTotal, // Añadir
     bonusJobTotal, // Añadir
     bonusMatchTotal, // Añadir
+    isBasePlanActive, // Nuevo
+    basePlan, // Nuevo
   } = useDashboardData();
 
   // Verificar si la prueba ha expirado después de obtener userSubscription
@@ -455,6 +457,8 @@ function Dashboard() {
               bonusJobTotal={bonusJobTotal}
               bonusMatchUsed={bonusMatchUsed}
               bonusMatchTotal={bonusMatchTotal}
+              isBasePlanActive={isBasePlanActive} // Nuevo
+              basePlan={basePlan} // Nuevo
             />
             );
           })()}
@@ -493,6 +497,8 @@ function Dashboard() {
               isBonusPlanActive={isBonusPlanActive}
               bonusJobUsed={bonusJobUsed}
               bonusJobTotal={bonusJobTotal}
+              isBasePlanActive={isBasePlanActive} // Nuevo
+              basePlan={basePlan} // Nuevo
             />
             );
           })()}

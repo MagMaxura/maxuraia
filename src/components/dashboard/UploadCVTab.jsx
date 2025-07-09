@@ -74,6 +74,22 @@ function UploadCVTab({
     >
       <h2 className="text-2xl font-semibold text-slate-800 mb-4">Cargar nuevo CV</h2>
       
+      {/* Mensaje de Plan Mensual Vencido */}
+      {!isBasePlanActive && basePlan && (basePlan.type === 'monthly' || basePlan.type === 'enterprise') && (
+        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-md shadow">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                Tu plan mensual <strong className="font-semibold capitalize">{basePlan.name}</strong> ha expirado. Aunque tengas bonos puntuales activos, te recomendamos <Link to="/#pricing" className="underline hover:text-red-600 font-semibold">renovar tu suscripción</Link> para mantener todas las funcionalidades.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Información de Uso y Límite */}
       {effectiveLimits.isSubscriptionActive && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">

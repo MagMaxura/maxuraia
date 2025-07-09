@@ -9,10 +9,12 @@ import { cvService } from '@/services/cvService';
 import { Brain, AlertCircle } from 'lucide-react'; // Importar el icono Brain y AlertCircle
 import CreateJobAIForm from '../CreateJobAIForm.jsx'; // Importar el componente del formulario AI (ruta corregida)
 import { APP_PLANS } from '@/config/plans'; // Importar APP_PLANS
+import { useDashboardData } from '@/hooks/useDashboardData'; // Importar useDashboardData
 
 function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob, effectiveLimits, isBonusPlanActive, bonusJobUsed, bonusJobTotal }) {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isBasePlanActive, basePlan } = useDashboardData(); // Obtener directamente del hook
   console.log("CreateNewJobTab: effectiveLimits recibidos:", effectiveLimits); // Nuevo log para depuración
   const [jobDetails, setJobDetails] = useState({
     title: '',
@@ -178,6 +180,22 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       className="bg-white p-6 md:p-8 rounded-xl shadow-xl space-y-6"
     >
       <h2 className="text-2xl font-semibold text-slate-800 mb-4">{isEditing ? 'Editar Puesto de Trabajo' : 'Crear Nuevo Puesto de Trabajo'}</h2>
+
+      {/* Mensaje de Plan Mensual Vencido */}
+      {!isBasePlanActive && basePlan && (basePlan.type === 'monthly' || basePlan.type === 'enterprise') && (
+        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-md shadow">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-red-700">
+                Tu plan mensual <strong className="font-semibold capitalize">{basePlan.name}</strong> ha expirado. Aunque tengas bonos puntuales activos, te recomendamos <a href="/#pricing" className="underline hover:text-red-600 font-semibold">renovar tu suscripción</a> para mantener todas las funcionalidades.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Información de Uso y Límite del Plan Actual */}
       {effectiveLimits.isSubscriptionActive && (

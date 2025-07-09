@@ -286,5 +286,7 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
     effectiveCurrentPlan: effectiveCurrentPlan,
     isSubscriptionActive: isSubscriptionActive,
     periodEndsAt: periodEndsAt,
+    isBasePlanActive: basePlanActive, // Añadir
+    basePlan: basePlan, // Añadir
   };
 };
