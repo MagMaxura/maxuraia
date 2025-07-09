@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Link } from 'react-router-dom';
 import { extractTextFromFile } from "@/lib/fileProcessing";
 import { APP_PLANS, PLAN_HIERARCHY } from '@/config/plans'; // Importar desde el archivo central
+import { useDashboardData } from '@/hooks/useDashboardData'; // Importar useDashboardData
 
 function UploadCVTab({
   handleFileUpload,
@@ -31,6 +32,7 @@ function UploadCVTab({
   // isLoadingSubscription, // Si useDashboardData devolviera un estado de carga específico para la suscripción
 }) {
   const { user } = useAuth();
+  const { isBasePlanActive, basePlan } = useDashboardData(); // Obtener directamente del hook
 
   // Usar las props directamente, con fallbacks seguros
   const planId = effectiveLimits?.effectiveCurrentPlan?.id || userSubscription?.plan_id || 'basico';
