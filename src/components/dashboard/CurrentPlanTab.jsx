@@ -63,7 +63,9 @@ function CurrentPlanTab() {
       <h2 className="text-2xl font-semibold text-slate-800 mb-6">Detalles de tu Plan</h2>
       {Object.values(APP_PLANS).length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
-        {Object.values(APP_PLANS).map((plan, index) => {
+        {Object.values(APP_PLANS)
+          .filter(plan => plan.id !== 'trial' && plan.type !== 'enterprise')
+          .map((plan, index) => {
           const isCurrentPlan = basePlan && basePlan.id === plan.id;
           const isExpired = isCurrentPlan && !isBasePlanActive && baseSubscription?.current_period_end && new Date(baseSubscription.current_period_end) < new Date();
 
@@ -121,6 +123,19 @@ function CurrentPlanTab() {
                   {baseSubscription.current_period_end && (
                     <p>Vencimiento: {new Date(baseSubscription.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   )}
+                </div>
+              )}
+
+              {basePlan?.id === 'busqueda_puntual' && baseSubscription && (
+                <div className="mb-4 text-sm text-slate-600 text-center">
+                  <p>Adquirido: {new Date(baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  {baseSubscription.bonus_periodo_end && (
+                    <p>Vencimiento: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  )}
+                  <p className="mt-2 font-semibold">Límites Disponibles:</p>
+                  <p>CVs: {effectiveLimits.cvs}</p>
+                  <p>Ofertas: {effectiveLimits.jobs}</p>
+                  <p>Matches: {effectiveLimits.matches}</p>
                 </div>
               )}
 
