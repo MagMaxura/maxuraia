@@ -77,7 +77,7 @@ function CurrentPlanTab() {
           let showButton = true;
 
           if (isCurrentPlan) {
-            borderColorClass = isExpired ? 'border-red-500 ring-2 ring-red-400' : 'border-yellow-400 ring-2 ring-yellow-300';
+            borderColorClass = isExpired ? 'border-red-500 ring-2 ring-red-400' : (isBasePlanActive ? 'border-green-500 ring-2 ring-green-400' : 'border-yellow-400 ring-2 ring-yellow-300');
             textColorClass = isExpired ? 'text-red-700' : 'text-yellow-700';
             buttonBgClass = isExpired ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-500 hover:bg-gray-600';
             buttonText = isExpired ? 'Renovar en forma manual' : 'Plan Actual';
@@ -172,6 +172,34 @@ function CurrentPlanTab() {
       ) : (
         <p className="text-slate-500">Cargando información del plan o no hay plan disponible. Si el problema persiste, contacta a soporte.</p>
       )}
+
+      {isBonusPlanActive && baseSubscription && basePlan?.id !== 'busqueda_puntual' && (
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="rounded-xl p-6 border shadow-lg flex flex-col relative bg-white border-green-500 ring-2 ring-green-400 mt-8"
+        >
+          <h3 className="text-2xl font-semibold mb-2 text-center text-green-700">Bonos Puntuales Activos</h3>
+          <div className="mb-4 text-sm text-slate-600 text-center">
+            <p>Adquirido: {new Date(baseSubscription.bonus_periodo_start || baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            {baseSubscription.bonus_periodo_end && (
+              <p>Vencimiento: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            )}
+            <p className="mt-2 font-semibold">Límites y Uso:</p>
+            {baseSubscription.one_time_cv_bonus > 0 && (
+              <p>CVs: {userSubscription.cvs_analizados_este_periodo || 0} / {baseSubscription.one_time_cv_bonus}</p>
+            )}
+            {baseSubscription.one_time_job_bonus > 0 && (
+              <p>Ofertas: {userSubscription.jobs_analizados_este_periodo || 0} / {baseSubscription.one_time_job_bonus}</p>
+            )}
+            {baseSubscription.one_time_match_bonus > 0 && (
+              <p>Matches: {userSubscription.mach_analizados_este_periodo || 0} / {baseSubscription.one_time_match_bonus}</p>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       {/* El ToastProvider y Toast ya no son necesarios aquí para el botón "Mejorar Plan" */}
       {/* Se pueden mantener si se usan para otras notificaciones */}
       <ToastProvider>
