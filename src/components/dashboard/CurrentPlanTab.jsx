@@ -61,206 +61,105 @@ function CurrentPlanTab() {
       className="bg-white p-6 md:p-8 rounded-xl shadow-xl"
     >
       <h2 className="text-2xl font-semibold text-slate-800 mb-6">Detalles de tu Plan</h2>
-      {user && baseSubscription ? (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-700">
-            {/* Columna 1: Plan de Suscripción Mensual/Empresarial/Trial */}
-            {basePlan && ( // Mostrar siempre si hay un plan base, activo o no
-              <div className={`p-4 rounded-lg ${isBasePlanActive ? 'border-2 border-blue-500 shadow-md' : 'border border-red-500'}`}>
-                <h3 className="text-lg font-semibold mb-1 text-center">
-                  Plan de Suscripción Mensual
-                </h3>
-                <p className="text-xl font-bold text-blue-600 text-center capitalize mb-3">
-                  {basePlan.name}
-                  {isBasePlanActive && <span className="ml-2 text-blue-500"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>}
-                </p>
-                <div className="space-y-3">
-                  {!isBasePlanActive && (
-                    <p className="text-red-600 font-medium flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      Este plan está actualmente inactivo o vencido.
-                    </p>
-                  )}
-                  {!isBasePlanActive && baseSubscription?.current_period_end && new Date(baseSubscription.current_period_end) < new Date() && (
-                    <div className="mt-4 text-center">
-                      <p className="text-orange-600 font-medium mb-2">
-                        El plan no se ha renovado de forma automática.
-                      </p>
-                      <Button
-                        onClick={() => handleCheckout(basePlan, user)} // Asumiendo que basePlan es el plan a renovar
-                        disabled={loadingCheckout}
-                        className="bg-blue-500 hover:bg-blue-600 text-white"
-                      >
-                        {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Renovar en forma manual
-                      </Button>
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Límite de CVs (mensual):</p>
-                    <p className="text-lg">{basePlan.cvLimit === Infinity ? "Ilimitados" : basePlan.cvLimit}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Límite de Puestos (mensual):</p>
-                    <p className="text-lg">{basePlan.jobLimit === Infinity ? "Ilimitados" : basePlan.jobLimit}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Límite de Matches (mensual):</p>
-                    <p className="text-lg">{basePlan.matchLimit === Infinity ? "Ilimitados" : basePlan.matchLimit}</p>
-                  </div>
-                  {baseSubscription.trial_ends_at && (
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">Tu prueba gratuita finaliza el:</p>
-                      <p className="text-lg">{new Date(baseSubscription.trial_ends_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    </div>
-                  )}
+      {plans && plans.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
+        {Object.values(APP_PLANS).map((plan, index) => {
+          const isCurrentPlan = basePlan && basePlan.id === plan.id;
+          const isExpired = isCurrentPlan && !isBasePlanActive && baseSubscription?.current_period_end && new Date(baseSubscription.current_period_end) < new Date();
+
+          let borderColorClass = 'border-slate-200'; // Default border
+          let textColorClass = 'text-slate-800'; // Default text color
+          let buttonBgClass = 'bg-blue-500 hover:bg-blue-600'; // Default button color
+          let buttonText = 'Elegir Plan';
+          let buttonAction = () => handleCheckout(plan, user);
+          let showButton = true;
+
+          if (isCurrentPlan) {
+            borderColorClass = isExpired ? 'border-red-500 ring-2 ring-red-400' : 'border-yellow-400 ring-2 ring-yellow-300';
+            textColorClass = isExpired ? 'text-red-700' : 'text-yellow-700';
+            buttonBgClass = isExpired ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-500 hover:bg-gray-600';
+            buttonText = isExpired ? 'Renovar en forma manual' : 'Plan Actual';
+            showButton = isExpired; // Solo mostrar botón si está vencido para renovación
+          } else if (plan.id === 'busqueda_puntual') {
+            buttonBgClass = 'bg-purple-600 hover:bg-purple-700';
+            buttonText = 'Comprar Ahora';
+          } else if (plan.id === nextPlanToShow?.id) {
+            buttonBgClass = 'bg-green-600 hover:bg-green-700';
+            buttonText = 'Mejorar Plan';
+          } else if (plan.type === 'enterprise') {
+            buttonBgClass = 'bg-gray-500 hover:bg-gray-600';
+            buttonText = 'Contactar Ventas';
+            buttonAction = () => window.location.href = '#contact'; // O una ruta de contacto
+          } else if (plan.id === 'trial') {
+            buttonBgClass = 'bg-purple-600 hover:bg-purple-700';
+            buttonText = 'Empezar Prueba';
+            buttonAction = () => window.location.href = '/register';
+          }
+
+          return (
+            <motion.div
+              key={plan.id}
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className={`rounded-xl p-6 border shadow-lg flex flex-col relative bg-white ${borderColorClass}`}
+            >
+              {isCurrentPlan && (
+                <div className={`absolute top-0 right-0 text-xs font-bold px-4 py-1 rounded-bl-lg ${isExpired ? 'bg-red-500 text-white' : 'bg-yellow-400 text-black'}`}>
+                  {isExpired ? 'Vencido' : 'Plan Actual'}
+                </div>
+              )}
+              <h3 className={`text-2xl font-semibold mb-2 text-center ${textColorClass}`}>{plan.name}</h3>
+              <p className="text-slate-600 text-sm mb-4 text-center h-16 overflow-hidden">{plan.description}</p>
+              <div className="mb-6 text-center">
+                <span className="text-3xl font-bold text-slate-800">{plan.priceDisplay}</span>
+              </div>
+
+              {isCurrentPlan && baseSubscription && (
+                <div className="mb-4 text-sm text-slate-600 text-center">
+                  <p>Adquirido: {new Date(baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   {baseSubscription.current_period_end && (
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">Próxima fecha de renovación:</p>
-                      <p className="text-lg">{new Date(baseSubscription.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    </div>
+                    <p>Vencimiento: {new Date(baseSubscription.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Columna para Bonos Puntuales */}
-            {(baseSubscription.one_time_cv_bonus > 0 || baseSubscription.one_time_job_bonus > 0 || baseSubscription.one_time_match_bonus > 0) && ( // Mostrar si hay bonos, activos o no
-              <div className={`p-4 rounded-lg ${isBonusPlanActive ? 'border-2 border-green-500 shadow-md' : 'border border-red-500'}`}>
-                <h3 className="text-lg font-semibold mb-3 flex items-center">
-                  Bonos de Búsqueda Puntual
-                  {isBonusPlanActive && <span className="ml-2 text-green-500"><svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></span>}
-                </h3>
-                {!isBonusPlanActive && (
-                  <p className="text-red-600 font-medium flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Estos bonos están actualmente inactivos o vencidos.
-                  </p>
-                )}
-                <p className="text-sm text-green-600 font-medium mb-3">¡Límites adicionales por única vez!</p>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">CVs adicionales:</p>
-                    <p className="text-lg">{baseSubscription.one_time_cv_bonus || 0}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Puestos adicionales:</p>
-                    <p className="text-lg">{baseSubscription.one_time_job_bonus || 0}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Matches adicionales:</p>
-                    <p className="text-lg">{baseSubscription.one_time_match_bonus || 0}</p>
-                  </div>
-                  {baseSubscription.bonus_periodo_end && (
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">Vencimiento de bonos:</p>
-                      <p className="text-lg">{new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+              <ul className="space-y-3 text-slate-700 mb-8 flex-grow text-sm">
+                {plan.features.map((feature, fIndex) => (
+                  <li key={fIndex} className="flex items-start">
+                    {feature.includes('✅') ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500 mr-2 mt-1 flex-shrink-0" />
+                    ) : feature.includes('❌') ? (
+                      <XCircle className="h-4 w-4 text-red-500 mr-2 mt-1 flex-shrink-0" />
+                    ) : (
+                      <CheckCircle2 className="h-4 w-4 text-blue-500 mr-2 mt-1 flex-shrink-0" /> // Default check for other features
+                    )}
+                    <span>{feature.replace('✅', '').replace('❌', '').trim()}</span>
+                  </li>
+                ))}
+              </ul>
 
-            {/* Columna para Límites Efectivos Totales (solo si hay algún plan activo) */}
-            {(effectiveLimits?.isSubscriptionActive) && (
-              <div className="border p-4 rounded-lg bg-blue-50">
-                <h3 className="text-lg font-semibold mb-3 text-blue-700">Tus Límites Totales Actuales</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Límite de CVs:</p>
-                    <p className="text-xl font-bold text-blue-800">{effectiveLimits?.cvLimit === Infinity ? "Ilimitados" : effectiveLimits?.cvLimit}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Límite de Puestos:</p>
-                    <p className="text-xl font-bold text-blue-800">{effectiveLimits?.jobLimit === Infinity ? "Ilimitados" : effectiveLimits?.jobLimit}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Límite de Matches:</p>
-                    <p className="text-xl font-bold text-blue-800">{effectiveLimits?.matchLimit === Infinity ? "Ilimitados" : effectiveLimits?.matchLimit}</p>
-                  </div>
-                  {effectiveLimits?.periodEndsAt && (
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">Vencimiento del plan principal:</p>
-                      <p className="text-lg">{new Date(effectiveLimits.periodEndsAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Columna para Comprar Búsqueda Puntual (siempre visible, a menos que el plan base sea ilimitado) */}
-            {/* Columna para Comprar Búsqueda Puntual (siempre visible) */}
-          </div>
-          <div className="mt-8 pt-8 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6 text-slate-700">
-            {/* Columna para Comprar Búsqueda Puntual */}
-            <div className="p-4 rounded-lg border border-purple-300 bg-purple-50">
-              <h3 className="text-lg font-semibold mb-3 text-purple-700 text-center">Comprar Búsqueda Puntual</h3>
-              <p className="text-center text-sm text-slate-600 mb-4">Adquiere límites adicionales por única vez, sin suscripción.</p>
-              <div className="space-y-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-500">CVs:</p>
-                  <p className="text-lg">{APP_PLANS['busqueda_puntual'].cvLimit}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Puestos:</p>
-                  <p className="text-lg">{APP_PLANS['busqueda_puntual'].jobLimit}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-500">Matches:</p>
-                  <p className="text-lg">{APP_PLANS['busqueda_puntual'].matchLimit}</p>
-                </div>
-              </div>
-              <Button
-                onClick={() => handleCheckout(APP_PLANS['busqueda_puntual'], user)}
-                disabled={loadingCheckout}
-                className="mt-6 w-full bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Comprar Ahora
-              </Button>
-            </div>
-
-            {/* Columna para Mejorar Plan Mensual */}
-            {nextPlanToShow && (
-              <div className="p-4 rounded-lg border border-green-300 bg-green-50">
-                <h3 className="text-lg font-semibold mb-3 text-green-700 text-center">Mejorar tu Plan Mensual</h3>
-                <p className="text-center text-sm text-slate-600 mb-4">Pasa al siguiente nivel con más límites y beneficios.</p>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Próximo Plan:</p>
-                    <p className="text-lg font-bold text-green-800 capitalize">{nextPlanToShow.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Límite de CVs:</p>
-                    <p className="text-lg">{nextPlanToShow.cvLimit === Infinity ? "Ilimitados" : nextPlanToShow.cvLimit}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Límite de Puestos:</p>
-                    <p className="text-lg">{nextPlanToShow.jobLimit === Infinity ? "Ilimitados" : nextPlanToShow.jobLimit}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-slate-500">Límite de Matches:</p>
-                    <p className="text-lg">{nextPlanToShow.matchLimit === Infinity ? "Ilimitados" : nextPlanToShow.matchLimit}</p>
-                  </div>
-                </div>
+              {showButton && (
                 <Button
-                  onClick={() => handleCheckout(nextPlanToShow, user)}
-                  disabled={loadingCheckout}
-                  className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white"
+                  size="lg"
+                  className={`w-full mt-auto font-semibold py-3 px-6 rounded-lg transition-colors ${buttonBgClass} text-white`}
+                  onClick={buttonAction}
+                  disabled={loadingCheckout || loadingUser}
                 >
                   {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Mejorar Plan
+                  {buttonText}
                 </Button>
-              </div>
-            )}
-          </div>
-        </>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
       ) : (
         <p className="text-slate-500">Cargando información del plan o no hay plan disponible. Si el problema persiste, contacta a soporte.</p>
       )}
       {/* El ToastProvider y Toast ya no son necesarios aquí para el botón "Mejorar Plan" */}
       {/* Se pueden mantener si se usan para otras notificaciones */}
-<ToastProvider>
+      <ToastProvider>
         <Toast open={open} onOpenChange={setOpen} nextPlan={nextPlanToShow}>
           <ToastTitle>{nextPlanToShow ? nextPlanToShow.name : 'No hay plan superior'}</ToastTitle>
           <ToastDescription>
