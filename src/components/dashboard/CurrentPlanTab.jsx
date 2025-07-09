@@ -179,12 +179,12 @@ function CurrentPlanTab() {
       {/* Se pueden mantener si se usan para otras notificaciones */}
 <ToastProvider>
         <Toast open={open} onOpenChange={setOpen} nextPlan={nextPlan}>
-          <ToastTitle>{nextPlan ? nextPlan.name : 'No hay plan superior'}</ToastTitle>
+          <ToastTitle>{nextPlanToShow ? nextPlanToShow.name : 'No hay plan superior'}</ToastTitle>
           <ToastDescription>
-            {nextPlan ? nextPlan.description : 'Contacta a soporte para más información.'}
+            {nextPlanToShow ? nextPlanToShow.description : 'Contacta a soporte para más información.'}
           </ToastDescription>
           <Button
-            onClick={() => handleCheckout(nextPlan, user)}
+            onClick={() => handleCheckout(nextPlanToShow, user)}
             disabled={loadingCheckout}
           >
             {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
