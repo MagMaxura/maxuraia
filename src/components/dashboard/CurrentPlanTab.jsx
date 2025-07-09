@@ -178,7 +178,7 @@ function CurrentPlanTab() {
       {/* El ToastProvider y Toast ya no son necesarios aquí para el botón "Mejorar Plan" */}
       {/* Se pueden mantener si se usan para otras notificaciones */}
 <ToastProvider>
-        <Toast open={open} onOpenChange={setOpen} nextPlan={nextPlan}>
+        <Toast open={open} onOpenChange={setOpen} nextPlan={nextPlanToShow}>
           <ToastTitle>{nextPlanToShow ? nextPlanToShow.name : 'No hay plan superior'}</ToastTitle>
           <ToastDescription>
             {nextPlanToShow ? nextPlanToShow.description : 'Contacta a soporte para más información.'}
