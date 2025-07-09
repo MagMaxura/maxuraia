@@ -41,6 +41,13 @@ function Dashboard() {
     effectiveLimits, // Nuevo: Obtener effectiveLimits del hook
     matchLimit, // Nuevo: Límite de macheos
     currentMatchCount, // Nuevo: Contador de macheos
+    isBonusPlanActive, // Añadir
+    bonusCvUsed, // Añadir
+    bonusJobUsed, // Añadir
+    bonusMatchUsed, // Añadir
+    bonusCvTotal, // Añadir
+    bonusJobTotal, // Añadir
+    bonusMatchTotal, // Añadir
   } = useDashboardData();
 
   // Verificar si la prueba ha expirado después de obtener userSubscription
@@ -441,6 +448,13 @@ function Dashboard() {
               analysisLimit={analysisLimit} // Pasar el límite
               currentAnalysisCount={currentAnalysisCount} // Pasar el contador
               effectiveLimits={effectiveLimits} // Nuevo: Pasar effectiveLimits
+              isBonusPlanActive={isBonusPlanActive}
+              bonusCvUsed={bonusCvUsed}
+              bonusCvTotal={bonusCvTotal}
+              bonusJobUsed={bonusJobUsed}
+              bonusJobTotal={bonusJobTotal}
+              bonusMatchUsed={bonusMatchUsed}
+              bonusMatchTotal={bonusMatchTotal}
             />
             );
           })()}
@@ -476,6 +490,9 @@ function Dashboard() {
               editingJob={editingJob}
               setEditingJob={setEditingJob}
               effectiveLimits={effectiveLimits} // Pasar effectiveLimits
+              isBonusPlanActive={isBonusPlanActive}
+              bonusJobUsed={bonusJobUsed}
+              bonusJobTotal={bonusJobTotal}
             />
             );
           })()}

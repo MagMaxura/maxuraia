@@ -21,6 +21,13 @@ function UploadCVTab({
   analysisLimit, // Recibir prop
   currentAnalysisCount, // Recibir prop
   effectiveLimits, // Nuevo: Recibir prop
+  isBonusPlanActive,
+  bonusCvUsed,
+  bonusCvTotal,
+  bonusJobUsed,
+  bonusJobTotal,
+  bonusMatchUsed,
+  bonusMatchTotal,
   // isLoadingSubscription, // Si useDashboardData devolviera un estado de carga específico para la suscripción
 }) {
   const { user } = useAuth();
@@ -70,26 +77,34 @@ function UploadCVTab({
       {/* Información de Uso y Límite */}
       {effectiveLimits.isSubscriptionActive && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+          <p className="font-semibold mb-2">Tu Plan Actual: <span className="capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || APP_PLANS[planId]?.name || planId}</span></p>
           <p>
-            CVs analizados este período: <strong className="font-semibold">{displayCurrentAnalysisCount}</strong> de <strong className="font-semibold">{displayAnalysisLimit}</strong>
+            CVs analizados este período: <strong className="font-semibold">{effectiveLimits.cvs_used}</strong> de <strong className="font-semibold">{effectiveLimits.cvs === -1 ? 'Ilimitados' : effectiveLimits.cvs}</strong>
           </p>
           <div className="mt-2 w-full bg-blue-200 rounded-full h-2.5">
             <div
               className="bg-blue-600 h-2.5 rounded-full"
-              style={{ width: `${analysisLimit === Infinity || analysisLimit === 0 ? 100 : (displayCurrentAnalysisCount / analysisLimit) * 100}%` }}
+              style={{ width: `${effectiveLimits.cvs === -1 || effectiveLimits.cvs === 0 ? 100 : (effectiveLimits.cvs_used / effectiveLimits.cvs) * 100}%` }}
             ></div>
           </div>
-          {nextPlanDetails && limitReached && (
+          {effectiveLimits.cvs !== -1 && effectiveLimits.cvs_used >= effectiveLimits.cvs && (
             <Link to="/#pricing" className="mt-3 inline-block">
               <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border-yellow-500">
-                Actualizar a Plan {nextPlanDetails.name}
+                Actualizar Plan
                 <ArrowRightCircle className="ml-2 h-4 w-4" />
               </Button>
             </Link>
           )}
-           {planId === 'enterprise_monthly' && limitReached && (
-             <p className="mt-3 text-sm">Has alcanzado el límite de tu plan Enterprise (esto no debería suceder).</p>
-           )}
+        </div>
+      )}
+
+      {isBonusPlanActive && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+          <p className="font-semibold mb-2">Bonos Puntuales Activos:</p>
+          {bonusCvTotal > 0 && (
+            <p>CVs de Bono: <strong className="font-semibold">{bonusCvUsed}</strong> de <strong className="font-semibold">{bonusCvTotal}</strong></p>
+          )}
+          {/* Puedes añadir más bonos aquí si son relevantes para esta pestaña, como jobs o matches */}
         </div>
       )}
 

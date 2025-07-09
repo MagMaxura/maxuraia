@@ -10,7 +10,7 @@ import { Brain, AlertCircle } from 'lucide-react'; // Importar el icono Brain y 
 import CreateJobAIForm from '../CreateJobAIForm.jsx'; // Importar el componente del formulario AI (ruta corregida)
 import { APP_PLANS } from '@/config/plans'; // Importar APP_PLANS
 
-function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob, effectiveLimits }) {
+function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob, effectiveLimits, isBonusPlanActive, bonusJobUsed, bonusJobTotal }) {
   const { user } = useAuth();
   const { toast } = useToast();
   console.log("CreateNewJobTab: effectiveLimits recibidos:", effectiveLimits); // Nuevo log para depuración
@@ -178,6 +178,38 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       className="bg-white p-6 md:p-8 rounded-xl shadow-xl space-y-6"
     >
       <h2 className="text-2xl font-semibold text-slate-800 mb-4">{isEditing ? 'Editar Puesto de Trabajo' : 'Crear Nuevo Puesto de Trabajo'}</h2>
+
+      {/* Información de Uso y Límite del Plan Actual */}
+      {effectiveLimits.isSubscriptionActive && (
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+          <p className="font-semibold mb-2">Tu Plan Actual: <span className="capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || APP_PLANS[effectiveLimits?.effectiveCurrentPlan?.id || 'basico']?.name || 'Básico'}</span></p>
+          <p>
+            Puestos de trabajo creados: <strong className="font-semibold">{effectiveLimits.jobs_used}</strong> de <strong className="font-semibold">{effectiveLimits.jobs === -1 ? 'Ilimitados' : effectiveLimits.jobs}</strong>
+          </p>
+          <div className="mt-2 w-full bg-blue-200 rounded-full h-2.5">
+            <div
+              className="bg-blue-600 h-2.5 rounded-full"
+              style={{ width: `${effectiveLimits.jobs === -1 || effectiveLimits.jobs === 0 ? 100 : (effectiveLimits.jobs_used / effectiveLimits.jobs) * 100}%` }}
+            ></div>
+          </div>
+          {effectiveLimits.jobs !== -1 && effectiveLimits.jobs_used >= effectiveLimits.jobs && (
+            <a href="/#pricing" className="mt-3 inline-block">
+              <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border-yellow-500">
+                Actualizar Plan
+                <ArrowRightCircle className="ml-2 h-4 w-4" />
+              </Button>
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* Información de Bonos Puntuales Activos */}
+      {isBonusPlanActive && bonusJobTotal > 0 && (
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
+          <p className="font-semibold mb-2">Bonos Puntuales Activos:</p>
+          <p>Puestos de Bono: <strong className="font-semibold">{bonusJobUsed}</strong> de <strong className="font-semibold">{bonusJobTotal}</strong></p>
+        </div>
+      )}
 
       {/* Mensaje de Límite Alcanzado (solo si NO estamos editando) */}
       {limitReachedForNew && (
