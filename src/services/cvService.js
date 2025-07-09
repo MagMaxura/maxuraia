@@ -219,7 +219,7 @@ export const cvService = {
   },
 
   // uploadCV ahora puede usar saveCvAndCandidate después de la subida del archivo (si se implementa)
-  async uploadCV(file, recruiterId, analysisData) {
+  async uploadCV(file, recruiterId, analysisData, userSubscription) { // Añadir userSubscription
     console.log("cvService.uploadCV: Procesando subida de nuevo CV para recruiterId:", recruiterId, "File:", file.name);
     // Paso 1: Subir archivo a Supabase Storage (Placeholder por ahora)
     // const filePath = `${recruiterId}/${Date.now()}-${file.name}`;
@@ -238,6 +238,13 @@ export const cvService = {
     try {
       const result = await this.saveCvAndCandidate(analysisData, recruiterId, null, null, file.name);
       console.log("cvService.uploadCV: CV y Candidato guardados en DB:", result);
+
+      // Incrementar el contador de CVs analizados si la suscripción existe
+      if (userSubscription?.id) {
+        console.log(`cvService.uploadCV: Incrementando contador de CVs para suscripción ID: ${userSubscription.id}`);
+        await this.incrementCvAnalysisCount(userSubscription.id);
+      }
+
       return result; // Devuelve { cv: {...}, candidate: {...} }
     } catch (error) {
       console.error("cvService.uploadCV: Error llamando a saveCvAndCandidate:", error);

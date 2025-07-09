@@ -17,7 +17,7 @@ export function useCvUploader({
   // Podríamos pasar cvFiles.length directamente si esa es la única necesidad.
   // Por ahora, pasaremos la función setCvFiles y el componente Dashboard manejará la lógica de añadir.
 }) {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth(); // Obtener refreshUser
   const { toast } = useToast();
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -109,23 +109,23 @@ export function useCvUploader({
         const text = await extractTextFromFile(file);
         const resolvedAnalysis = await analyzeCV(text);
 
-        if (user.suscripcion.id && !resolvedAnalysis.extractionError) {
-          try {
-            const updatedSubscription = await cvService.incrementCvAnalysisCount(user.suscripcion.id);
-            currentAnalysisCount = updatedSubscription.cvs_analizados_este_periodo;
-            // Considerar actualizar el contexto de usuario aquí si es posible y necesario para UI inmediata
-          } catch (incrementError) {
-            console.error("useCvUploader: Error al incrementar contador de análisis de CV:", incrementError);
-          }
-        }
+        // Llamar a cvService.uploadCV con user.suscripcion
+        const result = await cvService.uploadCV(file, user.id, resolvedAnalysis, user.suscripcion); // Pasar user.suscripcion
         
+        // Si el CV se guardó exitosamente y el contador se incrementó en el backend,
+        // forzar una recarga del usuario para actualizar los límites en el frontend.
+        if (result && !result.error && refreshUser) {
+          console.log("useCvUploader: CV guardado y contador incrementado. Refrescando usuario...");
+          await refreshUser(); // Forzar recarga del usuario para actualizar suscripción
+        }
+
         const newCvFile = {
           name: resolvedAnalysis.nombre || file.name,
           originalFile: file, // Mantener el objeto File original por si se necesita
           analysis: resolvedAnalysis,
           uploadedDate: new Date(),
-          cv_database_id: null, // Se establecerá después de guardar en BD
-          candidate_database_id: null, // Se establecerá después de guardar en BD
+          cv_database_id: result?.cv?.id || null, // Usar el ID real del CV guardado
+          candidate_database_id: result?.candidate?.id || null, // Usar el ID real del candidato guardado
         };
         newlyProcessedCvFiles.push(newCvFile);
         CvsProcessedInThisBatch++;
@@ -196,10 +196,9 @@ export function useCvUploader({
     toast,
     fileInputRef,
     setCvFiles,
-    // setSelectedCV, // Comentado para que Dashboard lo maneje vía useEffect
     setCvAnalysis,
     setActiveTab,
-    // No incluir setSelectedCV aquí si el Dashboard lo maneja para evitar dependencias conflictivas
+    refreshUser, // Añadir refreshUser a las dependencias
   ]);
 
   const handleDragOver = useCallback((event) => {
