@@ -17,7 +17,7 @@ import {
 
 function CurrentPlanTab() {
   const { user, loading: loadingUser } = useAuth(); // Obtener loading del hook useAuth
-  const { userSubscription, effectiveLimits } = useDashboardData(); // Obtener userSubscription y effectiveLimits
+  const { userSubscription, effectiveLimits, isBonusPlanActive, bonusCvUsed, bonusJobUsed, bonusMatchUsed, bonusCvTotal, bonusJobTotal, bonusMatchTotal } = useDashboardData(); // Obtener userSubscription y effectiveLimits
   const { loadingCheckout, handleCheckout } = usePayment();
 
   // Declarar el estado para controlar la visibilidad del Toast
@@ -32,14 +32,6 @@ function CurrentPlanTab() {
                            baseSubscription?.current_period_end &&
                            new Date(baseSubscription.current_period_end) > new Date();
 
-  // Determinar si los bonos puntuales están activos
-  const isBonusPlanActive = (baseSubscription?.one_time_cv_bonus > 0 ||
-                             baseSubscription?.one_time_job_bonus > 0 ||
-                             baseSubscription?.one_time_match_bonus > 0) &&
-                            baseSubscription?.bonus_periodo_start &&
-                            baseSubscription?.bonus_periodo_end &&
-                            new Date(baseSubscription.bonus_periodo_start) <= new Date() &&
-                            new Date(baseSubscription.bonus_periodo_end) >= new Date();
 
   // Determinar el siguiente plan en la jerarquía para mejora
   let nextPlanToShow = null;
@@ -126,18 +118,7 @@ function CurrentPlanTab() {
                 </div>
               )}
 
-              {basePlan?.id === 'busqueda_puntual' && baseSubscription && (
-                <div className="mb-4 text-sm text-slate-600 text-center">
-                  <p>Adquirido: {new Date(baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  {baseSubscription.bonus_periodo_end && (
-                    <p>Vencimiento: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                  )}
-                  <p className="mt-2 font-semibold">Límites Disponibles:</p>
-                  <p>CVs: {effectiveLimits.cvs}</p>
-                  <p>Ofertas: {effectiveLimits.jobs}</p>
-                  <p>Matches: {effectiveLimits.matches}</p>
-                </div>
-              )}
+              {/* Este bloque se elimina porque la información de bonos se manejará en una sección separada */}
 
               <ul className="space-y-3 text-slate-700 mb-8 flex-grow text-sm">
                 {plan.features.map((feature, fIndex) => (
@@ -187,14 +168,14 @@ function CurrentPlanTab() {
               <p>Vencimiento: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
             )}
             <p className="mt-2 font-semibold">Límites y Uso:</p>
-            {baseSubscription.one_time_cv_bonus > 0 && (
-              <p>CVs: {userSubscription.cvs_analizados_este_periodo || 0} / {baseSubscription.one_time_cv_bonus}</p>
+            {bonusCvTotal > 0 && (
+              <p>CVs: {bonusCvUsed} / {bonusCvTotal}</p>
             )}
-            {baseSubscription.one_time_job_bonus > 0 && (
-              <p>Ofertas: {userSubscription.jobs_analizados_este_periodo || 0} / {baseSubscription.one_time_job_bonus}</p>
+            {bonusJobTotal > 0 && (
+              <p>Ofertas: {bonusJobUsed} / {bonusJobTotal}</p>
             )}
-            {baseSubscription.one_time_match_bonus > 0 && (
-              <p>Matches: {userSubscription.mach_analizados_este_periodo || 0} / {baseSubscription.one_time_match_bonus}</p>
+            {bonusMatchTotal > 0 && (
+              <p>Matches: {bonusMatchUsed} / {bonusMatchTotal}</p>
             )}
           </div>
         </motion.div>

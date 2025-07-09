@@ -140,7 +140,19 @@ export function useDashboardData() {
       }
     }
 
-  }, [user?.id, toast, user?.suscripcion]); // Añadir user.suscripcion a las dependencias
+  }, [user?.id, toast, user?.suscripcion]);
+
+  // Calcular los límites de bonos y su estado aquí para devolverlos
+  const bonusPeriodStart = user?.suscripcion?.bonus_periodo_start ? new Date(user.suscripcion.bonus_periodo_start) : null;
+  const bonusPeriodEnd = user?.suscripcion?.bonus_periodo_end ? new Date(user.suscripcion.bonus_periodo_end) : null;
+  const now = new Date();
+
+  const hasBonusLimits = (user?.suscripcion?.one_time_cv_bonus || 0) > 0 || (user?.suscripcion?.one_time_job_bonus || 0) > 0 || (user?.suscripcion?.one_time_match_bonus || 0) > 0;
+  const hasConsumedBonusCv = (user?.suscripcion?.cvs_analizados_este_periodo || 0) >= (user?.suscripcion?.one_time_cv_bonus || 0);
+  const hasConsumedBonusJobs = currentJobCount >= (user?.suscripcion?.one_time_job_bonus || 0);
+  const hasConsumedBonusMatches = (user?.suscripcion?.mach_analizados_este_periodo || 0) >= (user?.suscripcion?.one_time_match_bonus || 0);
+
+  const isBonusPlanActiveCalculated = hasBonusLimits && bonusPeriodStart && bonusPeriodEnd && now >= bonusPeriodStart && now <= bonusPeriodEnd && (!hasConsumedBonusCv || !hasConsumedBonusJobs || !hasConsumedBonusMatches);
 
   return {
     cvFiles,
@@ -151,8 +163,15 @@ export function useDashboardData() {
     isLoadingJobs,
     // Nuevo: Devolver información de la suscripción y el límite
     userSubscription: user?.suscripcion,
-    // Calcular los límites efectivos usando la nueva función
     effectiveLimits: calculateEffectivePlan(user?.suscripcion, jobs.length),
+    isBonusPlanActive: isBonusPlanActiveCalculated, // Devolver el estado calculado de los bonos
+    bonusCvUsed: user?.suscripcion?.cvs_analizados_este_periodo || 0,
+    bonusJobUsed: user?.suscripcion?.jobs_analizados_este_periodo || 0, // Asumiendo que jobs_analizados_este_periodo existe
+    bonusMatchUsed: user?.suscripcion?.mach_analizados_este_periodo || 0,
+    bonusCvTotal: user?.suscripcion?.one_time_cv_bonus || 0,
+    bonusJobTotal: user?.suscripcion?.one_time_job_bonus || 0,
+    bonusMatchTotal: user?.suscripcion?.one_time_match_bonus || 0,
+    // Los siguientes ya se calculan dentro de effectiveLimits, pero los mantengo para compatibilidad si se usan directamente
     analysisLimit: calculateEffectivePlan(user?.suscripcion, jobs.length).cvLimit,
     jobLimit: calculateEffectivePlan(user?.suscripcion, jobs.length).jobLimit,
     matchLimit: calculateEffectivePlan(user?.suscripcion, jobs.length).matchLimit,
