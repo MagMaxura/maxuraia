@@ -226,24 +226,25 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
 
   console.log(`[DEBUG] Bonus Consumption Check: hasConsumedBonusCv=${hasConsumedBonusCv}, hasConsumedBonusJobs=${hasConsumedBonusJobs}, hasConsumedBonusMatches=${hasConsumedBonusMatches}`);
 
-  if (hasBonusLimits && bonusPeriodStart && bonusPeriodEnd && now >= bonusPeriodStart && now <= bonusPeriodEnd) {
-    // Los bonos están activos por fecha. Ahora verificar si se han agotado.
-    if (!hasConsumedBonusCv || !hasConsumedBonusJobs || !hasConsumedBonusMatches) {
+  // Los bonos puntuales se consideran activos si tienen límites definidos Y no se han agotado,
+  // Y si tienen fechas, que estén dentro del período. Si no tienen fechas, se asume que son válidos hasta su consumo.
+  if (hasBonusLimits && (!hasConsumedBonusCv || !hasConsumedBonusJobs || !hasConsumedBonusMatches)) {
+    if ((bonusPeriodStart && bonusPeriodEnd && now >= bonusPeriodStart && now <= bonusPeriodEnd) || (!bonusPeriodStart && !bonusPeriodEnd)) {
       bonusPlanActive = true;
       activePlans.push({
         plan: APP_PLANS['busqueda_puntual'], // Usar el plan de búsqueda puntual como referencia
         cvLimit: hasConsumedBonusCv ? 0 : (suscripcion.one_time_cv_bonus || 0),
         jobLimit: hasConsumedBonusJobs ? 0 : (suscripcion.one_time_job_bonus || 0),
         matchLimit: hasConsumedBonusMatches ? 0 : (suscripcion.one_time_match_bonus || 0),
-        periodEndsAt: bonusPeriodEnd,
+        periodEndsAt: bonusPeriodEnd, // Puede ser null, pero se usa para la visualización si existe
         type: 'one-time'
       });
-      console.log("[DEBUG] calculateEffectivePlan - Bonos puntuales activos por fecha y no agotados.");
+      console.log("[DEBUG] calculateEffectivePlan - Bonos puntuales activos y no agotados.");
     } else {
-      console.log("[DEBUG] calculateEffectivePlan - Bonos puntuales agotados.");
+      console.log("[DEBUG] calculateEffectivePlan - Bonos puntuales existen pero están expirados por fecha.");
     }
   } else if (hasBonusLimits) {
-    console.log("[DEBUG] calculateEffectivePlan - Bonos puntuales existen pero están expirados por fecha o sin fechas definidas.");
+    console.log("[DEBUG] calculateEffectivePlan - Bonos puntuales existen pero están agotados o sin fechas definidas.");
   }
 
   // 3. Sumar los límites de todos los planes activos
