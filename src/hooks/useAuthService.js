@@ -130,11 +130,11 @@ export function useAuthService() {
 
     setAuthChecked(true);
     setLoading(false); // Set loading false at the very end of processing the event
-
-  }, [user]); // Depende de 'user' para re-ejecutar si el usuario cambia (ej. después de un login)
-
-  useEffect(() => {
-    console.debug("[DEBUG] useAuthService: useEffect - Setting up onAuthStateChange listener.");
+ 
+   }, [setUser, setAuthChecked, setLoading, auth.getRecruiterProfile, auth.user, auth.clearAuthUser, lastFetchedUserId, APP_PLANS]); // Dependencias optimizadas
+ 
+   useEffect(() => {
+     console.debug("[DEBUG] useAuthService: useEffect - Setting up onAuthStateChange listener.");
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
       console.debug(`[DEBUG] useAuthService: onAuthStateChange - Event received: ${event}`);

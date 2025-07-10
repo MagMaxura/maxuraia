@@ -167,11 +167,11 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   let effectiveCurrentPlan = null;
   let isSubscriptionActive = false;
 
-  console.log("[DEBUG] calculateEffectivePlan - suscripcion:", suscripcion);
-  console.log("[DEBUG] calculateEffectivePlan - currentJobCount:", currentJobCount);
+  console.debug("[DEBUG] calculateEffectivePlan - suscripcion:", suscripcion);
+  console.debug("[DEBUG] calculateEffectivePlan - currentJobCount:", currentJobCount);
 
   if (!suscripcion) {
-    console.log("[DEBUG] calculateEffectivePlan - No subscription object found.");
+    console.debug("[DEBUG] calculateEffectivePlan - No subscription object found.");
     return {
       cvLimit: 0,
       jobLimit: 0,
@@ -192,7 +192,7 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   // 1. Evaluar el plan base (mensual, empresarial, trial)
   if (basePlan && (basePlan.type === 'monthly' || basePlan.type === 'enterprise' || basePlan.type === 'trial')) {
     const subscriptionPeriodEndsAt = suscripcion.current_period_end ? new Date(suscripcion.current_period_end) : null;
-    console.log(`[DEBUG] Base Plan Check: plan_id=${suscripcion.plan_id}, status=${suscripcion.status}, current_period_end=${suscripcion.current_period_end}, subscriptionPeriodEndsAt=${subscriptionPeriodEndsAt}, now=${now}`);
+    console.debug(`[DEBUG] Base Plan Check: plan_id=${suscripcion.plan_id}, status=${suscripcion.status}, current_period_end=${suscripcion.current_period_end}, subscriptionPeriodEndsAt=${subscriptionPeriodEndsAt}, now=${now}`);
     if (suscripcion.status === 'active' && subscriptionPeriodEndsAt && subscriptionPeriodEndsAt > now) {
       basePlanActive = true;
       activePlans.push({
@@ -215,8 +215,8 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   const bonusPeriodEnd = suscripcion.bonus_periodo_end ? new Date(suscripcion.bonus_periodo_end) : null;
   let bonusPlanActive = false;
 
-  console.log(`[DEBUG] Bonus Plan Check: one_time_cv_bonus=${suscripcion.one_time_cv_bonus}, one_time_job_bonus=${suscripcion.one_time_job_bonus}, one_time_match_bonus=${suscripcion.one_time_match_bonus}`);
-  console.log(`[DEBUG] Bonus Dates: bonus_periodo_start=${suscripcion.bonus_periodo_start}, bonusPeriodStart=${bonusPeriodStart}, bonus_periodo_end=${suscripcion.bonus_periodo_end}, bonusPeriodEnd=${bonusPeriodEnd}, now=${now}`);
+  console.debug(`[DEBUG] Bonus Plan Check: one_time_cv_bonus=${suscripcion.one_time_cv_bonus}, one_time_job_bonus=${suscripcion.one_time_job_bonus}, one_time_match_bonus=${suscripcion.one_time_match_bonus}`);
+  console.debug(`[DEBUG] Bonus Dates: bonus_periodo_start=${suscripcion.bonus_periodo_start}, bonusPeriodStart=${bonusPeriodStart}, bonus_periodo_end=${suscripcion.bonus_periodo_end}, bonusPeriodEnd=${bonusPeriodEnd}, now=${now}`);
 
   // Verificar si los bonos puntuales están activos por fecha Y si no se han agotado
   const hasBonusLimits = (suscripcion.one_time_cv_bonus || 0) > 0 || (suscripcion.one_time_job_bonus || 0) > 0 || (suscripcion.one_time_match_bonus || 0) > 0;
@@ -224,7 +224,7 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   const hasConsumedBonusJobs = currentJobCount >= (suscripcion.one_time_job_bonus || 0); // Usar currentJobCount
   const hasConsumedBonusMatches = (suscripcion.mach_analizados_este_periodo || 0) >= (suscripcion.one_time_match_bonus || 0);
 
-  console.log(`[DEBUG] Bonus Consumption Check: hasConsumedBonusCv=${hasConsumedBonusCv}, hasConsumedBonusJobs=${hasConsumedBonusJobs}, hasConsumedBonusMatches=${hasConsumedBonusMatches}`);
+  console.debug(`[DEBUG] Bonus Consumption Check: hasConsumedBonusCv=${hasConsumedBonusCv}, hasConsumedBonusJobs=${hasConsumedBonusJobs}, hasConsumedBonusMatches=${hasConsumedBonusMatches}`);
 
   // Los bonos puntuales se consideran activos si tienen límites definidos Y no se han agotado,
   // Y si tienen fechas, que estén dentro del período. Si no tienen fechas, se asume que son válidos hasta su consumo.
@@ -239,12 +239,12 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
         periodEndsAt: bonusPeriodEnd, // Puede ser null, pero se usa para la visualización si existe
         type: 'one-time'
       });
-      console.log("[DEBUG] calculateEffectivePlan - Bonos puntuales activos y no agotados.");
+      console.debug("[DEBUG] calculateEffectivePlan - Bonos puntuales activos y no agotados.");
     } else {
-      console.log("[DEBUG] calculateEffectivePlan - Bonos puntuales existen pero están expirados por fecha.");
+      console.debug("[DEBUG] calculateEffectivePlan - Bonos puntuales existen pero están expirados por fecha.");
     }
   } else if (hasBonusLimits) {
-    console.log("[DEBUG] calculateEffectivePlan - Bonos puntuales existen pero están agotados o sin fechas definidas.");
+    console.debug("[DEBUG] calculateEffectivePlan - Bonos puntuales existen pero están agotados o sin fechas definidas.");
   }
 
   // 3. Sumar los límites de todos los planes activos
@@ -272,12 +272,12 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   // 5. Determinar si la suscripción general está activa
   isSubscriptionActive = basePlanActive || bonusPlanActive;
 
-  console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveCvLimit:", effectiveCvLimit);
-  console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveJobLimit:", effectiveJobLimit);
-  console.log("[DEBUG] calculateEffectivePlan - Calculated effectiveMatchLimit:", effectiveMatchLimit);
-  console.log("[DEBUG] calculateEffectivePlan - Effective Current Plan:", effectiveCurrentPlan);
-  console.log("[DEBUG] calculateEffectivePlan - Is Subscription Active (overall):", isSubscriptionActive);
-  console.log("[DEBUG] calculateEffectivePlan - Period Ends At:", periodEndsAt);
+  console.debug("[DEBUG] calculateEffectivePlan - Calculated effectiveCvLimit:", effectiveCvLimit);
+  console.debug("[DEBUG] calculateEffectivePlan - Calculated effectiveJobLimit:", effectiveJobLimit);
+  console.debug("[DEBUG] calculateEffectivePlan - Calculated effectiveMatchLimit:", effectiveMatchLimit);
+  console.debug("[DEBUG] calculateEffectivePlan - Effective Current Plan:", effectiveCurrentPlan);
+  console.debug("[DEBUG] calculateEffectivePlan - Is Subscription Active (overall):", isSubscriptionActive);
+  console.debug("[DEBUG] calculateEffectivePlan - Period Ends At:", periodEndsAt);
 
   return {
     cvLimit: effectiveCvLimit,
