@@ -8,11 +8,11 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
  * Extrae el texto de un archivo PDF o DOCX. Si falla con PDF, usa OCR en el backend.
  */
 export async function extractTextFromFile(file, forceOcr = false) {
-  console.log("extractTextFromFile: Iniciando extracción de texto del archivo:", file.name, file.type, "Force OCR:", forceOcr);
+  console.debug("extractTextFromFile: Iniciando extracción de texto del archivo:", file.name, file.type, "Force OCR:", forceOcr);
   try {
     if (file.type === 'application/pdf') {
       if (forceOcr) {
-        console.log("extractTextFromFile: Forzando OCR para PDF:", file.name);
+        console.debug("extractTextFromFile: Forzando OCR para PDF:", file.name);
         const ocrText = await extractTextFromPDFWithOCR(file);
         if (!ocrText || (typeof ocrText === 'object' && ocrText.error) || (typeof ocrText === 'string' && ocrText.trim().length < 10)) {
           return {
@@ -23,7 +23,7 @@ export async function extractTextFromFile(file, forceOcr = false) {
         return ocrText;
       }
 
-      console.log("extractTextFromFile: Extrayendo texto de PDF (intento inicial):", file.name);
+      console.debug("extractTextFromFile: Extrayendo texto de PDF (intento inicial):", file.name);
       let text = await extractTextFromPDF(file);
       // Si la extracción es vacía o poco texto, intenta OCR
       if (!text || (typeof text === 'object' && text.error) || text.trim().length < 40) {
@@ -67,7 +67,7 @@ async function extractTextFromPDF(file) {
     const pageText = textContent.items.map(item => item.str).join(' ');
     fullText += pageText + '\n'; // Añadir salto de línea entre páginas
   }
-  console.log("extractTextFromPDF: Texto extraído del PDF:", fullText.substring(0, 300));
+  console.debug("extractTextFromPDF: Texto extraído del PDF:", fullText.substring(0, 300));
   return fullText;
 }
 
@@ -77,7 +77,7 @@ async function extractTextFromPDF(file) {
 async function extractTextFromDOCX(file) {
   const arrayBuffer = await file.arrayBuffer();
   const result = await mammoth.extractRawText({ arrayBuffer });
-  console.log("extractTextFromDOCX: Texto extraído del DOCX:", result.value.substring(0, 300));
+  console.debug("extractTextFromDOCX: Texto extraído del DOCX:", result.value.substring(0, 300));
   return result.value;
 }
 
@@ -86,7 +86,7 @@ async function extractTextFromDOCX(file) {
  */
 async function extractTextFromPDFWithOCR(file) {
   try {
-    console.log("extractTextFromPDFWithOCR: Enviando archivo al backend OCR:", file);
+    console.debug("extractTextFromPDFWithOCR: Enviando archivo al backend OCR:", file);
     const formData = new FormData();
     formData.append('file', file);
     const response = await fetch('/api/ocr', {
@@ -94,9 +94,9 @@ async function extractTextFromPDFWithOCR(file) {
       body: formData
     });
     const data = await response.json();
-    console.log("extractTextFromPDFWithOCR: Respuesta del backend OCR:", data);
+    console.debug("extractTextFromPDFWithOCR: Respuesta del backend OCR:", data);
     if (response.ok && data.text && data.text.trim().length > 0) {
-      console.log("extractTextFromPDFWithOCR: Texto extraído por OCR (primeros 300):", data.text.substring(0, 300));
+      console.debug("extractTextFromPDFWithOCR: Texto extraído por OCR (primeros 300):", data.text.substring(0, 300));
       return data.text;
     } else {
       console.warn("extractTextFromPDFWithOCR: OCR backend no devolvió texto:", data);
@@ -112,7 +112,7 @@ async function extractTextFromPDFWithOCR(file) {
  * Analiza el CV recibido como string o como resultado de extracción con error.
  */
 export async function analyzeCV(textOrExtractionResult) {
-  console.log("analyzeCV: Iniciando análisis del CV...");
+  console.debug("analyzeCV: Iniciando análisis del CV...");
 
   // Si llega un objeto de error de la extracción
   if (typeof textOrExtractionResult === 'object' && textOrExtractionResult !== null && textOrExtractionResult.error) {
@@ -144,7 +144,7 @@ export async function analyzeCV(textOrExtractionResult) {
   }
 
   try {
-    console.log("analyzeCV: Texto extraído del CV (primeros 300 caracteres):", text.substring(0, 300));
+    console.debug("analyzeCV: Texto extraído del CV (primeros 300 caracteres):", text.substring(0, 300));
     // Si querés usar GPT en backend, llamá tu endpoint:
     const response = await fetch('/api/openai/analyzeCv', {
       method: 'POST',
@@ -158,7 +158,7 @@ export async function analyzeCV(textOrExtractionResult) {
     }
 
     const gptAnalysis = await response.json();
-    console.log("analyzeCV: Análisis con GPT exitoso:", gptAnalysis);
+    console.debug("analyzeCV: Análisis con GPT exitoso:", gptAnalysis);
 
     // Validar que los datos requeridos estén presentes
     // Asegurar que habilidades sea un objeto con tecnicas y blandas, y que tecnicas/blandas sean arrays
@@ -172,14 +172,16 @@ export async function analyzeCV(textOrExtractionResult) {
     };
 
     // Verificar si el análisis es "pobre" (campos clave vacíos o con valores por defecto)
+    // El email y el teléfono no son críticos para considerar un análisis "no pobre" si el resto de los datos están.
     const isPoorAnalysis = !gptAnalysis.nombre ||
-                           !gptAnalysis.email ||
                            !gptAnalysis.resumen ||
                            !gptAnalysis.experiencia ||
                            (habilidades.tecnicas.length === 0 && habilidades.blandas.length === 0);
 
     return {
       ...gptAnalysis,
+      email: gptAnalysis.email || 'No encontrado', // Asegurar "No encontrado" si es null/undefined
+      telefono: gptAnalysis.telefono || 'No encontrado', // Asegurar "No encontrado" si es null/undefined
       habilidades: habilidades,
       nivel_escolarizacion: gptAnalysis.nivel_escolarizacion || gptAnalysis.title || "", // Compatibilidad con 'title'
       textoCompleto: text,
