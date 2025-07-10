@@ -74,7 +74,7 @@ export const cvService = {
       email: analysisData.email,
       phone: analysisData.telefono || analysisData.phone,
       location: analysisData.localidad || analysisData.location,
-      title: analysisData.tituloActual || analysisData.title, // o el campo correspondiente
+      title: analysisData.tituloActual || analysisData.title || (analysisData.summary ? analysisData.summary.split('.')[0].trim() : null), // Intenta extraer del summary si no hay título
       summary: analysisData.resumen || analysisData.summary,
       // skills: analysisData.habilidades?.tecnicas?.join(', ') + (analysisData.habilidades?.blandas?.length ? ', ' + analysisData.habilidades.blandas.join(', ') : ''), // Ejemplo de cómo podrías guardar skills como texto
       // skills: analysisData.habilidades, // Comentado para reemplazar con la lógica de array
