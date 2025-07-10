@@ -117,6 +117,7 @@ function ProcessedCVsTab({
               candidateDatabaseId={cvFiles[selectedCV]?.candidate_database_id}
               onSaveSuccess={onSaveSuccess}
               onDeleteCV={onDeleteCV}
+              isCvSaved={!!cvFiles[selectedCV]?.cv_database_id || !!cvFiles[selectedCV]?.candidate_database_id} // Pasar la prop isCvSaved
             />
           </motion.div>
         )}
@@ -220,8 +221,8 @@ function ProcessedCVsTab({
                 className={`p-3 rounded-md flex items-center justify-between cursor-pointer transition-colors border ${
                   selectedCV === originalIndex
                     ? "bg-blue-100 border-blue-400 shadow-md" // Seleccionado
-                    : (file.cv_database_id && file.cv_database_id !== 'temp-cv-id-error')
-                      ? "bg-green-50 border-green-300 hover:bg-green-100 hover:border-green-400" // Guardado si tiene ID de CV
+                    : (file.cv_database_id || file.candidate_database_id)
+                      ? "bg-green-50 border-green-300 hover:bg-green-100 hover:border-green-400" // Guardado si tiene ID de CV o de Candidato
                       : "bg-red-50 border-red-300 hover:bg-red-100 hover:border-red-400" // No guardado
                 } ${
                   selectedCV !== originalIndex ? "hover:shadow-sm" : ""
