@@ -21,6 +21,7 @@ function UploadCVTab({
   userSubscription, // Recibir prop
   analysisLimit, // Recibir prop
   currentAnalysisCount, // Recibir prop
+  optimisticCurrentAnalysisCount, // Nueva prop: contador optimista
   effectiveLimits, // Nuevo: Recibir prop
   isBonusPlanActive,
   bonusCvUsed,
@@ -38,7 +39,8 @@ function UploadCVTab({
   // Usar las props directamente, con fallbacks seguros
   const planId = effectiveLimits?.effectiveCurrentPlan?.id || userSubscription?.plan_id || 'basico';
   const displayAnalysisLimit = analysisLimit === Infinity ? 'Ilimitados' : analysisLimit;
-  const displayCurrentAnalysisCount = currentAnalysisCount || 0;
+  // Usar el contador optimista si está disponible, de lo contrario, el de la base de datos
+  const displayCurrentAnalysisCount = optimisticCurrentAnalysisCount !== undefined ? optimisticCurrentAnalysisCount : (currentAnalysisCount || 0);
 
   // Determinar si el usuario puede analizar más CVs
   const canAnalyzeMore = effectiveLimits.isSubscriptionActive && displayCurrentAnalysisCount < analysisLimit;

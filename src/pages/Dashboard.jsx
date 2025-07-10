@@ -153,13 +153,14 @@ function Dashboard() {
     handleFileUpload,
     handleDragOver,
     handleDrop,
+    optimisticCvCount, // Recibir el contador optimista
   } = useCvUploader({
     fileInputRef,
     setCvFiles,
     setSelectedCV,
     setCvAnalysis,
     setActiveTab,
-    currentCvCount: cvFiles.length, // Pasar el número actual de CVs cargados
+    currentCvCount: currentAnalysisCount, // Pasar currentAnalysisCount para sincronización
   });
 
   // Efecto para seleccionar el CV y mostrar su análisis cuando solo se sube un archivo.
@@ -449,6 +450,7 @@ function Dashboard() {
               userSubscription={userSubscription} // Pasar la suscripción
               analysisLimit={analysisLimit} // Pasar el límite
               currentAnalysisCount={currentAnalysisCount} // Pasar el contador
+              optimisticCurrentAnalysisCount={optimisticCvCount} // Pasar el contador optimista
               effectiveLimits={effectiveLimits} // Nuevo: Pasar effectiveLimits
               isBonusPlanActive={isBonusPlanActive}
               bonusCvUsed={bonusCvUsed}

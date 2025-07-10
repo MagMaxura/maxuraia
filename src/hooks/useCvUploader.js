@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react'; // Añadir useEffect
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from "@/components/ui/use-toast";
 import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
@@ -25,6 +25,15 @@ export function useCvUploader({
   const [totalFilesToUpload, setTotalFilesToUpload] = useState(0);
   const [filesUploadedCount, setFilesUploadedCount] = useState(0);
   const [currentFileProcessingName, setCurrentFileProcessingName] = useState("");
+  const [optimisticCvCount, setOptimisticCvCount] = useState(currentCvCount); // Nuevo estado optimista
+
+  // Sincronizar optimisticCvCount con currentCvCount cuando este último cambie (después de refreshUser)
+  useEffect(() => {
+    if (currentCvCount !== undefined && optimisticCvCount !== currentCvCount) {
+      console.debug("useCvUploader: Sincronizando optimisticCvCount con currentCvCount de DB:", currentCvCount);
+      setOptimisticCvCount(currentCvCount);
+    }
+  }, [currentCvCount, optimisticCvCount]);
 
   const handleFileUpload = useCallback(async (eventOrFiles) => {
     // Permite pasar un evento de input o directamente un array de archivos (para drag and drop)
@@ -147,7 +156,8 @@ export function useCvUploader({
         };
         newlyProcessedCvFiles.push(newCvFile);
         CvsProcessedInThisBatch++;
-        
+        setOptimisticCvCount(prevCount => prevCount + 1); // Incrementar el contador optimista
+
         toast({
           title: "CV Procesado",
           description: `${file.name} ha sido analizado. (${i + 1}/${selectedFiles.length})`,
@@ -240,5 +250,6 @@ export function useCvUploader({
     handleFileUpload,
     handleDragOver,
     handleDrop,
+    optimisticCvCount, // Devolver el contador optimista
   };
 }
