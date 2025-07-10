@@ -32,8 +32,6 @@ const CheckoutPage = () => {
   const hasCreatedIntent = useRef(false);
 
   useEffect(() => {
-    console.log('CheckoutPage useEffect running...');
-    console.log('Dependencies:', { priceId, user, loadingUser, clientSecret, loadingIntent, error, hasCreatedIntent: hasCreatedIntent.current });
 
     // Si la clave pública de Stripe no está disponible, no se puede continuar.
     if (!VITE_STRIPE_PUBLISHABLE_KEY) {
@@ -43,20 +41,18 @@ const CheckoutPage = () => {
     }
 
     if (loadingUser) {
-      console.log('CheckoutPage: loadingUser is true, waiting...');
       // Espera a que la información del usuario termine de cargar
       return;
     }
 
     if (!user) {
       // Si después de cargar, no hay usuario, redirige al login
-      console.log('CheckoutPage: Usuario no autenticado, redirigiendo a login.');
       navigate('/login', { replace: true, state: { from: `/checkout/${priceId}` } });
       return;
     }
 
     if (!priceId) {
-      console.log('CheckoutPage: priceId is missing.');
+      
       setError('No se proporcionó un ID de plan para el checkout.');
       setLoadingIntent(false);
       return;
@@ -64,7 +60,7 @@ const CheckoutPage = () => {
 
     const plan = Object.values(APP_PLANS).find(p => p.stripePriceId === priceId);
     if (!plan) {
-      console.log('CheckoutPage: Plan not found for priceId:', priceId);
+      
       setError('El plan seleccionado no es válido o no fue encontrado.');
       setLoadingIntent(false);
       return;
@@ -73,11 +69,10 @@ const CheckoutPage = () => {
 
     // Función para crear el PaymentIntent
     const createPaymentIntent = async () => {
-      console.log('CheckoutPage: Calling createPaymentIntent...');
+      
       setLoadingIntent(true); // Asegura que el estado de carga se active al iniciar la creación
       setError(null); // Limpia errores previos
       try {
-        console.log('CheckoutPage: Creando PaymentIntent para:', { priceId, userId: user.id, userEmail: user.email });
         const response = await fetch('/api/stripe/create-payment-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -88,7 +83,6 @@ const CheckoutPage = () => {
           }),
         });
 
-        console.log('CheckoutPage: Raw response status:', response.status, response.statusText);
         const responseData = await response.json(); // Intenta parsear JSON siempre
 
         if (!response.ok) {
@@ -97,7 +91,6 @@ const CheckoutPage = () => {
         }
 
         if (responseData.clientSecret && typeof responseData.clientSecret === 'string') {
-          console.log('CheckoutPage: Client Secret recibido:', responseData.clientSecret.substring(0, 15) + "..."); // Loguea solo una parte por seguridad
           setClientSecret(responseData.clientSecret);
           hasCreatedIntent.current = true; // Marcar que hemos creado el intent exitosamente
         } else {
@@ -120,22 +113,18 @@ const CheckoutPage = () => {
     // - No hay un error previo
     // - Y, crucialmente, NO hemos intentado crear el intent para este priceId todavía (usando el ref)
     if (user && priceId && !clientSecret && !loadingIntent && !error && !hasCreatedIntent.current) {
-         console.log('CheckoutPage: Condition met to create Payment Intent.');
          createPaymentIntent();
     } else {
-        console.log('CheckoutPage: Condition NOT met to create Payment Intent.');
-        console.log('Condition details:', {
+        
+        console.log('CheckoutPage: Condition NOT met to create Payment Intent. Details:', {
             hasUser: !!user,
             hasPriceId: !!priceId,
             hasClientSecret: !!clientSecret,
             isLoadingIntent: loadingIntent,
             hasError: !!error,
-            hasCreatedIntentRef: hasCreatedIntent.current
+            hasCreatedIntentRef: hasCreatedIntent.current,
         });
     }
-
-
-  // Incluir todas las dependencias relevantes. navigate no es necesario si su identidad es estable.
   }, [priceId, user, loadingUser, clientSecret, loadingIntent, error, navigate]);
 
 
@@ -202,11 +191,9 @@ const CheckoutPage = () => {
           // puedes mantenerlo, pero usualmente no es requerido.
           // clientSecret={clientSecret}
           onSuccess={() => {
-            console.log('CheckoutPage: Pago exitoso (manejado por return_url).');
             navigate('/payment-success'); // O donde sea que manejes el éxito
           }}
           onCancel={() => {
-            console.log('CheckoutPage: Pago cancelado por el usuario.');
             navigate('/payment-cancelled'); // O a la página de precios
           }}
         />

@@ -23,14 +23,10 @@ function Login() {
     // Solo redirigir si la comprobación inicial de auth ha terminado y el usuario está autenticado
     // Solo redirigir si la comprobación inicial de auth ha terminado y el usuario está autenticado
     if (!loading && isAuthenticated) {
-      console.log("Login.jsx: User already authenticated.");
-      console.log("Login.jsx: isAuthenticated:", isAuthenticated, "isProfileComplete:", isProfileComplete); // Log para depuración
       // Redirigir según si el perfil está completo
       if (isProfileComplete) {
-        console.log("Login.jsx: Profile complete, redirecting to dashboard.");
         navigate('/dashboard', { replace: true });
       } else {
-        console.log("Login.jsx: Profile incomplete, redirecting to complete-profile.");
         navigate('/complete-profile', { replace: true });
       }
     }
@@ -55,7 +51,6 @@ function Login() {
       // basándose en el estado isAuthenticated y isProfileComplete del contexto.
       // No necesitamos lógica de redirección explícita aquí después de un login exitoso.
       // El useEffect se encargará de ello una vez que el estado de autenticación se actualice.
-      console.log("Login.jsx: Login successful. useEffect will handle redirection.");
       // Opcional: podrías querer limpiar el formulario aquí si no se redirige inmediatamente
       // setCredentials({ email: "", password: "" });
     } else {

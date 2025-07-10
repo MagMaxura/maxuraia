@@ -7,7 +7,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { Mail, User, Building2, Phone, Globe, Users, Flag } from 'lucide-react';
 
 function CompleteProfile() {
-  console.log("CompleteProfile component rendering");
   // Obtener las funciones updateRecruiterProfile y refreshUser del contexto
   const { user: authUser, updateRecruiterProfile, loading, refreshUser } = useAuth();
   const { toast } = useToast();
@@ -30,7 +29,6 @@ function CompleteProfile() {
   useEffect(() => {
     // Redirigir si no hay usuario autenticado
     if (!loading && !authUser) {
-      console.log("CompleteProfile: No authenticated user found, redirecting to login.");
       navigate('/login');
     }
     // Podrías pre-rellenar algún dato si estuviera en authUser.user_metadata, pero lo dejamos vacío por ahora.
@@ -46,7 +44,6 @@ function CompleteProfile() {
     e.preventDefault();
     if (isSubmitting || !authUser) return;
 
-    console.log("CompleteProfile: Form data being validated:", formData);
 
     // Validar campos requeridos (ajusta según necesites)
     const requiredFields = {
@@ -78,7 +75,6 @@ function CompleteProfile() {
     }
 
     setIsSubmitting(true);
-    console.log("CompleteProfile: [LOG] Submitting profile data...");
 
     try {
       const dataForUpdate = {
@@ -95,9 +91,7 @@ function CompleteProfile() {
         marketing_consent: formData.marketingConsent,
       };
 
-      console.log("CompleteProfile: [LOG] Calling updateRecruiterProfile for user ID:", authUser.id, "with data:", dataForUpdate);
       await updateRecruiterProfile(authUser.id, dataForUpdate);
-      console.log("CompleteProfile: [LOG] updateRecruiterProfile call completed.");
 
       toast({
         title: "¡Perfil completado!",
@@ -106,10 +100,8 @@ function CompleteProfile() {
       });
 
       // Llamar a refreshUser para actualizar el estado del usuario en el contexto
-      console.log("CompleteProfile: [LOG] Calling refreshUser to update auth context.");
       await refreshUser(); // Esperar a que se complete la actualización del usuario
 
-      console.log("CompleteProfile: [LOG] Profile updated and auth context refreshed. Redirecting to dashboard.");
       navigate('/dashboard', { replace: true }); // Usar replace para evitar que el usuario vuelva a CompleteProfile con el botón de atrás
 
     } catch (error) {

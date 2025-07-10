@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { cvService } from '@/services/cvService.js';
 import { useToast } from "@/components/ui/use-toast";
-import { APP_PLANS, PLAN_CV_ANALYSIS_LIMITS, calculateEffectivePlan } from '@/config/plans'; // Importar planes, límites y la nueva función
+import { APP_PLANS, PLAN_CV_ANALYSIS_LIMITS, calculateEffectivePlan } from '@/config/plans';
 
 export function useDashboardData() {
   const { user } = useAuth();
@@ -15,15 +15,12 @@ export function useDashboardData() {
   const initialLoadAttemptedForUserIdRef = useRef(null);
 
   useEffect(() => {
-    console.debug("[DEBUG] useDashboardData: useEffect triggered. Current user:", user);
     const currentUserId = user?.id;
 
     const loadUserCandidatosYCVs = async (userIdToLoad) => { // Renombrado
-      console.debug("useDashboardData: Fetching Candidatos (and their CVs) for recruiterId:", userIdToLoad);
-      setIsLoadingCVs(true); // Sigue usando isLoadingCVs para la UI, podría renombrarse luego
+      setIsLoadingCVs(true);
       try {
-        const fetchedCandidatos = await cvService.getCandidatosConCVsByRecruiterId(userIdToLoad); // Nueva función del servicio
-        console.debug("useDashboardData: Fetched Candidatos from DB:", fetchedCandidatos);
+        const fetchedCandidatos = await cvService.getCandidatosConCVsByRecruiterId(userIdToLoad);
         
         const formattedData = fetchedCandidatos.map(candidato => {
           // Cada 'candidato' puede tener un array 'cvs'. Tomamos el más reciente o el primero.
@@ -77,11 +74,9 @@ export function useDashboardData() {
     };
 
     const loadUserJobs = async (userIdToLoad) => {
-      console.debug("useDashboardData: Fetching Jobs for recruiterId:", userIdToLoad);
       setIsLoadingJobs(true);
       try {
         const fetchedJobs = await cvService.getJobsByRecruiterId(userIdToLoad);
-        console.debug("useDashboardData: Fetched Jobs from DB:", fetchedJobs);
         setJobs(fetchedJobs || []);
       } catch (error) {
         console.error("useDashboardData: Error fetching user Jobs:", error);
@@ -93,7 +88,6 @@ export function useDashboardData() {
     };
 
     if (!currentUserId) {
-      console.debug("useDashboardData useEffect: No currentUserId. Clearing data and ref.");
       setCvFiles([]);
       setJobs([]);
       setIsLoadingCVs(false);
@@ -103,12 +97,10 @@ export function useDashboardData() {
     }
  
      if (initialLoadAttemptedForUserIdRef.current !== currentUserId) {
-       console.debug(`useDashboardData useEffect: New or different userId. Attempting initial load for ${currentUserId}.`);
       initialLoadAttemptedForUserIdRef.current = currentUserId;
-      loadUserCandidatosYCVs(currentUserId); // Llamar a la función renombrada
+      loadUserCandidatosYCVs(currentUserId);
       loadUserJobs(currentUserId);
     } else {
-      console.debug(`useDashboardData useEffect: Initial load already attempted for userId ${currentUserId}. Skipping.`);
       // Si ya se intentó la carga y las listas están vacías, isLoading debería ser false.
       // Esto previene que se muestre "Cargando..." indefinidamente si no hay datos.
       if (cvFiles.length === 0 && isLoadingCVs) setIsLoadingCVs(false);
@@ -124,10 +116,8 @@ export function useDashboardData() {
 
       // Solo reiniciar si es un plan de pago único y el período ha terminado
       if (planDetails?.type === 'one-time' && periodEndsAt && periodEndsAt < now) {
-        console.debug(`[DEBUG] useDashboardData: Plan de pago único expirado para suscripción ${subscription.id}. Reiniciando contadores.`);
         cvService.resetOneTimePlanCounters(subscription.id)
           .then(() => {
-            console.debug(`[DEBUG] useDashboardData: Contadores reiniciados para suscripción ${subscription.id}.`);
             // Opcional: Forzar una recarga de los datos del usuario para reflejar los contadores reiniciados
             // Esto podría hacerse llamando a una función de recarga de user en AuthContext,
             // o simplemente confiando en que el próximo fetch de suscripción traerá los nuevos valores.
@@ -157,6 +147,10 @@ export function useDashboardData() {
     (bonusPeriodStart && bonusPeriodEnd && now >= bonusPeriodStart && now <= bonusPeriodEnd) // Si hay fechas, debe estar dentro del período
   ) && (!hasConsumedBonusCv || !hasConsumedBonusJobs || !hasConsumedBonusMatches); // Y no todos los bonos deben estar consumidos
 
+  const effectiveLimits = useMemo(() => {
+    return calculateEffectivePlan(user?.suscripcion, jobs.length);
+  }, [user?.suscripcion, jobs.length]);
+
   return {
     cvFiles,
     setCvFiles,
@@ -164,26 +158,24 @@ export function useDashboardData() {
     setJobs,
     isLoadingCVs,
     isLoadingJobs,
-    // Nuevo: Devolver información de la suscripción y el límite
     userSubscription: user?.suscripcion,
-    effectiveLimits: calculateEffectivePlan(user?.suscripcion, jobs.length),
-    isBonusPlanActive: isBonusPlanActiveCalculated, // Devolver el estado calculado de los bonos
-    isBasePlanActive: calculateEffectivePlan(user?.suscripcion, jobs.length).isBasePlanActive, // Nuevo
-    basePlan: calculateEffectivePlan(user?.suscripcion, jobs.length).basePlan, // Nuevo
+    effectiveLimits: effectiveLimits,
+    isBonusPlanActive: isBonusPlanActiveCalculated,
+    isBasePlanActive: effectiveLimits.isBasePlanActive,
+    basePlan: effectiveLimits.basePlan,
     bonusCvUsed: user?.suscripcion?.cvs_analizados_este_periodo || 0,
-    bonusJobUsed: user?.suscripcion?.jobs_analizados_este_periodo || 0, // Asumiendo que jobs_analizados_este_periodo existe
+    bonusJobUsed: user?.suscripcion?.jobs_analizados_este_periodo || 0,
     bonusMatchUsed: user?.suscripcion?.mach_analizados_este_periodo || 0,
     bonusCvTotal: user?.suscripcion?.one_time_cv_bonus || 0,
     bonusJobTotal: user?.suscripcion?.one_time_job_bonus || 0,
     bonusMatchTotal: user?.suscripcion?.one_time_match_bonus || 0,
-    // Los siguientes ya se calculan dentro de effectiveLimits, pero los mantengo para compatibilidad si se usan directamente
-    analysisLimit: calculateEffectivePlan(user?.suscripcion, jobs.length).cvLimit,
-    jobLimit: calculateEffectivePlan(user?.suscripcion, jobs.length).jobLimit,
-    matchLimit: calculateEffectivePlan(user?.suscripcion, jobs.length).matchLimit,
+    analysisLimit: effectiveLimits.cvLimit,
+    jobLimit: effectiveLimits.jobLimit,
+    matchLimit: effectiveLimits.matchLimit,
     currentAnalysisCount: user?.suscripcion?.cvs_analizados_este_periodo || 0,
     currentMatchCount: user?.suscripcion?.mach_analizados_este_periodo || 0,
     currentJobCount: jobs.length,
-    isSubscriptionActive: calculateEffectivePlan(user?.suscripcion, jobs.length).isSubscriptionActive,
-    periodEndsAt: calculateEffectivePlan(user?.suscripcion, jobs.length).periodEndsAt,
+    isSubscriptionActive: effectiveLimits.isSubscriptionActive,
+    periodEndsAt: effectiveLimits.periodEndsAt,
   };
 }

@@ -160,19 +160,33 @@ export const getAllPlans = () => {
  * @param {object} newPlan - El nuevo plan que el usuario ha adquirido.
  * @returns {object} Un objeto con los límites efectivos de cvLimit y jobLimit, y el plan actual efectivo.
  */
+let lastSuscripcion = null;
+let lastCurrentJobCount = null;
+let lastEffectivePlanResult = null;
+
 export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
+  // Convertir suscripcion a una cadena JSON para una comparación profunda simple
+  const currentSuscripcionString = JSON.stringify(suscripcion);
+  const lastSuscripcionString = JSON.stringify(lastSuscripcion);
+
+  // Si los argumentos no han cambiado, devolver el resultado cacheado
+  if (currentSuscripcionString === lastSuscripcionString && currentJobCount === lastCurrentJobCount) {
+    console.debug("[DEBUG] calculateEffectivePlan - Devolviendo resultado cacheado.");
+    return lastEffectivePlanResult;
+  }
+
+  console.debug("[DEBUG] calculateEffectivePlan - Recalculando plan efectivo debido a cambios en los inputs.");
+
   let effectiveCvLimit = 0;
   let effectiveJobLimit = 0;
   let effectiveMatchLimit = 0;
   let effectiveCurrentPlan = null;
   let isSubscriptionActive = false;
 
-  console.debug("[DEBUG] calculateEffectivePlan - suscripcion:", suscripcion);
-  console.debug("[DEBUG] calculateEffectivePlan - currentJobCount:", currentJobCount);
 
   if (!suscripcion) {
     console.debug("[DEBUG] calculateEffectivePlan - No subscription object found.");
-    return {
+    const result = {
       cvLimit: 0,
       jobLimit: 0,
       matchLimit: 0,
@@ -180,6 +194,10 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
       isSubscriptionActive: false,
       periodEndsAt: null,
     };
+    lastSuscripcion = suscripcion;
+    lastCurrentJobCount = currentJobCount;
+    lastEffectivePlanResult = result;
+    return result;
   }
 
   const now = new Date();
@@ -272,14 +290,8 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   // 5. Determinar si la suscripción general está activa
   isSubscriptionActive = basePlanActive || bonusPlanActive;
 
-  console.debug("[DEBUG] calculateEffectivePlan - Calculated effectiveCvLimit:", effectiveCvLimit);
-  console.debug("[DEBUG] calculateEffectivePlan - Calculated effectiveJobLimit:", effectiveJobLimit);
-  console.debug("[DEBUG] calculateEffectivePlan - Calculated effectiveMatchLimit:", effectiveMatchLimit);
-  console.debug("[DEBUG] calculateEffectivePlan - Effective Current Plan:", effectiveCurrentPlan);
-  console.debug("[DEBUG] calculateEffectivePlan - Is Subscription Active (overall):", isSubscriptionActive);
-  console.debug("[DEBUG] calculateEffectivePlan - Period Ends At:", periodEndsAt);
 
-  return {
+  const result = {
     cvLimit: effectiveCvLimit,
     jobLimit: effectiveJobLimit,
     matchLimit: effectiveMatchLimit,
@@ -289,4 +301,11 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
     isBasePlanActive: basePlanActive, // Añadir
     basePlan: basePlan, // Añadir
   };
+
+  // Guardar los argumentos y el resultado para futuras llamadas
+  lastSuscripcion = suscripcion;
+  lastCurrentJobCount = currentJobCount;
+  lastEffectivePlanResult = result;
+
+  return result;
 };
