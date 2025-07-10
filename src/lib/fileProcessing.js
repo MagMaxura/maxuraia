@@ -7,16 +7,27 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 /**
  * Extrae el texto de un archivo PDF o DOCX. Si falla con PDF, usa OCR en el backend.
  */
-export async function extractTextFromFile(file) {
-  console.log("extractTextFromFile: Iniciando extracción de texto del archivo:", file.name, file.type);
+export async function extractTextFromFile(file, forceOcr = false) {
+  console.log("extractTextFromFile: Iniciando extracción de texto del archivo:", file.name, file.type, "Force OCR:", forceOcr);
   try {
     if (file.type === 'application/pdf') {
-      console.log("extractTextFromFile: Extrayendo texto de PDF:", file.name);
+      if (forceOcr) {
+        console.log("extractTextFromFile: Forzando OCR para PDF:", file.name);
+        const ocrText = await extractTextFromPDFWithOCR(file);
+        if (!ocrText || (typeof ocrText === 'object' && ocrText.error) || (typeof ocrText === 'string' && ocrText.trim().length < 10)) {
+          return {
+            error: "ocr_forced_failed",
+            message: "La extracción OCR forzada no devolvió texto útil o falló."
+          };
+        }
+        return ocrText;
+      }
+
+      console.log("extractTextFromFile: Extrayendo texto de PDF (intento inicial):", file.name);
       let text = await extractTextFromPDF(file);
       // Si la extracción es vacía o poco texto, intenta OCR
       if (!text || (typeof text === 'object' && text.error) || text.trim().length < 40) {
         console.warn("extractTextFromFile: Falló la extracción de texto del PDF o es muy corto. Probando OCR backend.");
-        // Envía el archivo al endpoint OCR backend
         const ocrText = await extractTextFromPDFWithOCR(file);
         if (!ocrText || (typeof ocrText === 'object' && ocrText.error) || (typeof ocrText === 'string' && ocrText.trim().length < 10)) {
           return {
@@ -160,11 +171,19 @@ export async function analyzeCV(textOrExtractionResult) {
         : [],
     };
 
+    // Verificar si el análisis es "pobre" (campos clave vacíos o con valores por defecto)
+    const isPoorAnalysis = !gptAnalysis.nombre ||
+                           !gptAnalysis.email ||
+                           !gptAnalysis.resumen ||
+                           !gptAnalysis.experiencia ||
+                           (habilidades.tecnicas.length === 0 && habilidades.blandas.length === 0);
+
     return {
       ...gptAnalysis,
       habilidades: habilidades,
       nivel_escolarizacion: gptAnalysis.nivel_escolarizacion || gptAnalysis.title || "", // Compatibilidad con 'title'
-      textoCompleto: text
+      textoCompleto: text,
+      isPoorAnalysis: isPoorAnalysis // Añadir la bandera de análisis pobre
     };
   } catch (error) {
     console.error('Error en el análisis con GPT:', error);

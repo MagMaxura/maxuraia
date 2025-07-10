@@ -106,8 +106,26 @@ export function useCvUploader({
       }
 
       try {
-        const text = await extractTextFromFile(file);
-        const resolvedAnalysis = await analyzeCV(text);
+        let text = await extractTextFromFile(file);
+        let resolvedAnalysis = await analyzeCV(text);
+
+        // Si el análisis inicial es pobre y es un PDF, reintentar con OCR forzado
+        if (resolvedAnalysis.isPoorAnalysis && file.type === 'application/pdf') {
+          console.warn(`Análisis inicial de CV ${file.name} es pobre. Reintentando extracción con OCR forzado.`);
+          const ocrText = await extractTextFromFile(file, true); // Forzar OCR
+          if (ocrText && typeof ocrText === 'string' && ocrText.trim().length > 10) {
+            resolvedAnalysis = await analyzeCV(ocrText); // Re-analizar con texto de OCR
+            if (resolvedAnalysis.isPoorAnalysis) {
+              // Si incluso después del OCR el análisis sigue siendo pobre, registrar un error más específico
+              console.error(`Análisis de CV ${file.name} sigue siendo pobre incluso después de OCR.`);
+              throw new Error("El análisis del CV es deficiente incluso con OCR. El documento podría ser ilegible.");
+            }
+          } else if (ocrText && ocrText.error) {
+            throw new Error(`Error en la extracción OCR forzada: ${ocrText.message}`);
+          } else {
+            throw new Error("La extracción OCR forzada no devolvió texto útil.");
+          }
+        }
 
         // Llamar a cvService.uploadCV con user.suscripcion
         const result = await cvService.uploadCV(file, user.id, resolvedAnalysis, user.suscripcion); // Pasar user.suscripcion
