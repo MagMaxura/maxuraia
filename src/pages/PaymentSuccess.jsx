@@ -70,7 +70,6 @@ const PaymentSuccess = () => {
           console.error('Error retrieving Stripe object:', stripeError);
           setError(stripeError.message || 'Error al verificar el estado del pago.');
         } else if (retrievedPaymentIntent) {
-          console.log('PaymentIntent retrieved:', retrievedPaymentIntent);
           setPaymentIntent(retrievedPaymentIntent);
           if (retrievedPaymentIntent.status !== 'succeeded') {
               console.warn('PaymentIntent status is not succeeded:', retrievedPaymentIntent.status);

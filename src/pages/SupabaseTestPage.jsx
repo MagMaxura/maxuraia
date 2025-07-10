@@ -26,7 +26,6 @@ function SupabaseTestPage() {
     try {
       // Usar la función login de authFunctions directamente
       const result = await authFunctions.login({ email: loginEmail, password: loginPassword });
-      console.log('[SupabaseTestPage] Login attempt result:', result);
 
       if (result.success && result.user) {
         setLoggedInUser(result.user);
@@ -67,10 +66,8 @@ function SupabaseTestPage() {
         company: 'TestInsertCompany',
         created_at: new Date().toISOString(),
       };
-      console.log('[SupabaseTestPage] Datos para INSERT:', testData);
       // Usar saveRecruiterProfile de authFunctions
       const data = await authFunctions.saveRecruiterProfile(testData);
-      console.log('[SupabaseTestPage] Éxito en INSERT:', data);
       setTestResults(`Éxito en INSERT: ${JSON.stringify(data, null, 2)}`);
       toast({ title: "Éxito en INSERT", description: "Registro insertado." });
     } catch (e) {
@@ -89,11 +86,9 @@ function SupabaseTestPage() {
     setIsLoading(true);
     setTestResults('Intentando SELECT de reclutadores...');
     try {
-      console.log('[SupabaseTestPage] Intentando SELECT para ID:', currentTestUserId);
       // Usar getRecruiterProfile de authFunctions
       const profileExists = await authFunctions.getRecruiterProfile(currentTestUserId);
       const message = profileExists ? `Registro encontrado (getRecruiterProfile devolvió true)` : 'No se encontró registro (getRecruiterProfile devolvió false)';
-      console.log('[SupabaseTestPage] Éxito en SELECT:', message);
       setTestResults(`Éxito en SELECT: ${message}`);
       toast({ title: "Éxito en SELECT", description: message });
     } catch (e) {
@@ -125,10 +120,8 @@ function SupabaseTestPage() {
         // Asegúrate de que estos nombres de campo (snake_case) coincidan con tus columnas en la DB
         // y que los valores sean del tipo correcto.
       };
-      console.log('[SupabaseTestPage] Datos para UPDATE:', updateData);
       // Usar updateRecruiterProfile de authFunctions
       const data = await authFunctions.updateRecruiterProfile(currentTestUserId, updateData);
-      console.log('[SupabaseTestPage] Éxito en UPDATE:', data);
       setTestResults(`Éxito en UPDATE: ${JSON.stringify(data, null, 2)} (la función devuelve true si no hay error)`);
       toast({ title: "Éxito en UPDATE", description: "Registro actualizado." });
     } catch (e) {
@@ -147,7 +140,6 @@ function SupabaseTestPage() {
     setIsLoading(true);
     setTestResults('Intentando DELETE de reclutadores...');
     try {
-      console.log('[SupabaseTestPage] Intentando DELETE para ID:', currentTestUserId);
       const { error } = await supabase // Usar supabase directo para delete es más simple
         .from('reclutadores')
         .delete()
@@ -158,7 +150,6 @@ function SupabaseTestPage() {
         setTestResults(`Error en DELETE: ${JSON.stringify(error, null, 2)}`);
         toast({ title: "Error en DELETE", description: error.message, variant: "destructive" });
       } else {
-        console.log('[SupabaseTestPage] Éxito en DELETE');
         setTestResults('Éxito en DELETE: Registro eliminado (si existía).');
         toast({ title: "Éxito en DELETE", description: "Registro eliminado." });
       }

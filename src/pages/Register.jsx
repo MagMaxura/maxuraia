@@ -8,7 +8,6 @@ import { Mail } from 'lucide-react'; // Ya no necesitamos los otros iconos aquí
 import { useEffect } from 'react'; // Importar useEffect
 
 function Register() {
-  console.log("Register component rendering");
   
   const [formData, setFormData] = useState({
     email: "",
@@ -23,13 +22,11 @@ function Register() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  console.log("Register: register function available:", !!register);
 
   // Redirigir si ya está autenticado
   useEffect(() => {
     // Solo redirigir si la comprobación inicial de auth ha terminado y el usuario está autenticado
     if (!loading && isAuthenticated) {
-      console.log("Register.jsx: User already authenticated, redirecting to dashboard.");
       navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, loading, navigate]);
@@ -37,11 +34,9 @@ function Register() {
   // validateWebsite ya no es necesaria aquí ya que el campo website fue eliminado del formulario inicial.
 
   const handleSubmit = async (e) => {
-    console.log("Register.jsx: handleSubmit - INICIO DE FUNCIÓN");
     e.preventDefault();
     
     if (isSubmitting) {
-      console.log("Register.jsx: Form submission blocked - already submitting");
       return;
     }
 
@@ -55,7 +50,6 @@ function Register() {
       return;
     }
     
-    console.log("Register.jsx: Form data being validated:", formData);
     
     // Validate required fields
     if (!formData.email || !formData.password || !formData.confirmPassword) {
@@ -69,7 +63,6 @@ function Register() {
 
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      console.log("Register.jsx: Passwords don't match");
       setPasswordMismatchError(true); // Establecer el estado de error
       toast({
         title: "Error en la contraseña",
@@ -83,7 +76,6 @@ function Register() {
 
     // Validate password length
     if (formData.password.length < 8) {
-      console.log("Register.jsx: Password too short");
       toast({
         title: "Contraseña muy corta",
         description: "La contraseña debe tener al menos 8 caracteres",
@@ -97,7 +89,6 @@ function Register() {
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      console.log("Register.jsx: Invalid email format");
       toast({
         title: "Formato de email inválido",
         description: "Por favor, ingresa un email válido",
@@ -106,7 +97,6 @@ function Register() {
       return;
     }
 
-    console.log("Register.jsx: All validations passed, proceeding with registration");
     setIsSubmitting(true);
 
     try {
@@ -118,13 +108,10 @@ function Register() {
       // No es necesario pasar confirmPassword a la función de signUp de Supabase.
       // La validación de que coinciden ya se hizo.
 
-      console.log("Register.jsx: Calling register function with data for signUp:", dataForSignUp);
       const registrationAttempt = await register(dataForSignUp);
 
-      console.log("Register.jsx: Registration (signUp) attempt result:", registrationAttempt);
       
       if (registrationAttempt && registrationAttempt.user) {
-        console.log("Register.jsx: SignUp successful, user needs to confirm email.");
         // Ya no guardamos 'pendingUserProfile' aquí, eso se hará en la página /complete-profile
         toast({
           title: "¡Casi listo!",
@@ -136,7 +123,6 @@ function Register() {
         setFormData({ email: "", password: "", confirmPassword: "" }); // Limpiar formulario
         
         // Redirigir al usuario a la página de login después de mostrar el mensaje
-        console.log("Register.jsx: Attempting to navigate to /register-confirmation"); // Log de depuración
         navigate('/register-confirmation'); // Redirigir a la página de confirmación
       } else {
         // Esto no debería suceder si register no lanzó un error, pero es una salvaguarda
@@ -155,7 +141,6 @@ function Register() {
         variant: "destructive",
       });
     } finally {
-      console.log("Register.jsx: Registration process completed, resetting submit state");
       setIsSubmitting(false);
     }
   };

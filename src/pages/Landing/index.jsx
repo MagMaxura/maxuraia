@@ -19,7 +19,6 @@ function Landing() {
   useEffect(() => {
     // Redirect to dashboard if user is already authenticated and initial check is done
     if (!loading && isAuthenticated) {
-      console.log("Landing: User authenticated, redirecting to dashboard.");
       navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, loading, navigate]);

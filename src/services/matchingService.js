@@ -94,7 +94,6 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
   }
 
   if (!candidates || candidates.length === 0) {
-    console.log("No se encontraron candidatos para procesar con los IDs proporcionados o no hay candidatos.");
     return [];
   }
 
@@ -115,7 +114,6 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
     }
 
     if (existingMatch) {
-      console.log(`Match ya existente para candidato ${candidate.id} y job ${jobId}. Score: ${existingMatch.match_score}. Omitiendo re-análisis.`);
       const recommendation = existingMatch.analysis && existingMatch.analysis.toLowerCase().includes("recomendación: sí");
       allResults.push({ ...existingMatch, recommendation, alreadyExisted: true, error: false });
       continue;
@@ -162,7 +160,6 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
       keywords: jobData.keywords,
     };
 
-    console.log(`Comparando CV de ${candidate.name} (${candidate.id}) con el puesto ${jobData.title} (${jobId})...`);
 
     let comparisonResult;
     try {
@@ -185,7 +182,6 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
         throw new Error(errorData.error || errorData.details || `Error del servidor: ${response.status}`);
       }
       comparisonResult = await response.json();
-      console.log(`[matchingService] comparisonResult desde API para candidato ${candidate.id}:`, comparisonResult);
 
     } catch (fetchOrApiError) {
       console.error(`Error al llamar a la API /api/openai/compareCv o procesar su respuesta para candidato ${candidate.id}:`, fetchOrApiError);
@@ -241,7 +237,6 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
         saveError: saveError.message,
       });
     } else {
-      console.log(`Match guardado para candidato ${candidate.id} y job ${jobId}. Score: ${comparisonResult.score}`);
       allResults.push({
         ...savedMatch,
         summary: comparisonResult.summary,
@@ -266,11 +261,9 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
       console.error(`Error al actualizar el contador de macheos para el reclutador ${recruiterId}:`, updateSubscriptionError);
       // No lanzar error fatal aquí, ya que los macheos ya se guardaron.
     } else {
-      console.log(`Contador de macheos actualizado para el reclutador ${recruiterId}. Nuevos macheos: ${matchesProcessedInThisRun}. Total: ${currentMatchCount + matchesProcessedInThisRun}`);
     }
   }
 
-  console.log(`Proceso de matching completado para el puesto ${jobId}.`);
   allResults.sort((a, b) => (b.match_score || 0) - (a.match_score || 0));
   return allResults;
 }

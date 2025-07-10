@@ -1,3 +1,4 @@
+// api/stripe-webhook.js
 import Stripe from 'stripe';
 import { buffer } from 'micro'; // Necesario para leer el cuerpo crudo de la solicitud
 import { createClient } from '@supabase/supabase-js'; // Importa Supabase

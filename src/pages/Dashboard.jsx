@@ -20,7 +20,6 @@ import { useDashboardData } from "@/hooks/useDashboardData.js"; // Importar el n
 import { useCvUploader } from "@/hooks/useCvUploader.js"; // Importar el hook de subida de CVs
 
 function Dashboard() {
-  console.debug("Dashboard: Rendering or re-rendering...");
   const { user, logout, refreshUser } = useAuth(); // Obtener refreshUser
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("cargarNuevoCV"); // Pestaña inicial
@@ -59,7 +58,6 @@ function Dashboard() {
 
   // Si la prueba ha expirado, mostrar un mensaje y restringir el contenido
   if (isTrialExpired) {
-    console.debug("Dashboard: Trial expired, showing upgrade message.");
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-100">
         <div className="bg-white p-8 rounded-xl shadow-xl text-center space-y-4">
@@ -76,20 +74,15 @@ function Dashboard() {
     );
   }
 
-  console.debug("Dashboard: cvFiles from useDashboardData:", cvFiles, "(type:", typeof cvFiles, Array.isArray(cvFiles) ? `length: ${cvFiles.length}` : 'not an array', ")");
-  console.debug("Dashboard: userSubscription:", userSubscription, "analysisLimit:", analysisLimit, "currentAnalysisCount:", currentAnalysisCount); // Log para verificar
-  console.debug("Dashboard: jobs from useDashboardData:", jobs, "(type:", typeof jobs, Array.isArray(jobs) ? `length: ${jobs.length}` : 'not an array', ")");
 
   // Determinar si hay CVs sin guardar (aquellos sin cv_database_id)
   const hasUnsavedCVs = cvFiles.some(cv => !cv.cv_database_id);
-  console.debug("Dashboard: hasUnsavedCVs:", hasUnsavedCVs);
 
   const [selectedCV, setSelectedCV] = useState(null);
   const [cvAnalysis, setCvAnalysis] = useState(null);
   const fileInputRef = useRef(null);
   const [editingJob, setEditingJob] = useState(null); // Para almacenar el job que se está editando
   
-  console.debug("Dashboard states: selectedCV:", selectedCV, "cvAnalysis:", cvAnalysis, "editingJob:", editingJob, "activeTab:", activeTab);
 
   // Estados para los filtros de CVs
   const [cvFilters, setCvFilters] = useState({
@@ -105,7 +98,6 @@ function Dashboard() {
   // ha sido movida a useDashboardData.js
  
    const handleSaveSuccess = (cvId, candidateId, updatedAnalysis) => {
-     console.debug("Dashboard: Entering handleSaveSuccess", { cvId, candidateId, updatedAnalysis });
     // Actualizar el cvFile en el estado cvFiles con los nuevos IDs y el análisis actualizado
     // Esto es importante para que la próxima vez que se seleccione este CV,
     // se sepa que ya existe en la BD y se pueda actualizar en lugar de crear uno nuevo.
@@ -118,7 +110,6 @@ function Dashboard() {
         // Una forma más robusta sería si 'updatedAnalysis' o 'cvId' permite identificarlo.
         // Por ahora, si el nombre del archivo coincide con el que está seleccionado actualmente.
         if (cvFile.name === cvFiles[selectedCV]?.name) {
-          console.debug("Dashboard: Updating cvFile in state:", cvFile.name);
           return {
             ...cvFile,
             analysis: updatedAnalysis, // Guardar el análisis posiblemente editado
@@ -182,7 +173,6 @@ function Dashboard() {
 
 
   const handleCVClick = (index) => {
-    console.debug("Dashboard: Entering handleCVClick, index:", index, "cvFiles available:", !!cvFiles);
     setSelectedCV(index);
     // cvFiles[index].analysis también podría ser una Promesa si no se resolvió al guardar.
     // Es más seguro re-evaluar o asegurar que se guardó el objeto resuelto.
@@ -190,13 +180,11 @@ function Dashboard() {
     // Si se hace clic en un CV antiguo que se subió sin el await, podría seguir siendo una promesa.
     // Una solución más robusta sería asegurar que todos los análisis en cvFiles estén resueltos.
     const clickedCvAnalysis = cvFiles[index].analysis;
-    console.log("Dashboard: handleCVClick - analysis object from cvFiles", clickedCvAnalysis);
     if (typeof clickedCvAnalysis.then === 'function') {
         console.warn("Dashboard: ¡El análisis clickeado es una Promesa! Esto no debería suceder con las nuevas subidas.");
         // Opcionalmente, podrías intentar resolverla aquí si es una promesa,
         // pero idealmente debería estar resuelta al guardarse.
         clickedCvAnalysis.then(resolved => {
-            console.log("Dashboard: handleCVClick - Promesa resuelta al hacer clic", resolved);
             setCvAnalysis(resolved);
         }).catch(err => {
             console.error("Dashboard: Error al resolver promesa en handleCVClick", err);
@@ -208,7 +196,6 @@ function Dashboard() {
   };
 
   const handleAddJob = () => {
-    console.debug("Dashboard: Entering handleAddJob");
     const newJob = {
       id: Date.now(),
       title: "Nuevo Puesto Ejemplo",
@@ -222,7 +209,6 @@ function Dashboard() {
   };
 
   const handleDeleteCV = async (cvFileToDelete) => {
-    console.debug("Dashboard: Entering handleDeleteCV, cvFileToDelete:", cvFileToDelete);
     const cvDatabaseIdToDelete = cvFileToDelete?.cv_database_id;
     const candidateDatabaseIdToDelete = cvFileToDelete?.candidate_database_id; // Declaración movida aquí
 
@@ -232,7 +218,6 @@ function Dashboard() {
       return;
     }
 
-    console.debug("Dashboard: Intentando eliminar CV. CV ID:", cvDatabaseIdToDelete, "Candidato ID:", candidateDatabaseIdToDelete);
     try {
       // Llamar a cvService.deleteCV con el ID de CV o el ID de Candidato
       await cvService.deleteCV(cvDatabaseIdToDelete, candidateDatabaseIdToDelete);
@@ -265,7 +250,6 @@ function Dashboard() {
   };
 
   const handleDeleteJob = async (jobId) => {
-    console.debug("Dashboard: Entering handleDeleteJob, jobId:", jobId);
     if (!jobId) {
       toast({ title: "Error", description: "ID del puesto no proporcionado.", variant: "destructive" });
       return;
@@ -284,13 +268,11 @@ function Dashboard() {
   };
 
   const handleEditJob = (jobToEdit) => {
-    console.debug("Dashboard: Entering handleEditJob, jobToEdit:", jobToEdit);
     setEditingJob(jobToEdit); // Guardar los datos del job a editar
     setActiveTab("nuevoPuesto"); // Cambiar a la pestaña de creación/edición
   };
 
   const handleJobPublishedOrUpdated = (job) => {
-    console.debug("Dashboard: handleJobPublishedOrUpdated called with job:", job); // Log detallado
     if (editingJob) { // Si estábamos editando
       setJobs(prevJobs => prevJobs.map(j => j.id === job.id ? job : j));
       toast({ title: "Puesto Actualizado", description: `${job.title} ha sido actualizado.` });
@@ -305,7 +287,6 @@ function Dashboard() {
 
   // Función para guardar todos los CVs que aún no tienen cv_database_id
   const handleSaveAllCVs = async () => {
-    console.debug("Dashboard: Entering handleSaveAllCVs");
     const unsavedCVs = cvFiles.filter(cv => !cv.cv_database_id);
 
     if (unsavedCVs.length === 0) {
@@ -433,9 +414,7 @@ function Dashboard() {
 
         {/* Área de Contenido Principal */}
         <main className="flex-1 p-4 md:p-6 overflow-auto">
-          {console.debug("Dashboard: Rendering main content area. Active tab:", activeTab)}
           {activeTab === "cargarNuevoCV" && (() => {
-            console.debug("Dashboard: Rendering UploadCVTab");
             return (
             <UploadCVTab
               handleFileUpload={handleFileUpload}
@@ -467,7 +446,6 @@ function Dashboard() {
           })()}
 
           {activeTab === "cvsProcesados" && (() => {
-            console.debug("Dashboard: Rendering ProcessedCVsTab, cvFiles:", cvFiles, "selectedCV:", selectedCV);
             return (
             <ProcessedCVsTab
               cvFiles={cvFiles}
@@ -488,7 +466,6 @@ function Dashboard() {
           })()}
 
           {activeTab === "nuevoPuesto" && (() => {
-            console.debug("Dashboard: Rendering CreateNewJobTab, jobs:", jobs);
             return (
             <CreateNewJobTab
               setActiveTab={setActiveTab}
@@ -507,7 +484,6 @@ function Dashboard() {
           })()}
 
           {activeTab === "puestosPublicados" && (() => {
-            console.log("Dashboard: Rendering PublishedJobsTab, jobs:", jobs);
             return (
             <PublishedJobsTab
               jobs={jobs}
@@ -522,7 +498,6 @@ function Dashboard() {
           })()}
 
           {activeTab === "analisisIA" && (() => {
-            console.log("Dashboard: Rendering AIAnalysisTab");
             return (
             <AIAnalysisTab
               jobs={jobs}
@@ -537,7 +512,6 @@ function Dashboard() {
           })()}
 
           {activeTab === "planActual" && (() => {
-            console.log("Dashboard: Rendering CurrentPlanTab");
             return (
             <CurrentPlanTab />
             );
