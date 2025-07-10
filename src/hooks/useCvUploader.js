@@ -133,7 +133,7 @@ export function useCvUploader({
         // Si el CV se guardó exitosamente y el contador se incrementó en el backend,
         // forzar una recarga del usuario para actualizar los límites en el frontend.
         if (result && !result.error && refreshUser) {
-          console.log("useCvUploader: CV guardado y contador incrementado. Refrescando usuario...");
+          console.debug("useCvUploader: CV guardado y contador incrementado. Refrescando usuario...");
           await refreshUser(); // Forzar recarga del usuario para actualizar suscripción
         }
 

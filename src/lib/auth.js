@@ -8,7 +8,7 @@ export const auth = {
   user: null,
 
   async login(credentials) {
-    console.log("auth.js: login - Attempting login for:", credentials.email);
+    console.debug("auth.js: login - Attempting login for:", credentials.email);
     let authUser = null;
     try {
       // 1. Intentar iniciar sesión
@@ -37,24 +37,24 @@ export const auth = {
       }
       
       authUser = signInData.user;
-      console.log("auth.js: Login successful for user ID:", authUser.id);
+      console.debug("auth.js: Login successful for user ID:", authUser.id);
 
       // 2. Verificar si el perfil existe en 'reclutadores'
-      console.log("auth.js: Checking for recruiter profile for user ID:", authUser.id);
+      console.debug("auth.js: Checking for recruiter profile for user ID:", authUser.id);
       // Llamar explícitamente a auth.getRecruiterProfile en lugar de this.getRecruiterProfile
       let profile = await auth.getRecruiterProfile(authUser.id); // Esto ahora devuelve el perfil completo o null
       let profileExists = !!profile;
       // Un perfil se considera incompleto si 'company' o 'first_name' tienen el placeholder
       let profileIsComplete = profileExists && profile.company !== "LLENAR POR EL USUARIO" && profile.first_name !== "LLENAR POR EL USUARIO";
       
-      console.log("auth.js: Initial profile check. Profile data:", profile);
-      console.log("auth.js: Profile exists:", profileExists, "Is complete:", profileIsComplete);
-      console.log("auth.js: Checking conditions for profile creation: email_confirmed_at:", authUser.email_confirmed_at, "!profileExists:", !profileExists);
+      console.debug("auth.js: Initial profile check. Profile data:", profile);
+      console.debug("auth.js: Profile exists:", profileExists, "Is complete:", profileIsComplete);
+      console.debug("auth.js: Checking conditions for profile creation: email_confirmed_at:", authUser.email_confirmed_at, "!profileExists:", !profileExists);
 
       // Si el perfil existe pero no tiene una suscripción activa o puntual, intentar crear una de prueba
       // O si tiene una suscripción pero no es de tipo mensual ni puntual (ej. solo trial expirado)
       if (profileExists && (!profile.suscripcion || (!profile.suscripcion.current_plan && !profile.suscripcion.one_time_plan))) {
-        console.log("auth.js: Profile exists but no active monthly/one-time subscription found. Attempting to create/update trial subscription.");
+        console.debug("auth.js: Profile exists but no active monthly/one-time subscription found. Attempting to create/update trial subscription.");
         try {
           const defaultPlanId = 'trial';
           const trialDays = 7;
@@ -97,7 +97,7 @@ export const auth = {
           } else if (!newSubscription) {
             console.warn("auth.js: Trial subscription INSERT returned no data during login flow, but no error. Check RLS or table configuration.");
           } else {
-            console.log("auth.js: Trial subscription created successfully during login flow:", newSubscription);
+            console.debug("auth.js: Trial subscription created successfully during login flow:", newSubscription);
             profile.suscripcion = newSubscription; // Actualizar el perfil con la nueva suscripción
           }
         } catch (subCreationError) {
@@ -107,7 +107,7 @@ export const auth = {
 
       // Si el usuario está confirmado pero el perfil no existe, crearlo ahora
       if (authUser.email_confirmed_at && !profileExists) {
-        console.log("auth.js: CONDITION MET - User confirmed but no profile. Attempting to create basic profile...");
+        console.debug("auth.js: CONDITION MET - User confirmed but no profile. Attempting to create basic profile...");
         try {
           const basicProfileData = {
             id: authUser.id,
@@ -117,7 +117,7 @@ export const auth = {
           };
           const newProfile = await auth.saveRecruiterProfile(basicProfileData); // INSERT
           if (newProfile) {
-            console.log("auth.js: Basic profile created successfully during login flow.");
+            console.debug("auth.js: Basic profile created successfully during login flow.");
             profileExists = true;
             profileIsComplete = false; // Recién creado, necesita completarse
             profile = newProfile; // Actualizar la variable de perfil local
@@ -151,11 +151,11 @@ export const auth = {
 
   async register(userData) {
     try {
-      console.log("auth.js: register - Starting registration process");
+      console.debug("auth.js: register - Starting registration process");
       // Eliminamos la verificación manual de email existente en 'reclutadores'.
       // supabase.auth.signUp() ya maneja la unicidad del email en 'auth.users'.
       
-      console.log("auth.js: Proceeding with Supabase Auth signup for email:", userData.email);
+      console.debug("auth.js: Proceeding with Supabase Auth signup for email:", userData.email);
       const { data: { user: authUser }, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -169,7 +169,7 @@ export const auth = {
       });
       
       // Log para verificar si la llamada a signUp retorna
-      console.log("[DEBUG] supabase.auth.signUp finished. Error:", authError, "User:", authUser);
+      console.debug("[DEBUG] supabase.auth.signUp finished. Error:", authError, "User:", authUser);
 
       if (authError) {
         console.error('auth.js: Supabase Auth signUp error:', authError);
@@ -189,8 +189,8 @@ export const auth = {
       if (sessionError) {
         console.error('auth.js: Error getting session immediately after signup:', sessionError);
       } else if (sessionData.session) {
-        console.log('auth.js: Session active immediately after signup. User ID:', sessionData.session.user.id);
-        console.log('auth.js: Token:', sessionData.session.access_token ? 'Exists' : 'DOES NOT EXIST');
+        console.debug('auth.js: Session active immediately after signup. User ID:', sessionData.session.user.id);
+        console.debug('auth.js: Token:', sessionData.session.access_token ? 'Exists' : 'DOES NOT EXIST');
       } else {
         console.warn('auth.js: No active session found immediately after signup.');
       }
@@ -198,8 +198,8 @@ export const auth = {
 
       // El usuario ha sido creado en auth.users.
       // La inserción en la tabla 'reclutadores' se hará después de la confirmación del email.
-      console.log("auth.js: Supabase Auth signUp successful. User created with ID:", authUser.id);
-      console.log("auth.js: User needs to confirm email before profile data is saved.");
+      console.debug("auth.js: Supabase Auth signUp successful. User created with ID:", authUser.id);
+      console.debug("auth.js: User needs to confirm email before profile data is saved.");
       
       // Devolvemos el usuario de autenticación para que el frontend pueda decidir cómo proceder
       // (por ejemplo, almacenar datos del perfil temporalmente y mostrar mensaje de confirmación).
@@ -212,7 +212,7 @@ export const auth = {
   },
 
   async saveRecruiterProfile(profileData) {
-    console.log("auth.js: saveRecruiterProfile - Attempting to save recruiter profile data");
+    console.debug("auth.js: saveRecruiterProfile - Attempting to save recruiter profile data");
     
     // Asegurarse de que el usuario esté autenticado
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -250,7 +250,7 @@ export const auth = {
     // Si 'email' ya está en auth.users y no quieres duplicarlo o es manejado por la FK, considera su manejo.
     // Por ahora, lo incluimos asumiendo que la tabla reclutadores tiene una columna email.
 
-    console.log("auth.js: [LOG] saveRecruiterProfile - Attempting INSERT with data:", recruiterDataToInsert);
+    console.debug("auth.js: [LOG] saveRecruiterProfile - Attempting INSERT with data:", recruiterDataToInsert);
     const { data: insertedRecruiter, error: recruiterInsertError } = await supabase
       .from('reclutadores')
       .insert([recruiterDataToInsert])
@@ -263,7 +263,7 @@ export const auth = {
       throw new Error(`Error al guardar perfil inicial: ${recruiterInsertError.message || recruiterInsertError.details || "Error desconocido"}`);
     }
 
-    console.log("auth.js: [LOG] saveRecruiterProfile - INSERT successful. Result:", insertedRecruiter);
+    console.debug("auth.js: [LOG] saveRecruiterProfile - INSERT successful. Result:", insertedRecruiter);
 
     // Después de crear el perfil del reclutador, crear o actualizar una suscripción de prueba por defecto
     if (insertedRecruiter) {
@@ -286,7 +286,7 @@ export const auth = {
         // created_at y updated_at se manejarán por defecto en la BD si están configurados
       };
 
-      console.log("auth.js: Attempting to create/update default subscription for recruiter_id:", insertedRecruiter.id);
+      console.debug("auth.js: Attempting to create/update default subscription for recruiter_id:", insertedRecruiter.id);
       const { data: newSubscription, error: subError } = await supabase
         .from('suscripciones')
         .upsert({
@@ -315,7 +315,7 @@ export const auth = {
         console.warn("auth.js: Default subscription INSERT returned no data, but no error. Check RLS or table configuration.");
       }
       else {
-        console.log("auth.js: Default subscription created successfully:", newSubscription);
+        console.debug("auth.js: Default subscription created successfully:", newSubscription);
         // Opcional: añadir la suscripción al objeto insertedRecruiter antes de devolverlo
         // insertedRecruiter.suscripcion = newSubscription;
       }
@@ -324,7 +324,7 @@ export const auth = {
   },
 
   async updateRecruiterProfile(userId, profileData) {
-    console.log("auth.js: updateRecruiterProfile - Attempting to update profile for user:", userId);
+    console.debug("auth.js: updateRecruiterProfile - Attempting to update profile for user:", userId);
     
     // No necesitamos verificar la sesión aquí, ya que se asume que CompleteProfile es una ruta protegida
     // y la llamada vendrá de un usuario autenticado. La RLS se encargará de la seguridad.
@@ -336,7 +336,7 @@ export const auth = {
     // Asegúrate de que todos los campos en dataToUpdate (que vienen de CompleteProfile.jsx
     // ya mapeados a snake_case) existan como columnas en tu tabla reclutadores.
 
-    console.log("auth.js: [LOG] updateRecruiterProfile - Attempting UPDATE for userId:", userId, "with data:", dataToUpdate);
+    console.debug("auth.js: [LOG] updateRecruiterProfile - Attempting UPDATE for userId:", userId, "with data:", dataToUpdate);
     const { data: updatedRecruiter, error: recruiterUpdateError } = await supabase
       .from('reclutadores')
       .update(dataToUpdate)
@@ -355,7 +355,7 @@ export const auth = {
       // Podrías lanzar un error aquí si esperas que siempre se actualice una fila.
       // throw new Error('No se encontró el perfil para actualizar o la actualización fue denegada.');
     } else {
-      console.log("auth.js: [LOG] updateRecruiterProfile - UPDATE successful. Result:", updatedRecruiter);
+      console.debug("auth.js: [LOG] updateRecruiterProfile - UPDATE successful. Result:", updatedRecruiter);
     }
     // Ya no devolvemos los datos actualizados, solo indicamos éxito implícito (sin error)
     return true; // O devolver void
@@ -379,7 +379,7 @@ export const auth = {
       // especialmente si el error indica que la sesión ya no es válida.
       this.user = null;
       localStorage.removeItem(STORAGE_KEY);
-      console.log("auth.js: Local user state and storage cleared after logout attempt.");
+      console.debug("auth.js: Local user state and storage cleared after logout attempt.");
     }
   },
 
@@ -417,7 +417,7 @@ export const auth = {
   clearAuthUser() {
      this.user = null;
      localStorage.removeItem(STORAGE_KEY);
-     console.log("Cleared auth user state and storage.");
+     console.debug("Cleared auth user state and storage.");
   },
 
   async getRecruiterProfile(userId) {

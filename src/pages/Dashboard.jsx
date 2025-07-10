@@ -21,7 +21,7 @@ import { useCvUploader } from "@/hooks/useCvUploader.js"; // Importar el hook de
 
 function Dashboard() {
   console.debug("Dashboard: Rendering or re-rendering...");
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth(); // Obtener refreshUser
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("cargarNuevoCV"); // Pestaña inicial
   const navigate = useNavigate(); // Inicializar useNavigate
@@ -459,6 +459,7 @@ function Dashboard() {
               bonusMatchTotal={bonusMatchTotal}
               isBasePlanActive={isBasePlanActive} // Nuevo
               basePlan={basePlan} // Nuevo
+              onCvUploadSuccess={refreshUser} // Pasar refreshUser como callback
             />
             );
           })()}

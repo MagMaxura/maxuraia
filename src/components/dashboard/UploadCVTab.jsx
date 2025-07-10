@@ -29,6 +29,7 @@ function UploadCVTab({
   bonusJobTotal,
   bonusMatchUsed,
   bonusMatchTotal,
+  onCvUploadSuccess, // Nueva prop: callback para éxito de subida de CV
   // isLoadingSubscription, // Si useDashboardData devolviera un estado de carga específico para la suscripción
 }) {
   const { user } = useAuth();
@@ -179,7 +180,7 @@ function UploadCVTab({
             const file = e.target.files[0];
             if (file) {
               const text = await extractTextFromFile(file);
-              console.log("Texto extraído del CV:", text);
+              console.debug("Texto extraído del CV:", text);
             }
           }}
           className="hidden"
