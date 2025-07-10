@@ -145,8 +145,8 @@ function CVAnalysis({
           summary: analysisToSave.resumen,
           title: analysisToSave.nivel_escolarizacion, // Mapear a 'title'
         };
-        savedCandidateData = await cvService.updateCandidate(candidateDatabaseId, candidateUpdatePayload);
-        savedCvData = { id: cvDatabaseId }; 
+        savedCandidateData = await cvService.updateCandidate(candidateDatabaseId, candidateUpdatePayload, userId); // Pasar userId como recruiterId
+        savedCvData = { id: cvDatabaseId };
         console.log("Candidato actualizado:", savedCandidateData);
       } else { 
         if (!originalFile) {
