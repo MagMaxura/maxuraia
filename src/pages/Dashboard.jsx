@@ -461,6 +461,7 @@ function Dashboard() {
               onCvFilterChange={setCvFilters}
               hasUnsavedCVs={hasUnsavedCVs} // Pasar la nueva prop
               onSaveAllCVs={handleSaveAllCVs} // Pasar la nueva función
+              isCvSaved={!!cvFiles[selectedCV]?.cv_database_id || !!cvFiles[selectedCV]?.candidate_database_id} // Determinar si el CV ya está guardado
             />
             );
           })()}
