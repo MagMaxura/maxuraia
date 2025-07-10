@@ -9,7 +9,7 @@ export const useAuth = () => {
     console.error("useAuth must be used within an AuthProvider");
     throw new Error("useAuth must be used within an AuthProvider");
   }
-  console.log("useAuth: register function available:", !!context.register);
+  // console.log("useAuth: register function available:", !!context.register);
   return context;
 };
 
@@ -17,9 +17,9 @@ import { auth as authFunctions } from "../lib/auth"; // Importar directamente la
 import { useMemo } from 'react'; // Importar useMemo
 
 export function AuthProvider({ children }) {
-  console.log("AuthProvider: Initializing");
+  // console.log("AuthProvider: Initializing");
   const authService = useAuthService(); // Hook para login, logout, register (signUp), user state, loading etc.
-  console.log("AuthProvider: register function available:", !!authService.register);
+  // console.log("AuthProvider: register function available:", !!authService.register);
 
   // Combinar el servicio base con las funciones específicas del perfil, memorizando el valor
   const value = useMemo(() => ({

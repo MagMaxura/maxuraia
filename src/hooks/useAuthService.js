@@ -6,7 +6,7 @@ import { supabase } from "../lib/supabase";
 import { APP_PLANS } from "../config/plans";
 
 export function useAuthService() {
-  console.log("useAuthService: Hook initialization");
+  // console.log("useAuthService: Hook initialization");
 
   // Inicializar el estado user con el usuario de la sesión actual si existe
   const initialUser = supabase.auth.currentUser;
@@ -18,7 +18,7 @@ export function useAuthService() {
   const lastFetchedUserId = useRef(initialUser?.id || null); // Inicializar ref con ID inicial si existe
 
   const handleAuthChange = useCallback(async (event, newSession) => {
-    console.log(`[DEBUG] useAuthService: handleAuthChange - Event: ${event}, New Session User ID:`, newSession?.user?.id);
+    console.debug(`[DEBUG] useAuthService: handleAuthChange - Event: ${event}, New Session User ID:`, newSession?.user?.id);
 
     // No establecer loading a true inmediatamente aquí si el evento es INITIAL_SESSION y ya tenemos un usuario.
     // El estado de carga inicial se maneja en useState.
@@ -34,13 +34,13 @@ export function useAuthService() {
       // we can potentially skip fetching the profile again to avoid unnecessary re-renders.
       // We check lastFetchedUserId.current to ensure the profile was successfully fetched previously.
       if (user && user.id === supabaseAuthUser.id && lastFetchedUserId.current === supabaseAuthUser.id) {
-        console.log(`[DEBUG] useAuthService: handleAuthChange - User ID ${supabaseAuthUser.id} is the same and profile already fetched, skipping profile fetch.`);
+        console.debug(`[DEBUG] useAuthService: handleAuthChange - User ID ${supabaseAuthUser.id} is the same and profile already fetched, skipping profile fetch.`);
         setAuthChecked(true);
         setLoading(false);
         return;
       }
 
-      console.log(`[DEBUG] useAuthService: Authenticated user found. Attempting to fetch full profile for user ID: ${supabaseAuthUser.id}`);
+      console.debug(`[DEBUG] useAuthService: Authenticated user found. Attempting to fetch full profile for user ID: ${supabaseAuthUser.id}`);
       try {
         const fullUserProfile = await auth.getRecruiterProfile(supabaseAuthUser.id);
 
@@ -52,14 +52,14 @@ export function useAuthService() {
           auth.user = supabaseAuthUser;
           lastFetchedUserId.current = supabaseAuthUser.id;
         } else {
-          console.log("[DEBUG] useAuthService: Full user profile fetched successfully.");
+          console.debug("[DEBUG] useAuthService: Full user profile fetched successfully.");
           auth.user = fullUserProfile;
           lastFetchedUserId.current = supabaseAuthUser.id;
         }
 
         // Lógica para asegurar que el usuario tenga una suscripción de prueba si no tiene ninguna activa
         if (userToSet && (!userToSet.suscripcion || (userToSet.suscripcion.status !== 'active' && userToSet.suscripcion.status !== 'trialing'))) {
-          console.log("[DEBUG] useAuthService: User has profile but no active monthly/one-time subscription. Attempting to create trial subscription.");
+          console.debug("[DEBUG] useAuthService: User has profile but no active monthly/one-time subscription. Attempting to create trial subscription.");
           try {
             const defaultPlanId = 'trial';
             const trialDays = 7;
@@ -101,7 +101,7 @@ export function useAuthService() {
             } else if (!newSubscription) {
               console.warn("[DEBUG] useAuthService: Trial subscription UPSERT returned no data, but no error. Check RLS or table configuration.");
             } else {
-              console.log("[DEBUG] useAuthService: Trial subscription created/updated successfully:", newSubscription);
+              console.debug("[DEBUG] useAuthService: Trial subscription created/updated successfully:", newSubscription);
               userToSet.suscripcion = {
                 current_plan: newSubscription.plan_id,
                 one_time_plan: null, // Trial es el plan principal, no un bono
@@ -122,7 +122,7 @@ export function useAuthService() {
         lastFetchedUserId.current = supabaseAuthUser.id;
       }
     } else {
-      console.log("[DEBUG] useAuthService: No active session, clearing user state.");
+      console.debug("[DEBUG] useAuthService: No active session, clearing user state.");
       setUser(null);
       auth.clearAuthUser();
       lastFetchedUserId.current = null;
@@ -134,15 +134,15 @@ export function useAuthService() {
   }, [user]); // Depende de 'user' para re-ejecutar si el usuario cambia (ej. después de un login)
 
   useEffect(() => {
-    console.log("[DEBUG] useAuthService: useEffect - Setting up onAuthStateChange listener.");
+    console.debug("[DEBUG] useAuthService: useEffect - Setting up onAuthStateChange listener.");
 
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log(`[DEBUG] useAuthService: onAuthStateChange - Event received: ${event}`);
+      console.debug(`[DEBUG] useAuthService: onAuthStateChange - Event received: ${event}`);
       handleAuthChange(event, session);
     });
 
     return () => {
-      console.log("[DEBUG] useAuthService: Cleanup - unsubscribing auth listener");
+      console.debug("[DEBUG] useAuthService: Cleanup - unsubscribing auth listener");
       if (authListener?.subscription?.unsubscribe) {
         authListener.subscription.unsubscribe();
       }
@@ -161,7 +161,7 @@ export function useAuthService() {
   // está en src/lib/auth.js. Estas funciones en el hook actúan como wrappers.
 
   const register = useCallback(async (formData) => {
-    console.log("[DEBUG] useAuthService: register wrapper called");
+    console.debug("[DEBUG] useAuthService: register wrapper called");
     setLoading(true);
     try {
       const result = await auth.register(formData);
@@ -175,7 +175,7 @@ export function useAuthService() {
   }, []);
 
   const login = useCallback(async (credentials) => {
-    console.log("[DEBUG] useAuthService: login wrapper called");
+    console.debug("[DEBUG] useAuthService: login wrapper called");
     setLoading(true);
     try {
       const result = await auth.login(credentials);
@@ -189,7 +189,7 @@ export function useAuthService() {
   }, []);
 
   const logout = useCallback(async () => {
-    console.log("[DEBUG] useAuthService: logout wrapper called");
+    console.debug("[DEBUG] useAuthService: logout wrapper called");
     setLoading(true);
     try {
       await auth.logout();
@@ -210,7 +210,7 @@ export function useAuthService() {
   }, [toast]);
 
   const resetPassword = useCallback(async (email) => {
-    console.log("[DEBUG] useAuthService: resetPassword wrapper called");
+    console.debug("[DEBUG] useAuthService: resetPassword wrapper called");
     setLoading(true);
     try {
       const result = await auth.resetPassword(email);
@@ -244,7 +244,7 @@ export function useAuthService() {
     isAuthenticated: !!user, // Basado en el estado user
     isProfileComplete: !!(user && user.id && user.company && user.phone),
     refreshUser: useCallback(async () => {
-      console.log("[DEBUG] useAuthService: refreshUser called.");
+      console.debug("[DEBUG] useAuthService: refreshUser called.");
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       handleAuthChange("REFRESH", currentSession);
     }, [handleAuthChange]),

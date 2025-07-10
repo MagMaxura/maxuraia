@@ -10,7 +10,7 @@ export const cvService = {
       return [];
     }
     try {
-      console.log(`cvService.getCandidatosConCVsByRecruiterId: Querying Supabase candidatos for recruiterId: ${recruiterId}`);
+      console.debug(`cvService.getCandidatosConCVsByRecruiterId: Querying Supabase candidatos for recruiterId: ${recruiterId}`);
       // Consultar candidatos y traer el CV más reciente asociado (si existe)
       // Esto asume que 'cvs' tiene una columna 'candidate_id' que referencia 'candidatos.id'
       // y que quieres el CV más reciente si hay múltiples.
@@ -38,7 +38,7 @@ export const cvService = {
         console.error(`cvService.getCandidatosConCVsByRecruiterId: Supabase query error for recruiterId ${recruiterId}:`, JSON.stringify(error, null, 2));
         return [];
       }
-      console.log(`cvService.getCandidatosConCVsByRecruiterId: Supabase query successful for recruiterId ${recruiterId}. Data received:`, data);
+      console.debug(`cvService.getCandidatosConCVsByRecruiterId: Supabase query successful for recruiterId ${recruiterId}. Data received:`, data);
       if (!data) {
         console.warn(`cvService.getCandidatosConCVsByRecruiterId: Supabase returned null data for recruiterId ${recruiterId}, returning empty array.`);
         return [];
@@ -53,7 +53,7 @@ export const cvService = {
   },
 
   async saveCvAndCandidate(analysisData, recruiterId, existingCvId = null, existingCandidateId = null, fileName = 'N/A') {
-    console.log("cvService.saveCvAndCandidate: Guardando CV y Candidato. RecruiterId:", recruiterId, "ExistingCvId:", existingCvId, "ExistingCandidateId:", existingCandidateId);
+    console.debug("cvService.saveCvAndCandidate: Guardando CV y Candidato. RecruiterId:", recruiterId, "ExistingCvId:", existingCvId, "ExistingCandidateId:", existingCandidateId);
     console.log("Analysis Data:", analysisData);
 
     if (!recruiterId) {
@@ -107,10 +107,10 @@ export const cvService = {
       }
     }
     
-    console.log("Payload del candidato (antes de DB op):", JSON.stringify(candidatePayload, null, 2)); // Log detallado
+    console.debug("Payload del candidato (antes de DB op):", JSON.stringify(candidatePayload, null, 2)); // Log detallado
 
     if (candidateId) {
-      console.log(`Actualizando candidato existente ID: ${candidateId}`);
+      console.debug(`Actualizando candidato existente ID: ${candidateId}`);
       const { data, error } = await supabase
         .from('candidatos')
         .update(candidatePayload)
@@ -122,11 +122,11 @@ export const cvService = {
         throw error;
       }
       candidateResult = data;
-      console.log("Candidato actualizado:", candidateResult);
+      console.debug("Candidato actualizado:", candidateResult);
     } else {
-      console.log("Creando nuevo candidato...");
+      console.debug("Creando nuevo candidato...");
       // Asegurarse de que el title se está intentando guardar
-      console.log(`Intentando guardar title para nuevo candidato: ${candidatePayload.title}`);
+      console.debug(`Intentando guardar title para nuevo candidato: ${candidatePayload.title}`);
       const { data, error } = await supabase
         .from('candidatos')
         .insert(candidatePayload)
@@ -138,7 +138,7 @@ export const cvService = {
       }
       candidateResult = data;
       candidateId = candidateResult.id;
-      console.log("Nuevo candidato creado:", candidateResult);
+      console.debug("Nuevo candidato creado:", candidateResult);
     }
 
     if (!candidateId) {
@@ -167,13 +167,13 @@ export const cvService = {
         delete cvPayload[key];
       }
     }
-    console.log("Payload del CV:", cvPayload);
-
-    if (existingCvId) {
-      console.log(`Actualizando CV existente ID: ${existingCvId}`);
-      const { data, error } = await supabase
-        .from('cvs')
-        .update(cvPayload)
+    console.debug("Payload del CV:", cvPayload);
+ 
+     if (existingCvId) {
+       console.debug(`Actualizando CV existente ID: ${existingCvId}`);
+       const { data, error } = await supabase
+         .from('cvs')
+         .update(cvPayload)
         .eq('id', existingCvId)
         .select()
         .single();
@@ -182,9 +182,9 @@ export const cvService = {
         throw error;
       }
       cvResult = data;
-      console.log("CV actualizado:", cvResult);
+      console.debug("CV actualizado:", cvResult);
     } else {
-      console.log("Creando nuevo CV...");
+      console.debug("Creando nuevo CV...");
       const { data, error } = await supabase
         .from('cvs')
         .insert(cvPayload)
@@ -195,7 +195,7 @@ export const cvService = {
         throw error;
       }
       cvResult = data;
-      console.log("Nuevo CV creado:", cvResult);
+      console.debug("Nuevo CV creado:", cvResult);
     }
 
     // Actualizar el candidato con el cv_id
@@ -211,7 +211,7 @@ export const cvService = {
         console.error("Error al actualizar el candidato con cv_id:", JSON.stringify(updateError, null, 2));
         // Considerar si lanzar el error o continuar
       } else {
-        console.log("Candidato actualizado con cv_id:", updatedCandidate);
+        console.debug("Candidato actualizado con cv_id:", updatedCandidate);
       }
     }
     
@@ -220,7 +220,7 @@ export const cvService = {
 
   // uploadCV ahora puede usar saveCvAndCandidate después de la subida del archivo (si se implementa)
   async uploadCV(file, recruiterId, analysisData, userSubscription) { // Añadir userSubscription
-    console.log("cvService.uploadCV: Procesando subida de nuevo CV para recruiterId:", recruiterId, "File:", file.name);
+    console.debug("cvService.uploadCV: Procesando subida de nuevo CV para recruiterId:", recruiterId, "File:", file.name);
     // Paso 1: Subir archivo a Supabase Storage (Placeholder por ahora)
     // const filePath = `${recruiterId}/${Date.now()}-${file.name}`;
     // const { data: storageData, error: storageError } = await supabase.storage
@@ -232,16 +232,16 @@ export const cvService = {
     // }
     // const fileUrl = supabase.storage.from('cv-files').getPublicUrl(filePath).data.publicUrl;
     // console.log("Archivo subido a Storage:", fileUrl);
-
-    // Por ahora, como la subida a Storage es placeholder, no tenemos file_path ni file_url.
-    // Llamamos a saveCvAndCandidate sin existingCvId y sin existingCandidateId.
-    try {
-      const result = await this.saveCvAndCandidate(analysisData, recruiterId, null, null, file.name);
-      console.log("cvService.uploadCV: CV y Candidato guardados en DB:", result);
+ 
+     // Por ahora, como la subida a Storage es placeholder, no tenemos file_path ni file_url.
+     // Llamamos a saveCvAndCandidate sin existingCvId y sin existingCandidateId.
+     try {
+       const result = await this.saveCvAndCandidate(analysisData, recruiterId, null, null, file.name);
+       console.debug("cvService.uploadCV: CV y Candidato guardados en DB:", result);
 
       // Incrementar el contador de CVs analizados si la suscripción existe
       if (userSubscription?.id) {
-        console.log(`cvService.uploadCV: Incrementando contador de CVs para suscripción ID: ${userSubscription.id}`);
+        console.debug(`cvService.uploadCV: Incrementando contador de CVs para suscripción ID: ${userSubscription.id}`);
         await this.incrementCvAnalysisCount(userSubscription.id);
       }
 
@@ -258,7 +258,7 @@ export const cvService = {
     }
   },
   async updateCandidate(candidateId, candidateDataToUpdate, recruiterId) {
-    console.log(`cvService.updateCandidate: Actualizando candidato ID: ${candidateId}`);
+    console.debug(`cvService.updateCandidate: Actualizando candidato ID: ${candidateId}`);
     if (!candidateId || !candidateDataToUpdate) {
       throw new Error("ID del candidato y datos son requeridos para actualizar.");
     }
@@ -279,12 +279,12 @@ export const cvService = {
       console.error("Error actualizando candidato en updateCandidate:", JSON.stringify(error, null, 2));
       throw error;
     }
-    console.log("Candidato actualizado en updateCandidate:", data);
+    console.debug("Candidato actualizado en updateCandidate:", data);
     return data;
   },
   
   async deleteCV(cvDatabaseId, candidateDatabaseId) {
-    console.log(`cvService.deleteCV: Intentando eliminar. CV ID: ${cvDatabaseId}, Candidato ID: ${candidateDatabaseId}`);
+    console.debug(`cvService.deleteCV: Intentando eliminar. CV ID: ${cvDatabaseId}, Candidato ID: ${candidateDatabaseId}`);
     
     let finalCandidateIdToDelete = candidateDatabaseId;
     let finalCvIdToDelete = cvDatabaseId;
@@ -292,7 +292,7 @@ export const cvService = {
     try {
       // Si no tenemos un cvDatabaseId pero sí un candidateDatabaseId, intentamos obtener el cv_id del candidato
       if (!finalCvIdToDelete && finalCandidateIdToDelete) {
-        console.log(`Buscando cv_id para candidato ID: ${finalCandidateIdToDelete}`);
+        console.debug(`Buscando cv_id para candidato ID: ${finalCandidateIdToDelete}`);
         const { data: candidatoData, error: fetchCandidatoError } = await supabase
           .from('candidatos')
           .select('cv_id')
@@ -304,13 +304,13 @@ export const cvService = {
           // No lanzar error aquí, ya que podríamos proceder solo con la eliminación del candidato
         } else if (candidatoData?.cv_id) {
           finalCvIdToDelete = candidatoData.cv_id;
-          console.log(`cv_id encontrado para candidato ${finalCandidateIdToDelete}: ${finalCvIdToDelete}`);
+          console.debug(`cv_id encontrado para candidato ${finalCandidateIdToDelete}: ${finalCvIdToDelete}`);
         }
       }
 
       // Eliminar el CV de la tabla 'cvs' si tenemos un cv_id
       if (finalCvIdToDelete) {
-        console.log(`Eliminando CV de la tabla 'cvs' con ID: ${finalCvIdToDelete}`);
+        console.debug(`Eliminando CV de la tabla 'cvs' con ID: ${finalCvIdToDelete}`);
         const { error: cvDeleteError } = await supabase
           .from('cvs')
           .delete()
@@ -320,14 +320,14 @@ export const cvService = {
           console.error("Error eliminando CV de la base de datos:", JSON.stringify(cvDeleteError, null, 2));
           throw cvDeleteError;
         }
-        console.log("CV eliminado exitosamente, ID:", finalCvIdToDelete);
+        console.debug("CV eliminado exitosamente, ID:", finalCvIdToDelete);
       } else {
         console.warn("No se encontró un CV ID válido para eliminar de la tabla 'cvs'.");
       }
 
       // Eliminar el candidato de la tabla 'candidatos' si tenemos un candidate_id
       if (finalCandidateIdToDelete) {
-        console.log(`Eliminando candidato de la tabla 'candidatos' con ID: ${finalCandidateIdToDelete}`);
+        console.debug(`Eliminando candidato de la tabla 'candidatos' con ID: ${finalCandidateIdToDelete}`);
         const { error: candidateDeleteError } = await supabase
           .from('candidatos')
           .delete()
@@ -337,7 +337,7 @@ export const cvService = {
           console.error("Error eliminando candidato asociado:", JSON.stringify(candidateDeleteError, null, 2));
           throw candidateDeleteError;
         }
-        console.log("Candidato asociado eliminado exitosamente, ID:", finalCandidateIdToDelete);
+        console.debug("Candidato asociado eliminado exitosamente, ID:", finalCandidateIdToDelete);
       } else {
         console.warn("No se encontró un Candidato ID válido para eliminar de la tabla 'candidatos'.");
       }
@@ -353,7 +353,7 @@ export const cvService = {
     }
   },
   async createJobPost(jobData) {
-    console.log("cvService.createJobPost: Creando puesto con datos:", jobData);
+    console.debug("cvService.createJobPost: Creando puesto con datos:", jobData);
     // Validar que recruiter_id, title y description estén presentes
     if (!jobData || !jobData.recruiter_id || !jobData.title || !jobData.description) {
       console.error("cvService.createJobPost: Faltan datos requeridos (recruiter_id, title, description).");
@@ -363,12 +363,12 @@ export const cvService = {
     const { ai_generated_description, ...dataToInsert } = jobData;
     // No es necesario serializar requirements o keywords si la BD los acepta directamente como JSONB y TEXT[]
     // La validación de formato se hará en Supabase.
-
-    try {
-      console.log("cvService.createJobPost: Data to insert into 'jobs' table:", dataToInsert); // Nuevo log
-      const { data, error } = await supabase
-        .from('jobs') // Asumiendo que la tabla se llama 'jobs'
-        .insert([dataToInsert])
+ 
+     try {
+       console.debug("cvService.createJobPost: Data to insert into 'jobs' table:", dataToInsert); // Nuevo log
+       const { data, error } = await supabase
+         .from('jobs') // Asumiendo que la tabla se llama 'jobs'
+         .insert([dataToInsert])
         .select() // Para obtener el registro insertado de vuelta
         .single(); // Asumiendo que se inserta un solo registro
 
@@ -377,7 +377,7 @@ export const cvService = {
         // Asegurarse de lanzar un Error con un mensaje útil
         throw new Error(`Supabase error al crear puesto: ${error.message || JSON.stringify(error)}`);
       }
-      console.log("Puesto de trabajo creado exitosamente:", data);
+      console.debug("Puesto de trabajo creado exitosamente:", data);
       return data; // Devolver el objeto del puesto creado
     } catch (error) {
       console.error("Excepción general en cvService.createJobPost:", error);
@@ -403,7 +403,7 @@ export const cvService = {
         // No lanzar el error, devolver array vacío
         return [];
       }
-      console.log("cvService.getJobsByRecruiterId: Puestos obtenidos:", data);
+      console.debug("cvService.getJobsByRecruiterId: Puestos obtenidos:", data);
       return data || []; // data puede ser null si no hay resultados, así que || [] asegura un array
     } catch (error) { // Capturar cualquier otra excepción
       console.error("Exception fetching jobs by recruiter ID:", error);
@@ -412,7 +412,7 @@ export const cvService = {
   },
 
   async updateJobPost(jobId, jobData) {
-    console.log(`cvService.updateJobPost: Actualizando puesto ID: ${jobId} con datos:`, jobData);
+    console.debug(`cvService.updateJobPost: Actualizando puesto ID: ${jobId} con datos:`, jobData);
     if (!jobId || !jobData) {
       console.error("cvService.updateJobPost: jobId y jobData son requeridos.");
       throw new Error("Faltan datos para actualizar el puesto.");
@@ -448,7 +448,7 @@ export const cvService = {
         console.error("Error actualizando puesto de trabajo:", JSON.stringify(error, null, 2));
         throw error;
       }
-      console.log("Puesto de trabajo actualizado exitosamente:", data);
+      console.debug("Puesto de trabajo actualizado exitosamente:", data);
       return data;
     } catch (error) {
       console.error("Excepción en cvService.updateJobPost:", error);
@@ -457,7 +457,7 @@ export const cvService = {
   },
 
   async deleteJobPost(jobId) {
-    console.log(`cvService.deleteJobPost: Eliminando puesto ID: ${jobId}`);
+    console.debug(`cvService.deleteJobPost: Eliminando puesto ID: ${jobId}`);
     if (!jobId) {
       console.error("cvService.deleteJobPost: jobId es requerido.");
       throw new Error("ID del puesto no proporcionado para eliminar.");
@@ -472,7 +472,7 @@ export const cvService = {
         console.error("Error eliminando puesto de trabajo:", JSON.stringify(error, null, 2));
         throw error;
       }
-      console.log("Puesto de trabajo eliminado exitosamente, ID:", jobId);
+      console.debug("Puesto de trabajo eliminado exitosamente, ID:", jobId);
       return { success: true, id: jobId }; // Devolver el ID para facilitar la actualización del estado en el frontend
     } catch (error) {
       console.error("Excepción en cvService.deleteJobPost:", error);
@@ -487,7 +487,7 @@ export const cvService = {
       throw new Error("ID de suscripción no proporcionado para reiniciar contadores.");
     }
     try {
-      console.log(`cvService.resetOneTimePlanCounters: Reiniciando contadores para suscripción ID: ${suscripcionId}`);
+      console.debug(`cvService.resetOneTimePlanCounters: Reiniciando contadores para suscripción ID: ${suscripcionId}`);
       const { data, error } = await supabase
         .from('suscripciones')
         .update({

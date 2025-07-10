@@ -15,15 +15,15 @@ export function useDashboardData() {
   const initialLoadAttemptedForUserIdRef = useRef(null);
 
   useEffect(() => {
-    console.log("[DEBUG] useDashboardData: useEffect triggered. Current user:", user);
+    console.debug("[DEBUG] useDashboardData: useEffect triggered. Current user:", user);
     const currentUserId = user?.id;
 
     const loadUserCandidatosYCVs = async (userIdToLoad) => { // Renombrado
-      console.log("useDashboardData: Fetching Candidatos (and their CVs) for recruiterId:", userIdToLoad);
+      console.debug("useDashboardData: Fetching Candidatos (and their CVs) for recruiterId:", userIdToLoad);
       setIsLoadingCVs(true); // Sigue usando isLoadingCVs para la UI, podría renombrarse luego
       try {
         const fetchedCandidatos = await cvService.getCandidatosConCVsByRecruiterId(userIdToLoad); // Nueva función del servicio
-        console.log("useDashboardData: Fetched Candidatos from DB:", fetchedCandidatos);
+        console.debug("useDashboardData: Fetched Candidatos from DB:", fetchedCandidatos);
         
         const formattedData = fetchedCandidatos.map(candidato => {
           // Cada 'candidato' puede tener un array 'cvs'. Tomamos el más reciente o el primero.
@@ -77,11 +77,11 @@ export function useDashboardData() {
     };
 
     const loadUserJobs = async (userIdToLoad) => {
-      console.log("useDashboardData: Fetching Jobs for recruiterId:", userIdToLoad);
+      console.debug("useDashboardData: Fetching Jobs for recruiterId:", userIdToLoad);
       setIsLoadingJobs(true);
       try {
         const fetchedJobs = await cvService.getJobsByRecruiterId(userIdToLoad);
-        console.log("useDashboardData: Fetched Jobs from DB:", fetchedJobs);
+        console.debug("useDashboardData: Fetched Jobs from DB:", fetchedJobs);
         setJobs(fetchedJobs || []);
       } catch (error) {
         console.error("useDashboardData: Error fetching user Jobs:", error);
@@ -93,7 +93,7 @@ export function useDashboardData() {
     };
 
     if (!currentUserId) {
-      console.log("useDashboardData useEffect: No currentUserId. Clearing data and ref.");
+      console.debug("useDashboardData useEffect: No currentUserId. Clearing data and ref.");
       setCvFiles([]);
       setJobs([]);
       setIsLoadingCVs(false);
@@ -101,14 +101,14 @@ export function useDashboardData() {
       initialLoadAttemptedForUserIdRef.current = null; // Reiniciar ref
       return;
     }
-
-    if (initialLoadAttemptedForUserIdRef.current !== currentUserId) {
-      console.log(`useDashboardData useEffect: New or different userId. Attempting initial load for ${currentUserId}.`);
+ 
+     if (initialLoadAttemptedForUserIdRef.current !== currentUserId) {
+       console.debug(`useDashboardData useEffect: New or different userId. Attempting initial load for ${currentUserId}.`);
       initialLoadAttemptedForUserIdRef.current = currentUserId;
       loadUserCandidatosYCVs(currentUserId); // Llamar a la función renombrada
       loadUserJobs(currentUserId);
     } else {
-      console.log(`useDashboardData useEffect: Initial load already attempted for userId ${currentUserId}. Skipping.`);
+      console.debug(`useDashboardData useEffect: Initial load already attempted for userId ${currentUserId}. Skipping.`);
       // Si ya se intentó la carga y las listas están vacías, isLoading debería ser false.
       // Esto previene que se muestre "Cargando..." indefinidamente si no hay datos.
       if (cvFiles.length === 0 && isLoadingCVs) setIsLoadingCVs(false);
@@ -124,10 +124,10 @@ export function useDashboardData() {
 
       // Solo reiniciar si es un plan de pago único y el período ha terminado
       if (planDetails?.type === 'one-time' && periodEndsAt && periodEndsAt < now) {
-        console.log(`[DEBUG] useDashboardData: Plan de pago único expirado para suscripción ${subscription.id}. Reiniciando contadores.`);
+        console.debug(`[DEBUG] useDashboardData: Plan de pago único expirado para suscripción ${subscription.id}. Reiniciando contadores.`);
         cvService.resetOneTimePlanCounters(subscription.id)
           .then(() => {
-            console.log(`[DEBUG] useDashboardData: Contadores reiniciados para suscripción ${subscription.id}.`);
+            console.debug(`[DEBUG] useDashboardData: Contadores reiniciados para suscripción ${subscription.id}.`);
             // Opcional: Forzar una recarga de los datos del usuario para reflejar los contadores reiniciados
             // Esto podría hacerse llamando a una función de recarga de user en AuthContext,
             // o simplemente confiando en que el próximo fetch de suscripción traerá los nuevos valores.
