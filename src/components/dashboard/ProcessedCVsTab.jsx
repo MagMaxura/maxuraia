@@ -23,7 +23,8 @@ function ProcessedCVsTab({
 }) {
 
   useEffect(() => {
-    if (cvFiles && cvFiles.length > 0 && selectedCV === null) {
+    // Solo seleccionar un CV si no hay uno ya seleccionado y hay CVs disponibles
+    if (cvFiles && cvFiles.length > 0 && selectedCV === null && cvAnalysis === null) {
       // Intentar encontrar el CV más reciente por uploadedDate
       let latestCvIndex = 0;
       if (cvFiles.every(cv => cv.uploadedDate)) {
@@ -34,10 +35,11 @@ function ProcessedCVsTab({
         // Si no todos tienen fecha, seleccionar el último del array como fallback
         latestCvIndex = cvFiles.length - 1;
       }
+      // Llamar a handleCVClick para establecer selectedCV y cvAnalysis
       handleCVClick(latestCvIndex);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cvFiles, selectedCV]); // No incluir handleCVClick para evitar re-renders innecesarios si la función cambia de referencia
+  }, [cvFiles, selectedCV, cvAnalysis]); // Incluir cvAnalysis en las dependencias
 
   const handleFilterInputChange = (e) => {
     const { name, value } = e.target;
@@ -108,7 +110,7 @@ function ProcessedCVsTab({
               Análisis del CV: {cvFiles[selectedCV]?.name}
             </h2>
             <CVAnalysis
-              analysis={cvFiles[selectedCV]?.analysis}
+              analysis={cvAnalysis}
               userId={userId}
               originalFile={cvFiles[selectedCV]?.originalFile}
               cvDatabaseId={cvFiles[selectedCV]?.cv_database_id}
