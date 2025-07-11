@@ -13,21 +13,20 @@ function CVAnalysis({
   originalFile, 
   cvDatabaseId, 
   candidateDatabaseId,
-  onSaveSuccess,
-  isCvSaved // Nueva prop
+  onSaveSuccess
 }) {
   const [editableAnalysis, setEditableAnalysis] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     console.log("CVAnalysis: initialAnalysis prop:", initialAnalysis);
     if (initialAnalysis && typeof initialAnalysis.then !== 'function') {
-      // Asegurar que habilidades sea un objeto con tecnicas y blandas, y que tecnicas/blandas sean arrays
       const habilidades = {
         tecnicas: Array.isArray(initialAnalysis.habilidades?.tecnicas)
           ? initialAnalysis.habilidades.tecnicas
-          : (Array.isArray(initialAnalysis.habilidades) ? initialAnalysis.habilidades : []), // Compatibilidad con array simple
+          : (Array.isArray(initialAnalysis.habilidades) ? initialAnalysis.habilidades : []),
         blandas: Array.isArray(initialAnalysis.habilidades?.blandas)
           ? initialAnalysis.habilidades.blandas
           : [],
@@ -36,8 +35,9 @@ function CVAnalysis({
       setEditableAnalysis({
         ...initialAnalysis,
         habilidades: habilidades,
-        nivel_escolarizacion: initialAnalysis.nivel_escolarizacion || initialAnalysis.title || "" // Compatibilidad con 'title' si viene de BD
+        nivel_escolarizacion: initialAnalysis.nivel_escolarizacion || initialAnalysis.title || ""
       });
+      setHasUnsavedChanges(false); // Resetear al cargar un nuevo análisis
     } else if (initialAnalysis && typeof initialAnalysis.then === 'function') {
       initialAnalysis.then(resolved => {
         const habilidades = {
@@ -54,15 +54,18 @@ function CVAnalysis({
             habilidades: habilidades,
             nivel_escolarizacion: resolved.nivel_escolarizacion || resolved.title || ""
         });
+        setHasUnsavedChanges(false); // Resetear al cargar un nuevo análisis
       }).catch(err => setEditableAnalysis(null));
     } else {
       setEditableAnalysis(null);
+      setHasUnsavedChanges(false); // Resetear si no hay análisis
     }
   }, [initialAnalysis]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setEditableAnalysis(prev => ({ ...prev, [name]: value }));
+    setHasUnsavedChanges(true); // Marcar que hay cambios sin guardar
   };
   
   const handleHabilidadesChange = (type, e) => { // 'tecnicas' o 'blandas'
@@ -74,6 +77,7 @@ function CVAnalysis({
         [type]: value.split(',').map(s => s.trim()).filter(Boolean)
       }
     }));
+    setHasUnsavedChanges(true); // Marcar que hay cambios sin guardar
   };
 
   const handleSave = async () => {

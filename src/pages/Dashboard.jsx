@@ -103,13 +103,14 @@ function Dashboard() {
     // se sepa que ya existe en la BD y se pueda actualizar en lugar de crear uno nuevo.
     // También asegura que si el análisis fue editado, se refleje en la lista.
     setCvFiles(prevCvFiles => {
-      return prevCvFiles.map(cvFile => {
-        // Identificar el CV por nombre de archivo original o alguna otra clave única si es necesario
-        // Aquí asumimos que el 'updatedAnalysis' tiene el 'textoCompleto' que podemos usar para comparar
-        // o si el 'selectedCV' (índice) sigue siendo válido y corresponde al CV guardado.
-        // Una forma más robusta sería si 'updatedAnalysis' o 'cvId' permite identificarlo.
-        // Por ahora, si el nombre del archivo coincide con el que está seleccionado actualmente.
-        if (cvFile.name === cvFiles[selectedCV]?.name) {
+      return prevCvFiles.map((cvFile, index) => {
+        // Identificar el CV por su ID de base de datos si existe, o por el índice seleccionado si es un CV nuevo
+        // Esto es crucial para asegurar que el CV correcto se actualice en el estado.
+        const isCurrentlySelected = index === selectedCV;
+        const isMatchingSavedCv = (cvFile.cv_database_id && cvFile.cv_database_id === cvId) ||
+                                   (cvFile.candidate_database_id && cvFile.candidate_database_id === candidateId);
+
+        if (isCurrentlySelected || isMatchingSavedCv) {
           return {
             ...cvFile,
             analysis: updatedAnalysis, // Guardar el análisis posiblemente editado
