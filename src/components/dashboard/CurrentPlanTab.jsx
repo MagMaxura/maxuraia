@@ -133,6 +133,26 @@ function CurrentPlanTab() {
                 </div>
               )}
 
+              {isCurrentPlan && isBonusPlanActive && plan.id === 'busqueda_puntual' && baseSubscription && (
+                <div className="mb-4 text-sm text-slate-600 text-center">
+                  <h3 className="text-xl font-semibold mb-2 text-center text-green-700">Bonos Puntuales Activos</h3>
+                  <p>Adquirido: {new Date(baseSubscription.bonus_periodo_start || baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  {baseSubscription.bonus_periodo_end && (
+                    <p>Vencimiento: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  )}
+                  <p className="mt-2 font-semibold">Límites y Uso:</p>
+                  {bonusCvTotal > 0 && (
+                    <p>CVs: {bonusCvUsed} / {bonusCvTotal}</p>
+                  )}
+                  {bonusJobTotal > 0 && (
+                    <p>Ofertas: {bonusJobUsed} / {bonusJobTotal}</p>
+                  )}
+                  {bonusMatchTotal > 0 && (
+                    <p>Matches: {bonusMatchUsed} / {bonusMatchTotal}</p>
+                  )}
+                </div>
+              )}
+
               <ul className="space-y-3 text-slate-700 mb-8 flex-grow text-sm">
                 {plan.features.map((feature, fIndex) => (
                   <li key={fIndex} className="flex items-start">
@@ -167,32 +187,7 @@ function CurrentPlanTab() {
         <p className="text-slate-500">Cargando información del plan o no hay plan disponible. Si el problema persiste, contacta a soporte.</p>
       )}
 
-      {isBonusPlanActive && baseSubscription && basePlan?.id !== 'busqueda_puntual' && (
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="rounded-xl p-6 border shadow-lg flex flex-col relative bg-white border-green-500 ring-2 ring-green-400 mt-8"
-        >
-          <h3 className="text-2xl font-semibold mb-2 text-center text-green-700">Bonos Puntuales Activos</h3>
-          <div className="mb-4 text-sm text-slate-600 text-center">
-            <p>Adquirido: {new Date(baseSubscription.bonus_periodo_start || baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            {baseSubscription.bonus_periodo_end && (
-              <p>Vencimiento: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            )}
-            <p className="mt-2 font-semibold">Límites y Uso:</p>
-            {bonusCvTotal > 0 && (
-              <p>CVs: {bonusCvUsed} / {bonusCvTotal}</p>
-            )}
-            {bonusJobTotal > 0 && (
-              <p>Ofertas: {bonusJobUsed} / {bonusJobTotal}</p>
-            )}
-            {bonusMatchTotal > 0 && (
               <p>Matches: {bonusMatchUsed} / {bonusMatchTotal}</p>
-            )}
-          </div>
-        </motion.div>
-      )}
 
       {/* El ToastProvider y Toast ya no son necesarios aquí para el botón "Mejorar Plan" */}
       {/* Se pueden mantener si se usan para otras notificaciones */}
