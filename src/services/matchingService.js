@@ -46,7 +46,9 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
     throw new Error("Su suscripción no está activa. Por favor, active su plan para realizar macheos.");
   }
 
-  const currentMatchCount = subscriptionData.mach_analizados_este_periodo || 0;
+  const currentMatchCount = effectiveLimits.effectiveCurrentPlan?.type === 'one-time'
+    ? (subscriptionData.one_time_match_bonus || 0)
+    : (subscriptionData.mach_analizados_este_periodo || 0);
   const matchLimit = effectiveLimits.matchLimit;
 
   if (matchLimit !== Infinity && currentMatchCount >= matchLimit) {
@@ -252,9 +254,16 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
 
   // Actualizar el contador de macheos en la suscripción del usuario
   if (matchesProcessedInThisRun > 0) {
+    let updatePayload = {};
+    if (effectiveLimits.effectiveCurrentPlan?.type === 'one-time') {
+      updatePayload = { one_time_match_bonus: currentMatchCount + matchesProcessedInThisRun };
+    } else {
+      updatePayload = { mach_analizados_este_periodo: currentMatchCount + matchesProcessedInThisRun };
+    }
+
     const { error: updateSubscriptionError } = await supabase
       .from('suscripciones')
-      .update({ mach_analizados_este_periodo: currentMatchCount + matchesProcessedInThisRun })
+      .update(updatePayload)
       .eq('recruiter_id', recruiterId);
 
     if (updateSubscriptionError) {

@@ -140,7 +140,7 @@ export function useDashboardData() {
   const hasBonusLimits = (user?.suscripcion?.one_time_cv_bonus || 0) > 0 || (user?.suscripcion?.one_time_job_bonus || 0) > 0 || (user?.suscripcion?.one_time_match_bonus || 0) > 0;
   const hasConsumedBonusCv = (user?.suscripcion?.cvs_analizados_este_periodo || 0) >= (user?.suscripcion?.one_time_cv_bonus || 0);
   const hasConsumedBonusJobs = jobs.length >= (user?.suscripcion?.one_time_job_bonus || 0);
-  const hasConsumedBonusMatches = (user?.suscripcion?.mach_analizados_este_periodo || 0) >= (user?.suscripcion?.one_time_match_bonus || 0);
+  const hasConsumedBonusMatches = (user?.suscripcion?.one_time_match_bonus || 0) >= (user?.suscripcion?.one_time_cv_bonus || 0);
 
   const isBonusPlanActiveCalculated = hasBonusLimits && (
     (!bonusPeriodStart && !bonusPeriodEnd) || // Si no hay fechas, se asume activo si hay límites
@@ -165,16 +165,16 @@ export function useDashboardData() {
     basePlan: effectiveLimits.basePlan,
     bonusCvUsed: user?.suscripcion?.cvs_analizados_este_periodo || 0,
     bonusJobUsed: user?.suscripcion?.jobs_analizados_este_periodo || 0,
-    bonusMatchUsed: user?.suscripcion?.mach_analizados_este_periodo || 0,
+    bonusMatchUsed: user?.suscripcion?.one_time_match_bonus || 0,
     bonusCvTotal: user?.suscripcion?.one_time_cv_bonus || 0,
     bonusJobTotal: user?.suscripcion?.one_time_job_bonus || 0,
-    bonusMatchTotal: user?.suscripcion?.one_time_match_bonus || 0,
+    bonusMatchTotal: user?.suscripcion?.one_time_cv_bonus || 0,
     analysisLimit: effectiveLimits.cvLimit,
     jobLimit: effectiveLimits.jobLimit,
     matchLimit: effectiveLimits.matchLimit,
-    currentAnalysisCount: user?.suscripcion?.cvs_analizados_este_periodo || 0,
-    currentMatchCount: user?.suscripcion?.mach_analizados_este_periodo || 0,
-    currentJobCount: jobs.length,
+    currentAnalysisCount: effectiveLimits.cvs_used,
+    currentMatchCount: effectiveLimits.matches_used,
+    currentJobCount: effectiveLimits.jobs_used,
     isSubscriptionActive: effectiveLimits.isSubscriptionActive,
     periodEndsAt: effectiveLimits.periodEndsAt,
   };

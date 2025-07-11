@@ -182,6 +182,7 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   let effectiveMatchLimit = 0;
   let effectiveCurrentPlan = null;
   let isSubscriptionActive = false;
+  let matchesUsed = 0; // Nueva variable para el contador de matches usados
 
 
   if (!suscripcion) {
@@ -240,7 +241,7 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   const hasBonusLimits = (suscripcion.one_time_cv_bonus || 0) > 0 || (suscripcion.one_time_job_bonus || 0) > 0 || (suscripcion.one_time_match_bonus || 0) > 0;
   const hasConsumedBonusCv = (suscripcion.cvs_analizados_este_periodo || 0) >= (suscripcion.one_time_cv_bonus || 0);
   const hasConsumedBonusJobs = currentJobCount >= (suscripcion.one_time_job_bonus || 0); // Usar currentJobCount
-  const hasConsumedBonusMatches = (suscripcion.mach_analizados_este_periodo || 0) >= (suscripcion.one_time_match_bonus || 0);
+  const hasConsumedBonusMatches = (suscripcion.one_time_match_bonus || 0) >= (suscripcion.one_time_cv_bonus || 0);
 
   console.debug(`[DEBUG] Bonus Consumption Check: hasConsumedBonusCv=${hasConsumedBonusCv}, hasConsumedBonusJobs=${hasConsumedBonusJobs}, hasConsumedBonusMatches=${hasConsumedBonusMatches}`);
 
@@ -253,7 +254,7 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
         plan: APP_PLANS['busqueda_puntual'], // Usar el plan de búsqueda puntual como referencia
         cvLimit: hasConsumedBonusCv ? 0 : (suscripcion.one_time_cv_bonus || 0),
         jobLimit: hasConsumedBonusJobs ? 0 : (suscripcion.one_time_job_bonus || 0),
-        matchLimit: hasConsumedBonusMatches ? 0 : (suscripcion.one_time_match_bonus || 0),
+        matchLimit: hasConsumedBonusMatches ? 0 : (suscripcion.one_time_cv_bonus || 0),
         periodEndsAt: bonusPeriodEnd, // Puede ser null, pero se usa para la visualización si existe
         type: 'one-time'
       });
@@ -291,15 +292,25 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   isSubscriptionActive = basePlanActive || bonusPlanActive;
 
 
+  // Determinar el contador de matches usados según el plan activo
+  if (basePlanActive) {
+    matchesUsed = suscripcion.mach_analizados_este_periodo || 0;
+  } else if (bonusPlanActive) {
+    matchesUsed = suscripcion.one_time_match_bonus || 0;
+  }
+
   const result = {
     cvLimit: effectiveCvLimit,
     jobLimit: effectiveJobLimit,
     matchLimit: effectiveMatchLimit,
+    cvs_used: suscripcion.cvs_analizados_este_periodo || 0, // Añadir
+    jobs_used: currentJobCount, // Añadir
+    matches_used: matchesUsed, // Añadir
     effectiveCurrentPlan: effectiveCurrentPlan,
     isSubscriptionActive: isSubscriptionActive,
     periodEndsAt: periodEndsAt,
-    isBasePlanActive: basePlanActive, // Añadir
-    basePlan: basePlan, // Añadir
+    isBasePlanActive: basePlanActive,
+    basePlan: basePlan,
   };
 
   // Guardar los argumentos y el resultado para futuras llamadas
