@@ -6,22 +6,12 @@ import { APP_PLANS, PLAN_HIERARCHY } from '@/config/plans'; // Añadir PLAN_HIER
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { usePayment } from '@/hooks/usePayment';
 import { useDashboardData } from '@/hooks/useDashboardData'; // Importar useDashboardData
-import {
-  Toast,
-  ToastClose,
-  ToastDescription,
-  ToastProvider,
-  ToastTitle,
-  ToastViewport,
-} from '@/components/ui/toast';
 
 function CurrentPlanTab() {
   const { user, loading: loadingUser } = useAuth(); // Obtener loading del hook useAuth
   const { userSubscription, effectiveLimits, isBonusPlanActive, bonusCvUsed, bonusJobUsed, bonusMatchUsed, bonusCvTotal, bonusJobTotal, bonusMatchTotal } = useDashboardData(); // Obtener userSubscription y effectiveLimits
   const { loadingCheckout, handleCheckout } = usePayment();
 
-  // Declarar el estado para controlar la visibilidad del Toast
-  const [open, setOpen] = useState(false);
 
   const baseSubscription = user?.suscripcion;
   const basePlan = APP_PLANS[baseSubscription?.plan_id] || null;
@@ -133,7 +123,7 @@ function CurrentPlanTab() {
                 </div>
               )}
 
-              {isCurrentPlan && isBonusPlanActive && plan.id === 'busqueda_puntual' && baseSubscription && (
+              {isBonusPlanActive && plan.id === 'busqueda_puntual' && baseSubscription && (
                 <div className="mb-4 text-sm text-slate-600 text-center">
                   <h3 className="text-xl font-semibold mb-2 text-center text-green-700">Bonos Puntuales Activos</h3>
                   <p>Adquirido: {new Date(baseSubscription.bonus_periodo_start || baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
@@ -186,28 +176,6 @@ function CurrentPlanTab() {
       ) : (
         <p className="text-slate-500">Cargando información del plan o no hay plan disponible. Si el problema persiste, contacta a soporte.</p>
       )}
-
-              <p>Matches: {bonusMatchUsed} / {bonusMatchTotal}</p>
-
-      {/* El ToastProvider y Toast ya no son necesarios aquí para el botón "Mejorar Plan" */}
-      {/* Se pueden mantener si se usan para otras notificaciones */}
-      <ToastProvider>
-        <Toast open={open} onOpenChange={setOpen} nextPlan={nextPlanToShow}>
-          <ToastTitle>{nextPlanToShow ? nextPlanToShow.name : 'No hay plan superior'}</ToastTitle>
-          <ToastDescription>
-            {nextPlanToShow ? nextPlanToShow.description : 'Contacta a soporte para más información.'}
-          </ToastDescription>
-          <Button
-            onClick={() => handleCheckout(nextPlanToShow, user)}
-            disabled={loadingCheckout}
-          >
-            {loadingCheckout && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Comprar Plan
-          </Button>
-          <ToastClose />
-        </Toast>
-        <ToastViewport />
-      </ToastProvider>
     </motion.div>
   );
 }
