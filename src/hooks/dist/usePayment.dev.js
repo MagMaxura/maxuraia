@@ -85,13 +85,7 @@ var usePayment = function usePayment() {
 
             if (!payload.successUrl) delete payload.successUrl;
             if (!payload.cancelUrl) delete payload.cancelUrl;
-
-            if (!(planDetails.type === 'one-time')) {
-              _context.next = 31;
-              break;
-            }
-
-            _context.next = 19;
+            _context.next = 18;
             return regeneratorRuntime.awrap(fetch('/api/stripe/create-checkout-session', {
               method: 'POST',
               headers: {
@@ -100,16 +94,16 @@ var usePayment = function usePayment() {
               body: JSON.stringify(payload)
             }));
 
-          case 19:
+          case 18:
             response = _context.sent;
-            _context.next = 22;
+            _context.next = 21;
             return regeneratorRuntime.awrap(response.json());
 
-          case 22:
+          case 21:
             data = _context.sent;
 
             if (response.ok) {
-              _context.next = 28;
+              _context.next = 27;
               break;
             }
 
@@ -122,7 +116,7 @@ var usePayment = function usePayment() {
             setLoadingCheckout(false);
             return _context.abrupt("return");
 
-          case 28:
+          case 27:
             if (data.checkoutUrl) {
               console.log('usePayment - Redirigiendo a Stripe Checkout:', data.checkoutUrl);
               window.location.href = data.checkoutUrl; // Redirigir al usuario a la URL de checkout
@@ -135,64 +129,11 @@ var usePayment = function usePayment() {
               });
             }
 
-            _context.next = 43;
+            _context.next = 34;
             break;
 
-          case 31:
-            _context.next = 33;
-            return regeneratorRuntime.awrap(fetch('/api/stripe/create-payment-intent', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify(payload)
-            }));
-
-          case 33:
-            response = _context.sent;
-            _context.next = 36;
-            return regeneratorRuntime.awrap(response.json());
-
-          case 36:
-            data = _context.sent;
-
-            if (response.ok) {
-              _context.next = 42;
-              break;
-            }
-
-            console.error('usePayment - Error del API create-payment-intent:', data);
-            toast({
-              title: "Error al Iniciar Pago",
-              description: data.message || data.error || 'No se pudo iniciar el proceso de pago. Intenta de nuevo.',
-              variant: "destructive"
-            });
-            setLoadingCheckout(false);
-            return _context.abrupt("return");
-
-          case 42:
-            if (data.clientSecret) {
-              console.log('usePayment - Payment Intent clientSecret recibido.');
-              toast({
-                title: "Proceso de Pago Iniciado",
-                description: "Continúa en el formulario de pago.",
-                variant: "success"
-              }); // Aquí se esperaría la lógica para confirmar el pago con Stripe Elements
-            } else {
-              console.error('usePayment - No se recibió clientSecret del API.');
-              toast({
-                title: "Error Inesperado",
-                description: 'No se pudo obtener la información de pago del servidor.',
-                variant: "destructive"
-              });
-            }
-
-          case 43:
-            _context.next = 49;
-            break;
-
-          case 45:
-            _context.prev = 45;
+          case 30:
+            _context.prev = 30;
             _context.t0 = _context["catch"](12);
             console.error('usePayment - Excepción al llamar a create-payment-intent:', _context.t0);
             toast({
@@ -201,18 +142,18 @@ var usePayment = function usePayment() {
               variant: "destructive"
             });
 
-          case 49:
-            _context.prev = 49;
+          case 34:
+            _context.prev = 34;
             setLoadingCheckout(false); // Asegurarse de que loading se desactive
 
-            return _context.finish(49);
+            return _context.finish(34);
 
-          case 52:
+          case 37:
           case "end":
             return _context.stop();
         }
       }
-    }, null, null, [[12, 45, 49, 52]]);
+    }, null, null, [[12, 30, 34, 37]]);
   };
 
   return {
