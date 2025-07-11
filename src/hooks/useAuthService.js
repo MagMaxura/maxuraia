@@ -32,9 +32,10 @@ export function useAuthService() {
     if (supabaseAuthUser) {
       // If the user ID hasn't changed and we already have a user with a fetched profile,
       // we can potentially skip fetching the profile again to avoid unnecessary re-renders.
-      // We check lastFetchedUserId.current to ensure the profile was successfully fetched previously.
-      if (user && user.id === supabaseAuthUser.id && lastFetchedUserId.current === supabaseAuthUser.id) {
-        console.debug(`[DEBUG] useAuthService: handleAuthChange - User ID ${supabaseAuthUser.id} is the same and profile already fetched, skipping profile fetch.`);
+      // Si el evento es REFRESH, siempre intentar obtener el perfil completo para asegurar la actualización de datos como cvs_analizados_este_periodo.
+      // Para otros eventos, si el ID de usuario no ha cambiado y el perfil ya fue fetchado, podemos saltar la obtención.
+      if (event !== 'REFRESH' && user && user.id === supabaseAuthUser.id && lastFetchedUserId.current === supabaseAuthUser.id) {
+        console.debug(`[DEBUG] useAuthService: handleAuthChange - User ID ${supabaseAuthUser.id} is the same and profile already fetched (non-REFRESH event), skipping profile fetch.`);
         setAuthChecked(true);
         setLoading(false);
         return;
