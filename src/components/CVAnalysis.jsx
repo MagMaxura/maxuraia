@@ -381,13 +381,13 @@ function CVAnalysis({
           <Trash2 className="mr-2 h-4 w-4" />
           Eliminar CV
         </Button>
-        {isCvSaved ? (
+        {cvDatabaseId && candidateDatabaseId && !hasUnsavedChanges ? (
           <p className="text-green-600 font-semibold flex items-center">
             <Save className="w-4 h-4 mr-2" />
             CV Guardado
           </p>
         ) : (
-          <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700">
+          <Button onClick={handleSave} disabled={isSaving || !hasUnsavedChanges} className="bg-blue-600 hover:bg-blue-700">
             <Save className="mr-2 h-4 w-4" />
             {isSaving ? "Guardando..." : "Guardar Cambios"}
           </Button>
