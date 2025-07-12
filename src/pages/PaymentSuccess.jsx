@@ -56,11 +56,35 @@ const PaymentSuccess = () => {
 
           if (!response.ok) {
             stripeError = { message: data.error || 'Error al recuperar la sesión de checkout.' };
-          } else if (data.session && data.session.payment_intent) {
-            // Si la sesión tiene un payment_intent, lo usamos
-            retrievedPaymentIntent = data.session.payment_intent;
+          } else if (data.session) {
+            // Si la sesión tiene un payment_intent (para pagos únicos), lo usamos
+            if (data.session.payment_status === 'paid' && data.session.payment_intent) {
+                const piResult = await stripe.retrievePaymentIntent(data.session.payment_intent);
+                retrievedPaymentIntent = piResult.paymentIntent;
+                stripeError = piResult.error;
+            } else if (data.session.mode === 'subscription' && data.session.subscription) {
+                // Si es una suscripción, recuperamos la suscripción y verificamos su estado
+                const subscriptionId = data.session.subscription;
+                const responseSubscription = await fetch(`/api/stripe/retrieve-subscription?subscriptionId=${subscriptionId}`);
+                const dataSubscription = await responseSubscription.json();
+
+                if (!responseSubscription.ok) {
+                    stripeError = { message: dataSubscription.error || 'Error al recuperar la suscripción.' };
+                } else if (dataSubscription.subscription && (dataSubscription.subscription.status === 'active' || dataSubscription.subscription.status === 'trialing')) {
+                    // Creamos un "pseudo" PaymentIntent para mantener la estructura del estado
+                    retrievedPaymentIntent = { status: 'succeeded', id: subscriptionId, type: 'subscription' };
+                } else {
+                    setError('No se pudo encontrar una suscripción activa asociada a la sesión de checkout.');
+                    setLoading(false);
+                    return;
+                }
+            } else {
+                setError('No se pudo encontrar un PaymentIntent o una suscripción asociada a la sesión de checkout.');
+                setLoading(false);
+                return;
+            }
           } else {
-            setError('No se pudo encontrar un PaymentIntent asociado a la sesión de checkout.');
+            setError('No se pudo encontrar una sesión de checkout válida.');
             setLoading(false);
             return;
           }

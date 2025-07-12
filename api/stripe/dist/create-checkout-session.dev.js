@@ -11,9 +11,12 @@ var _plans = require("../_lib/plans.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-// Archivo: api/stripe/create-checkout-session.js
-// Este archivo ha sido comentado temporalmente ya que se está utilizando la integración con Stripe Elements
-// y para reducir el número de funciones Serverless para el límite del plan Hobby de Vercel.
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(source, true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(source).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 // Importar APP_PLANS
 // Asegúrate de tener tu clave secreta de Stripe en las variables de entorno
 var stripe = new _stripe["default"](process.env.STRIPE_SECRET_KEY, {
@@ -69,7 +72,7 @@ var _callee = function _callee(req, res) {
         case 10:
           _context.prev = 10;
           _context.next = 13;
-          return regeneratorRuntime.awrap(stripe.checkout.sessions.create({
+          return regeneratorRuntime.awrap(stripe.checkout.sessions.create(_objectSpread({
             line_items: [{
               price: priceId,
               quantity: 1
@@ -87,7 +90,20 @@ var _callee = function _callee(req, res) {
 
             },
             customer_email: email
-          }));
+          }, plan.type !== 'one-time' && {
+            subscription_data: {
+              metadata: {
+                recruiterId: String(recruiterId),
+                planId: String(plan.id)
+              }
+            },
+            payment_intent_data: {
+              metadata: {
+                recruiterId: String(recruiterId),
+                planId: String(plan.id)
+              }
+            }
+          })));
 
         case 13:
           session = _context.sent;
