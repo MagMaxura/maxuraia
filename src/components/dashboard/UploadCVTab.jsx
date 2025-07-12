@@ -100,52 +100,25 @@ function UploadCVTab({
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
           <p className="font-semibold mb-2">Tu Plan Actual: <span className="capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || APP_PLANS[planId]?.name || planId}</span></p>
           {/* Mostrar el uso de CVs del plan base si está activo, de lo contrario, mostrar los bonos */}
-          {isBasePlanActive ? (
-            <>
               <p>
-                CVs cargados este período: <strong className="font-semibold">{effectiveLimits.cvs_used}</strong> de <strong className="font-semibold">{effectiveLimits.cvs === -1 ? 'Ilimitados' : effectiveLimits.cvs}</strong>
+                CVs cargados este período: <strong className="font-semibold">{effectiveLimits.cvs_used}</strong> de <strong className="font-semibold">{effectiveLimits.cvLimit === Infinity ? 'Ilimitados' : effectiveLimits.cvLimit}</strong>
+                {effectiveLimits.periodEndsAt && (
+                  <> Vencen el: <strong className="font-semibold">{new Date(effectiveLimits.periodEndsAt).toLocaleDateString()}</strong></>
+                )}
               </p>
               <div className="mt-2 w-full bg-blue-200 rounded-full h-2.5">
                 <div
                   className="bg-blue-600 h-2.5 rounded-full"
-                  style={{ width: `${effectiveLimits.cvs === -1 || effectiveLimits.cvs === 0 ? 100 : (effectiveLimits.cvs_used / effectiveLimits.cvs) * 100}%` }}
+                  style={{ width: `${effectiveLimits.cvLimit === Infinity || effectiveLimits.cvLimit === 0 ? 100 : (effectiveLimits.cvs_used / effectiveLimits.cvLimit) * 100}%` }}
                 ></div>
               </div>
-              {effectiveLimits.cvs !== -1 && effectiveLimits.cvs_used >= effectiveLimits.cvs && (
+              {effectiveLimits.cvLimit !== Infinity && effectiveLimits.cvs_used >= effectiveLimits.cvLimit && (
                 <Link to="/#pricing" className="mt-3 inline-block">
                   <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border-yellow-500">
                     Actualizar Plan
                     <ArrowRightCircle className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-              )}
-                </>
-              ) : (
-                // Si el plan base no está activo, pero hay bonos de CV, mostrar el uso de bonos
-                isBonusPlanActive && bonusCvTotal > 0 && (
-                  <>
-                    <p>
-                      CVs cargados por plan de búsqueda puntual: <strong className="font-semibold">{optimisticCurrentAnalysisCount}</strong> de <strong className="font-semibold">{bonusCvTotal}</strong>.
-                      {effectiveLimits.bonus_periodo_end && (
-                        <> Vencen el: <strong className="font-semibold">{new Date(effectiveLimits.bonus_periodo_end).toLocaleDateString()}</strong></>
-                      )}
-                    </p>
-                    <div className="mt-2 w-full bg-blue-200 rounded-full h-2.5">
-                      <div
-                        className="bg-blue-600 h-2.5 rounded-full"
-                        style={{ width: `${bonusCvTotal === 0 ? 100 : (optimisticCurrentAnalysisCount / bonusCvTotal) * 100}%` }}
-                      ></div>
-                    </div>
-                    {optimisticCurrentAnalysisCount >= bonusCvTotal && (
-                      <Link to="/#pricing" className="mt-3 inline-block">
-                        <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border-yellow-500">
-                          Actualizar Plan
-                          <ArrowRightCircle className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Link>
-                    )}
-                  </>
-                )
               )}
         </div>
       )}

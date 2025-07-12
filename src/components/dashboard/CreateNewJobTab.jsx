@@ -202,15 +202,15 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
           <p className="font-semibold mb-2">Tu Plan Actual: <span className="capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || APP_PLANS[effectiveLimits?.effectiveCurrentPlan?.id || 'basico']?.name || 'Básico'}</span></p>
           <p>
-            Puestos de trabajo creados: <strong className="font-semibold">{effectiveLimits.jobs_used}</strong> de <strong className="font-semibold">{effectiveLimits.jobs === -1 ? 'Ilimitados' : effectiveLimits.jobs}</strong>
+            Puestos de trabajo creados: <strong className="font-semibold">{effectiveLimits.jobs_used}</strong> de <strong className="font-semibold">{effectiveLimits.jobLimit === Infinity ? 'Ilimitados' : effectiveLimits.jobLimit}</strong>
           </p>
           <div className="mt-2 w-full bg-blue-200 rounded-full h-2.5">
             <div
               className="bg-blue-600 h-2.5 rounded-full"
-              style={{ width: `${effectiveLimits.jobs === -1 || effectiveLimits.jobs === 0 ? 100 : (effectiveLimits.jobs_used / effectiveLimits.jobs) * 100}%` }}
+              style={{ width: `${effectiveLimits.jobLimit === Infinity || effectiveLimits.jobLimit === 0 ? 100 : (effectiveLimits.jobs_used / effectiveLimits.jobLimit) * 100}%` }}
             ></div>
           </div>
-          {effectiveLimits.jobs !== -1 && effectiveLimits.jobs_used >= effectiveLimits.jobs && (
+          {effectiveLimits.jobLimit !== Infinity && effectiveLimits.jobs_used >= effectiveLimits.jobLimit && (
             <a href="/#pricing" className="mt-3 inline-block">
               <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border-yellow-500">
                 Actualizar Plan
@@ -218,14 +218,6 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
               </Button>
             </a>
           )}
-        </div>
-      )}
-
-      {/* Información de Bonos Puntuales Activos */}
-      {isBonusPlanActive && bonusJobTotal > 0 && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-          <p className="font-semibold mb-2">Bonos Puntuales Activos:</p>
-          <p>Puestos de Bono: <strong className="font-semibold">{bonusJobUsed}</strong> de <strong className="font-semibold">{bonusJobTotal}</strong></p>
         </div>
       )}
 
@@ -238,7 +230,7 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                Has alcanzado el límite de <strong className="font-semibold">{jobLimit === Infinity ? 'puestos ilimitados' : `${jobLimit} puestos activos`}</strong> para tu plan <strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || planId}</strong>.
+                Has alcanzado el límite de <strong className="font-semibold">{effectiveLimits.jobLimit === Infinity ? 'puestos ilimitados' : `${effectiveLimits.jobLimit} puestos activos`}</strong> para tu plan <strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || planId}</strong>.
                 Para crear más puestos, por favor considera <a href="/#pricing" className="underline hover:text-yellow-600">actualizar tu plan</a>.
               </p>
             </div>
