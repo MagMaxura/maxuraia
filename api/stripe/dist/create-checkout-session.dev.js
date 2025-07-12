@@ -96,12 +96,6 @@ var _callee = function _callee(req, res) {
                 recruiterId: String(recruiterId),
                 planId: String(plan.id)
               }
-            },
-            payment_intent_data: {
-              metadata: {
-                recruiterId: String(recruiterId),
-                planId: String(plan.id)
-              }
             }
           })));
 

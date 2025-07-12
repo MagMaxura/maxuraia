@@ -47,15 +47,9 @@ export default async (req, res) => {
         stripePriceId: String(priceId), // Price ID de Stripe usado
       },
       customer_email: email,
-      // Propagar metadatos a la suscripción y al PaymentIntent si es un plan de suscripción
+      // Propagar metadatos a la suscripción si es un plan de suscripción
       ...(plan.type !== 'one-time' && {
         subscription_data: {
-          metadata: {
-            recruiterId: String(recruiterId),
-            planId: String(plan.id),
-          },
-        },
-        payment_intent_data: {
           metadata: {
             recruiterId: String(recruiterId),
             planId: String(plan.id),
