@@ -156,12 +156,13 @@ var _callee = function _callee(req, res) {
           // --- FIN DE LA MEJORA ---
           paymentIntentParams = {
             customer: customer.id,
-            // <-- AÑADES ESTA LÍNEA para asociar el pago al cliente
+            // Asociar el PaymentIntent al cliente de Stripe
             amount: amountInCents,
             currency: 'ars',
             // Asegúrate de que esta moneda esté activa en tu cuenta de Stripe
             metadata: {
               recruiterId: String(recruiterId),
+              // Asegurar que el recruiterId se pase como metadata
               email: String(email),
               planId: String(plan.id),
               // ID interno de tu plan

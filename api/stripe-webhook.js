@@ -78,7 +78,18 @@ export default async (req, res) => {
       console.log('✅ PaymentIntent succeeded:', paymentIntent.id);
 
       // Accede a la metadata que pasamos al crear el PaymentIntent
-      const { recruiterId, planId: planIdFromMetadata } = paymentIntent.metadata; // planId aquí es tu ID interno (ej: 'busqueda_puntual')
+      // Accede a la metadata que pasamos al crear el PaymentIntent
+      // Si recruiterId no está en metadata del PaymentIntent, intenta obtenerlo del customer asociado
+      let { recruiterId, planId: planIdFromMetadata } = paymentIntent.metadata;
+      if (!recruiterId && paymentIntent.customer) {
+          try {
+              const customer = await stripe.customers.retrieve(paymentIntent.customer);
+              recruiterId = customer.metadata?.recruiterId;
+              console.log(`DEBUG: recruiterId recuperado del cliente de Stripe: ${recruiterId}`);
+          } catch (e) {
+              console.warn(`⚠️ No se pudo recuperar el cliente de Stripe ${paymentIntent.customer} para obtener recruiterId: ${e.message}`);
+          }
+      }
 
       // Verificar que los datos esenciales de la metadata estén presentes
       if (!recruiterId || !planIdFromMetadata) {
@@ -365,7 +376,17 @@ export default async (req, res) => {
        console.log('✅ Subscription created:', subscriptionCreated.id);
        console.log('DEBUG: Full subscriptionCreated object:', JSON.stringify(subscriptionCreated, null, 2)); // Añadir este log
        // Cuando se crea una suscripción (incluido el primer pago exitoso)
-       const recruiterIdCreated = subscriptionCreated.metadata?.recruiterId || subscriptionCreated.customer; // Obtén recruiterId
+       // Obtén recruiterId de los metadatos de la suscripción o del cliente de Stripe
+       let recruiterIdCreated = subscriptionCreated.metadata?.recruiterId;
+       if (!recruiterIdCreated && subscriptionCreated.customer) {
+           try {
+               const customer = await stripe.customers.retrieve(subscriptionCreated.customer);
+               recruiterIdCreated = customer.metadata?.recruiterId;
+               console.log(`DEBUG: recruiterIdCreated recuperado del cliente de Stripe: ${recruiterIdCreated}`);
+           } catch (e) {
+               console.warn(`⚠️ No se pudo recuperar el cliente de Stripe ${subscriptionCreated.customer} para obtener recruiterIdCreated: ${e.message}`);
+           }
+       }
        const stripeProductIdCreated = subscriptionCreated.items.data[0]?.price?.product; // Obtén el Product ID
        const subscriptionPlanDetails = getPlanByStripeProductId(stripeProductIdCreated); // Mapea a tu ID interno (objeto completo)
 
@@ -430,7 +451,17 @@ export default async (req, res) => {
            const subscriptionUpdated = event.data.object;
            console.log('✅ Subscription updated:', subscriptionUpdated.id);
            // Cuando se actualiza una suscripción (cambio de plan, estado, etc.)
-           const recruiterIdUpdated = subscriptionUpdated.metadata?.recruiterId || subscriptionUpdated.customer;
+           // Obtén recruiterId de los metadatos de la suscripción o del cliente de Stripe
+           let recruiterIdUpdated = subscriptionUpdated.metadata?.recruiterId;
+           if (!recruiterIdUpdated && subscriptionUpdated.customer) {
+               try {
+                   const customer = await stripe.customers.retrieve(subscriptionUpdated.customer);
+                   recruiterIdUpdated = customer.metadata?.recruiterId;
+                   console.log(`DEBUG: recruiterIdUpdated recuperado del cliente de Stripe: ${recruiterIdUpdated}`);
+               } catch (e) {
+                   console.warn(`⚠️ No se pudo recuperar el cliente de Stripe ${subscriptionUpdated.customer} para obtener recruiterIdUpdated: ${e.message}`);
+               }
+           }
            const stripeProductIdUpdated = subscriptionUpdated.items.data[0]?.price?.product;
            const updatedSubscriptionPlanDetails = getPlanByStripeProductId(stripeProductIdUpdated); // Obtener objeto completo del plan
 
@@ -494,7 +525,17 @@ export default async (req, res) => {
        const subscriptionDeleted = event.data.object;
        console.log('✅ Subscription deleted:', subscriptionDeleted.id);
        // Cuando una suscripción se cancela o finaliza
-       const recruiterIdDeleted = subscriptionDeleted.metadata?.recruiterId || subscriptionDeleted.customer;
+       // Obtén recruiterId de los metadatos de la suscripción o del cliente de Stripe
+       let recruiterIdDeleted = subscriptionDeleted.metadata?.recruiterId;
+       if (!recruiterIdDeleted && subscriptionDeleted.customer) {
+           try {
+               const customer = await stripe.customers.retrieve(subscriptionDeleted.customer);
+               recruiterIdDeleted = customer.metadata?.recruiterId;
+               console.log(`DEBUG: recruiterIdDeleted recuperado del cliente de Stripe: ${recruiterIdDeleted}`);
+           } catch (e) {
+               console.warn(`⚠️ No se pudo recuperar el cliente de Stripe ${subscriptionDeleted.customer} para obtener recruiterIdDeleted: ${e.message}`);
+           }
+       }
 
        if (recruiterIdDeleted) {
            try {
@@ -534,7 +575,17 @@ export default async (req, res) => {
          // Asegúrate de que el acceso del usuario se mantenga activo y actualiza las fechas del período.
          // La metadata puede estar en la factura o en la suscripción asociada a la factura
          const subscriptionIdFromInvoice = invoice.subscription; // ID de suscripción de Stripe
-         const recruiterIdFromInvoice = invoice.metadata?.recruiterId || invoice.customer; // O del customer asociado
+         // Obtén recruiterId de los metadatos de la factura o del cliente de Stripe
+         let recruiterIdFromInvoice = invoice.metadata?.recruiterId;
+         if (!recruiterIdFromInvoice && invoice.customer) {
+             try {
+                 const customer = await stripe.customers.retrieve(invoice.customer);
+                 recruiterIdFromInvoice = customer.metadata?.recruiterId;
+                 console.log(`DEBUG: recruiterIdFromInvoice recuperado del cliente de Stripe: ${recruiterIdFromInvoice}`);
+             } catch (e) {
+                 console.warn(`⚠️ No se pudo recuperar el cliente de Stripe ${invoice.customer} para obtener recruiterIdFromInvoice: ${e.message}`);
+             }
+         }
 
          if (recruiterIdFromInvoice && subscriptionIdFromInvoice) {
               try {

@@ -71,11 +71,11 @@ export default async (req, res) => {
     // --- FIN DE LA MEJORA ---
 
     const paymentIntentParams = {
-        customer: customer.id, // <-- AÑADES ESTA LÍNEA para asociar el pago al cliente
+        customer: customer.id, // Asociar el PaymentIntent al cliente de Stripe
         amount: amountInCents,
         currency: 'ars', // Asegúrate de que esta moneda esté activa en tu cuenta de Stripe
         metadata: {
-            recruiterId: String(recruiterId),
+            recruiterId: String(recruiterId), // Asegurar que el recruiterId se pase como metadata
             email: String(email),
             planId: String(plan.id), // ID interno de tu plan
             stripePriceId: String(priceId), // Price ID de Stripe usado
