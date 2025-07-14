@@ -212,7 +212,11 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   if (basePlan && (basePlan.type === 'monthly' || basePlan.type === 'enterprise' || basePlan.type === 'trial')) {
     const subscriptionPeriodEndsAt = suscripcion.current_period_end ? new Date(suscripcion.current_period_end) : null;
     console.debug(`[DEBUG] Base Plan Check: plan_id=${suscripcion.plan_id}, status=${suscripcion.status}, current_period_end=${suscripcion.current_period_end}, subscriptionPeriodEndsAt=${subscriptionPeriodEndsAt}, now=${now}`);
-    if (suscripcion.status === 'active' && subscriptionPeriodEndsAt && subscriptionPeriodEndsAt > now) {
+    
+    const isTrialActive = basePlan.type === 'trial' && suscripcion.status === 'trialing' && subscriptionPeriodEndsAt && subscriptionPeriodEndsAt > now;
+    const isPaidPlanActive = (basePlan.type === 'monthly' || basePlan.type === 'enterprise') && suscripcion.status === 'active' && subscriptionPeriodEndsAt && subscriptionPeriodEndsAt > now;
+
+    if (isTrialActive || isPaidPlanActive) {
       basePlanActive = true;
       activePlans.push({
         plan: basePlan,
@@ -222,7 +226,7 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
         periodEndsAt: subscriptionPeriodEndsAt,
         type: basePlan.type
       });
-      periodEndsAt = subscriptionPeriodEndsAt; // El plan mensual define el período principal
+      periodEndsAt = subscriptionPeriodEndsAt; // El plan mensual/trial define el período principal
       console.log(`[DEBUG] calculateEffectivePlan - Plan base '${basePlan.id}' activo.`);
     } else {
       console.log(`[DEBUG] calculateEffectivePlan - Suscripción mensual/empresarial/trial expirada o inactiva para plan ${suscripcion.plan_id}.`);

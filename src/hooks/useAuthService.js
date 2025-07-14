@@ -103,12 +103,11 @@ export function useAuthService() {
               console.warn("[DEBUG] useAuthService: Trial subscription UPSERT returned no data, but no error. Check RLS or table configuration.");
             } else {
               console.debug("[DEBUG] useAuthService: Trial subscription created/updated successfully:", newSubscription);
+              // Asegurarse de que userToSet.suscripcion contenga todas las propiedades de newSubscription
               userToSet.suscripcion = {
-                current_plan: newSubscription.plan_id,
-                one_time_plan: null, // Trial es el plan principal, no un bono
-                current_plan_details: APP_PLANS[newSubscription.plan_id],
-                one_time_plan_details: null,
-                cvs_analizados_este_periodo: newSubscription.cvs_analizados_este_periodo,
+                ...newSubscription, // Copiar todas las propiedades de la nueva suscripción
+                current_plan_details: APP_PLANS[newSubscription.plan_id], // Añadir detalles del plan
+                one_time_plan_details: null, // Asegurar que no haya detalles de plan de un solo uso si es trial
               };
             }
           } catch (subCreationError) {
