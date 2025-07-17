@@ -205,6 +205,9 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
   let periodEndsAt = null; // Fecha de fin del período más relevante
   let activePlans = []; // Para almacenar los planes activos y sus límites
 
+  console.debug("[DEBUG] calculateEffectivePlan - Suscripcion recibida:", suscripcion); // Nuevo log
+  console.debug(`[DEBUG] calculateEffectivePlan - Fecha actual (now): ${now}`); // Nuevo log
+
   const basePlan = APP_PLANS[suscripcion.plan_id];
   let basePlanActive = false;
 
@@ -215,6 +218,8 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
     
     const isTrialActive = basePlan.type === 'trial' && suscripcion.status === 'trialing' && subscriptionPeriodEndsAt && subscriptionPeriodEndsAt > now;
     const isPaidPlanActive = (basePlan.type === 'monthly' || basePlan.type === 'enterprise') && suscripcion.status === 'active' && subscriptionPeriodEndsAt && subscriptionPeriodEndsAt > now;
+
+    console.debug(`[DEBUG] calculateEffectivePlan - isTrialActive: ${isTrialActive}, isPaidPlanActive: ${isPaidPlanActive}`); // Nuevo log
 
     if (isTrialActive || isPaidPlanActive) {
       basePlanActive = true;

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/components/ui/use-toast";
 import { cvService } from '@/services/cvService';
-import { Brain, AlertCircle } from 'lucide-react'; // Importar el icono Brain y AlertCircle
+import { Brain, AlertCircle, ArrowRightCircle } from 'lucide-react'; // Importar los iconos necesarios
 import CreateJobAIForm from '../CreateJobAIForm.jsx'; // Importar el componente del formulario AI (ruta corregida)
 import { APP_PLANS } from '@/config/plans'; // Importar APP_PLANS
 import { useDashboardData } from '@/hooks/useDashboardData'; // Importar useDashboardData
