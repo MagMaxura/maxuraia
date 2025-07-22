@@ -82,9 +82,9 @@ ${text}`;
             : [];
     }
 
-    // Asegurar que nivel_escolarizacion sea un string
-    if (typeof parsedResponse.nivel_escolarizacion !== 'string') {
-        parsedResponse.nivel_escolarizacion = parsedResponse.nivel_escolarizacion ? String(parsedResponse.nivel_escolarizacion) : "No especificado";
+    // Asegurar que nivel_escolarizacion sea un string y no esté vacío
+    if (typeof parsedResponse.nivel_escolarizacion !== 'string' || parsedResponse.nivel_escolarizacion.trim() === '') {
+        parsedResponse.nivel_escolarizacion = "No especificado";
     }
 
     return res.status(200).json(parsedResponse);

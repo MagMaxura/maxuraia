@@ -1,18 +1,13 @@
-import { supabase } from '@/lib/supabase'; // Asegurarse de que supabase esté importado
+import { supabase } from '../lib/supabase'; // Asegurarse de que supabase esté importado
+import { sha256 } from '../lib/utils'; // Importar la función de hashing
 
 export const cvService = {
-  // NOTA: Las implementaciones de las otras funciones (getCVsByRecruiterId, uploadCV, etc.)
-  // deben ser completadas si aún son placeholders.
-
-  async getCandidatosConCVsByRecruiterId(recruiterId) { // Renombrado y lógica ajustada
+  async getCandidatosConCVsByRecruiterId(recruiterId) {
     if (!recruiterId) {
       console.error("cvService.getCandidatosConCVsByRecruiterId: recruiterId es requerido.");
       return [];
     }
     try {
-      // Consultar candidatos y traer el CV más reciente asociado (si existe)
-      // Esto asume que 'cvs' tiene una columna 'candidate_id' que referencia 'candidatos.id'
-      // y que quieres el CV más reciente si hay múltiples.
       const { data, error } = await supabase
         .from('candidatos')
         .select(`
@@ -26,12 +21,7 @@ export const cvService = {
           )
         `)
         .eq('recruiter_id', recruiterId)
-        // Si quieres ordenar los candidatos:
         .order('created_at', { ascending: false });
-        // Si quieres ordenar los cvs anidados (Supabase podría no soportar order en anidado directamente en select string así):
-        // .order('created_at', { foreignTable: 'cvs', ascending: false }) -> esto es sintaxis inventada
-        // La forma de ordenar anidados es más compleja o se hace post-fetch.
-        // Por ahora, obtendremos todos los cvs y el frontend puede tomar el más reciente si es necesario.
 
       if (error) {
         console.error(`cvService.getCandidatosConCVsByRecruiterId: Supabase query error for recruiterId ${recruiterId}:`, JSON.stringify(error, null, 2));
@@ -41,8 +31,6 @@ export const cvService = {
         console.warn(`cvService.getCandidatosConCVsByRecruiterId: Supabase returned null data for recruiterId ${recruiterId}, returning empty array.`);
         return [];
       }
-      // Si la relación cvs devuelve un array de cvs por candidato, puede que necesites procesarlo.
-      // Por ahora, devolvemos los datos tal cual para que useDashboardData los maneje.
       return data;
     } catch (e) {
       console.error(`cvService.getCandidatosConCVsByRecruiterId: Exception for recruiterId ${recruiterId}:`, e);
@@ -50,7 +38,7 @@ export const cvService = {
     }
   },
 
-  async saveCvAndCandidate(analysisData, recruiterId, existingCvId = null, existingCandidateId = null, fileName = 'N/A') {
+  async saveCvAndCandidate(analysisData, recruiterId, existingCvId = null, existingCandidateId = null, fileName = 'N/A', contentHash = null) {
 
     if (!recruiterId) {
       throw new Error("Recruiter ID es requerido para guardar CV y candidato.");
@@ -62,41 +50,29 @@ export const cvService = {
     let candidateId = existingCandidateId;
     let candidateResult = null;
 
-    // Datos del candidato a partir de analysisData
-    // Asegúrate de que los nombres de campo coincidan con tu tabla 'candidatos'
     const candidatePayload = {
-      recruiter_id: recruiterId, // Asumiendo que candidatos también tiene recruiter_id
+      recruiter_id: recruiterId,
       name: analysisData.nombre || analysisData.name,
       email: analysisData.email,
       phone: analysisData.telefono || analysisData.phone,
       location: analysisData.localidad || analysisData.location,
-      title: analysisData.tituloActual || analysisData.title || (analysisData.summary ? analysisData.summary.split('.')[0].trim() : null), // Intenta extraer del summary si no hay título
+      title: analysisData.nivel_escolarizacion || analysisData.tituloActual || analysisData.title || (analysisData.summary ? analysisData.summary.split('.')[0].trim() : null),
       summary: analysisData.resumen || analysisData.summary,
-      // skills: analysisData.habilidades?.tecnicas?.join(', ') + (analysisData.habilidades?.blandas?.length ? ', ' + analysisData.habilidades.blandas.join(', ') : ''), // Ejemplo de cómo podrías guardar skills como texto
-      // skills: analysisData.habilidades, // Comentado para reemplazar con la lógica de array
       experience: analysisData.experiencia || analysisData.experience,
-      // age: analysisData.edad, // Si tienes un campo 'age'
-      // score: analysisData.scoreGeneral, // Si quieres guardar un score general en el candidato
     };
 
-    // Procesamiento para el campo 'skills'
     let skillsArray = [];
     if (analysisData.habilidades && typeof analysisData.habilidades === 'object' && !Array.isArray(analysisData.habilidades)) {
-      // Si es un objeto (y no un array directamente), iterar sobre sus valores
       Object.values(analysisData.habilidades).forEach(categoryValue => {
         if (Array.isArray(categoryValue)) {
-          // Concatenar solo si los elementos son strings
           skillsArray = skillsArray.concat(categoryValue.filter(skill => typeof skill === 'string'));
         }
       });
     } else if (Array.isArray(analysisData.habilidades)) {
-      // Si analysisData.habilidades ya es un array (p.ej. de strings), usarlo directamente
-      // Filtrar para asegurar que solo sean strings si esa es la expectativa
       skillsArray = analysisData.habilidades.filter(skill => typeof skill === 'string');
     }
-    candidatePayload.skills = skillsArray; // Asignar el array procesado
+    candidatePayload.skills = skillsArray;
 
-    // Filtrar propiedades undefined para no enviar nulls innecesarios a Supabase
     for (const key in candidatePayload) {
       if (candidatePayload[key] === undefined) {
         delete candidatePayload[key];
@@ -117,7 +93,6 @@ export const cvService = {
       }
       candidateResult = data;
     } else {
-      // Asegurarse de que el title se está intentando guardar
       const { data, error } = await supabase
         .from('candidatos')
         .insert(candidatePayload)
@@ -135,23 +110,15 @@ export const cvService = {
       throw new Error("No se pudo obtener el ID del candidato después de la operación de inserción/actualización.");
     }
 
-    // Guardar/Actualizar CV
     let cvResult = null;
     const cvPayload = {
       recruiter_id: recruiterId,
-      analysis_result: analysisData, // Guardar el objeto de análisis completo
+      analysis_result: analysisData,
       file_name: fileName,
-      content: analysisData.textoCompleto || null, // El texto extraído del CV
-      // file_path: filePathFromStorage, // Si se sube a Storage
-      // file_url: fileUrlFromStorage,   // Si se sube a Storage
+      content: analysisData.textoCompleto || null,
+      content_hash: contentHash, // Añadir el hash del contenido
     };
 
-    // Eliminar candidate_id si no existe
-    // if (candidateId) {
-    //   cvPayload.candidate_id = candidateId;
-    // }
-
-    // Filtrar propiedades undefined
     for (const key in cvPayload) {
       if (cvPayload[key] === undefined) {
         delete cvPayload[key];
@@ -183,7 +150,6 @@ export const cvService = {
       cvResult = data;
     }
 
-    // Actualizar el candidato con el cv_id
     if (cvResult && candidateResult) {
       const { data: updatedCandidate, error: updateError } = await supabase
         .from('candidatos')
@@ -194,7 +160,6 @@ export const cvService = {
 
       if (updateError) {
         console.error("Error al actualizar el candidato con cv_id:", JSON.stringify(updateError, null, 2));
-        // Considerar si lanzar el error o continuar
       } else {
       }
     }
@@ -202,38 +167,88 @@ export const cvService = {
     return { cv: cvResult, candidate: candidateResult };
   },
 
-  // uploadCV ahora puede usar saveCvAndCandidate después de la subida del archivo (si se implementa)
-  async uploadCV(file, recruiterId, analysisData, userSubscription) { // Añadir userSubscription
-    // Paso 1: Subir archivo a Supabase Storage (Placeholder por ahora)
-    // const filePath = `${recruiterId}/${Date.now()}-${file.name}`;
-    // const { data: storageData, error: storageError } = await supabase.storage
-    //   .from('cv-files') // Nombre de tu bucket de storage
-    //   .upload(filePath, file);
-    // if (storageError) {
-    //   console.error("Error subiendo archivo a Storage:", storageError);
-    //   throw storageError;
-    // }
-    // const fileUrl = supabase.storage.from('cv-files').getPublicUrl(filePath).data.publicUrl;
-    // console.log("Archivo subido a Storage:", fileUrl);
- 
-     // Por ahora, como la subida a Storage es placeholder, no tenemos file_path ni file_url.
-     // Llamamos a saveCvAndCandidate sin existingCvId y sin existingCandidateId.
-     try {
-       const result = await this.saveCvAndCandidate(analysisData, recruiterId, null, null, file.name);
+  async uploadCV(file, recruiterId, analysisData, userSubscription) {
+    try {
+      const cvContentHash = await sha256(analysisData.textoCompleto || '');
 
-      // Incrementar el contador de CVs analizados si la suscripción existe
+      // 1. Check for existing CV with the same content hash for this recruiter
+      const { data: existingCvs, error: cvFetchError } = await supabase
+        .from('cvs')
+        .select('id, candidate_id')
+        .eq('recruiter_id', recruiterId)
+        .eq('content_hash', cvContentHash);
+
+      if (cvFetchError) {
+        console.error("Error checking for existing CV by hash:", JSON.stringify(cvFetchError, null, 2));
+        throw cvFetchError;
+      }
+
+      if (existingCvs && existingCvs.length > 0) {
+        // Duplicate CV found
+        console.log(`Duplicate CV detected for recruiter ${recruiterId} with hash ${cvContentHash}. Returning existing CV.`);
+        // Optionally, fetch the full candidate data for the existing CV
+        const { data: existingCandidate, error: candidateFetchError } = await supabase
+          .from('candidatos')
+          .select('*')
+          .eq('id', existingCvs[0].candidate_id)
+          .single();
+
+        if (candidateFetchError) {
+          console.error("Error fetching existing candidate for duplicate CV:", JSON.stringify(candidateFetchError, null, 2));
+          // Proceed without candidate data if there's an error fetching it
+          return {
+            cv: existingCvs[0],
+            candidate: null, // Or handle this error more gracefully
+            isDuplicate: true,
+            message: "CV duplicado detectado."
+          };
+        }
+
+        return {
+          cv: existingCvs[0],
+          candidate: existingCandidate,
+          isDuplicate: true,
+          message: "CV duplicado detectado."
+        };
+      }
+
+      // If no duplicate CV, proceed to check for existing candidate by email
+      let existingCandidate = null;
+      if (analysisData.email) {
+        const { data: candidates, error: candidateFetchError } = await supabase
+          .from('candidatos')
+          .select('id')
+          .eq('recruiter_id', recruiterId)
+          .eq('email', analysisData.email);
+
+        if (candidateFetchError) {
+          console.error("Error checking for existing candidate by email:", JSON.stringify(candidateFetchError, null, 2));
+          // Do not throw, proceed as if no candidate found
+        } else if (candidates && candidates.length > 0) {
+          existingCandidate = candidates[0];
+        }
+      }
+
+      const result = await this.saveCvAndCandidate(
+        analysisData,
+        recruiterId,
+        null, // existingCvId is null as we didn't find a duplicate CV
+        existingCandidate ? existingCandidate.id : null, // Pass existing candidate ID if found
+        file.name,
+        cvContentHash // Pass the content hash to saveCvAndCandidate
+      );
+
       if (userSubscription?.id) {
         await this.incrementCvAnalysisCount(userSubscription.id);
       }
 
-      return result; // Devuelve { cv: {...}, candidate: {...} }
+      return result;
     } catch (error) {
-      console.error("cvService.uploadCV: Error llamando a saveCvAndCandidate:", error);
-      // Devolver un objeto de error consistente si es necesario para el frontend
+      console.error("cvService.uploadCV: Error llamando a saveCvAndCandidate o durante la verificación de duplicados:", error);
       return {
         error: true,
         message: "Error al guardar CV/Candidato en la base de datos: " + error.message,
-        cv: { id: 'temp-cv-id-error', file_name: file.name }, // Placeholder en caso de error
+        cv: { id: 'temp-cv-id-error', file_name: file.name },
         candidate: { id: 'temp-candidate-id-error' }
       };
     }
@@ -242,7 +257,6 @@ export const cvService = {
     if (!candidateId || !candidateDataToUpdate) {
       throw new Error("ID del candidato y datos son requeridos para actualizar.");
     }
-    // Asegurar que recruiter_id esté presente si es necesario para la política RLS
     const payload = { ...candidateDataToUpdate };
     if (recruiterId && !payload.recruiter_id) {
         payload.recruiter_id = recruiterId;
@@ -268,7 +282,6 @@ export const cvService = {
     let finalCvIdToDelete = cvDatabaseId;
 
     try {
-      // Si no tenemos un cvDatabaseId pero sí un candidateDatabaseId, intentamos obtener el cv_id del candidato
       if (!finalCvIdToDelete && finalCandidateIdToDelete) {
         const { data: candidatoData, error: fetchCandidatoError } = await supabase
           .from('candidatos')
@@ -278,14 +291,12 @@ export const cvService = {
 
         if (fetchCandidatoError) {
           console.error("Error obteniendo cv_id del candidato:", JSON.stringify(fetchCandidatoError, null, 2));
-          // No lanzar error aquí, ya que podríamos proceder solo con la eliminación del candidato
         } else if (candidatoData?.cv_id) {
           finalCvIdToDelete = candidatoData.cv_id;
           
         }
       }
 
-      // Eliminar el CV de la tabla 'cvs' si tenemos un cv_id
       if (finalCvIdToDelete) {
         const { error: cvDeleteError } = await supabase
           .from('cvs')
@@ -300,7 +311,6 @@ export const cvService = {
         console.warn("No se encontró un CV ID válido para eliminar de la tabla 'cvs'.");
       }
 
-      // Eliminar el candidato de la tabla 'candidatos' si tenemos un candidate_id
       if (finalCandidateIdToDelete) {
         const { error: candidateDeleteError } = await supabase
           .from('candidatos')
@@ -326,32 +336,26 @@ export const cvService = {
     }
   },
   async createJobPost(jobData) {
-    // Validar que recruiter_id, title y description estén presentes
     if (!jobData || !jobData.recruiter_id || !jobData.title || !jobData.description) {
       console.error("cvService.createJobPost: Faltan datos requeridos (recruiter_id, title, description).");
       throw new Error("Faltan datos requeridos para crear el puesto (título y descripción).");
     }
-    // Eliminar ai_generated_description si existe antes de insertar
     const { ai_generated_description, ...dataToInsert } = jobData;
-    // No es necesario serializar requirements o keywords si la BD los acepta directamente como JSONB y TEXT[]
-    // La validación de formato se hará en Supabase.
  
      try {
        const { data, error } = await supabase
-         .from('jobs') // Asumiendo que la tabla se llama 'jobs'
+         .from('jobs')
          .insert([dataToInsert])
-        .select() // Para obtener el registro insertado de vuelta
-        .single(); // Asumiendo que se inserta un solo registro
+        .select()
+        .single();
 
       if (error) {
         console.error("Error creando puesto de trabajo en Supabase:", JSON.stringify(error, null, 2));
-        // Asegurarse de lanzar un Error con un mensaje útil
         throw new Error(`Supabase error al crear puesto: ${error.message || JSON.stringify(error)}`);
       }
-      return data; // Devolver el objeto del puesto creado
+      return data;
     } catch (error) {
       console.error("Excepción general en cvService.createJobPost:", error);
-      // Asegurarse de lanzar un Error con un mensaje útil
       throw new Error(`Error inesperado al crear puesto: ${error.message || JSON.stringify(error)}`);
     }
   },
@@ -370,13 +374,12 @@ export const cvService = {
 
       if (error) {
         console.error("Error fetching jobs by recruiter ID:", error);
-        // No lanzar el error, devolver array vacío
         return [];
       }
-      return data || []; // data puede ser null si no hay resultados, así que || [] asegura un array
-    } catch (error) { // Capturar cualquier otra excepción
+      return data || [];
+    } catch (error) {
       console.error("Exception fetching jobs by recruiter ID:", error);
-      return []; // Devolver array vacío en caso de excepción
+      return [];
     }
   },
 
@@ -385,24 +388,20 @@ export const cvService = {
       console.error("cvService.updateJobPost: jobId y jobData son requeridos.");
       throw new Error("Faltan datos para actualizar el puesto.");
     }
-    // Preparar datos para actualizar, asegurando que requirements y keywords sean objetos/arrays vacíos si son nulos/undefined
-    // Excluir campos que no deberían ser actualizados directamente o que maneja la BD
     const { recruiter_id, id, created_at, updated_at, ai_generated_description, ...restOfJobData } = jobData;
     
     const dataToUpdate = {
         title: restOfJobData.title,
         description: restOfJobData.description,
-        requirements: restOfJobData.requirements || {}, // Asegurar objeto vacío si es nulo/undefined
-        keywords: restOfJobData.keywords || [], // Asegurar array vacío si es nulo/undefined
-        // Incluir otros campos si los hay en restOfJobData
+        requirements: restOfJobData.requirements || {},
+        keywords: restOfJobData.keywords || [],
         ...restOfJobData
     };
-    // Limpiar campos que no deben actualizarse si se incluyeron accidentalmente
      delete dataToUpdate.recruiter_id;
      delete dataToUpdate.id;
      delete dataToUpdate.created_at;
      delete dataToUpdate.updated_at;
-     delete dataToUpdate.ai_generated_description; // Asegurar exclusión
+     delete dataToUpdate.ai_generated_description;
 
     try {
       const { data, error } = await supabase
@@ -438,14 +437,13 @@ export const cvService = {
         console.error("Error eliminando puesto de trabajo:", JSON.stringify(error, null, 2));
         throw error;
       }
-      return { success: true, id: jobId }; // Devolver el ID para facilitar la actualización del estado en el frontend
+      return { success: true, id: jobId };
     } catch (error) {
       console.error("Excepción en cvService.deleteJobPost:", error);
       throw error;
     }
   },
 
-  // Nueva función para reiniciar los contadores de planes de pago único
   async resetOneTimePlanCounters(suscripcionId) {
     if (!suscripcionId) {
       console.error("cvService.resetOneTimePlanCounters: suscripcionId es requerido.");
@@ -457,10 +455,6 @@ export const cvService = {
         .update({
           cvs_analizados_este_periodo: 0,
           mach_analizados_este_periodo: 0,
-          // También podrías actualizar current_period_end para el próximo mes si es un plan recurrente
-          // Pero para "pago único" se asume que el período se define por el uso o un bono.
-          // Si el "mes" es un concepto fijo, necesitarías una lógica para calcular el próximo period_end.
-          // Por ahora, solo reiniciamos los contadores.
         })
         .eq('id', suscripcionId)
         .select()
@@ -477,7 +471,6 @@ export const cvService = {
     }
   },
 
-  // Función para incrementar el contador de análisis de CVs (existente)
   async incrementCvAnalysisCount(suscripcionId) {
     if (!suscripcionId) {
       console.error("cvService.incrementCvAnalysisCount: suscripcionId es requerido.");
@@ -505,23 +498,17 @@ export const cvService = {
         .from('suscripciones')
         .update({ cvs_analizados_este_periodo: newCount })
         .eq('id', suscripcionId)
-        .select('cvs_analizados_este_periodo') // Devolver el nuevo contador
+        .select('cvs_analizados_este_periodo')
         .single();
 
       if (error) {
         console.error("Error incrementing CV analysis count:", JSON.stringify(error, null, 2));
         throw error;
       }
-      return data; // Devuelve { cvs_analizados_este_periodo: nuevo_valor }
+      return data;
     } catch (error) {
       console.error("Exception in incrementCvAnalysisCount:", error);
       throw error;
     }
   }
 };
-
-// Si tienes funciones individuales exportadas en lugar de un objeto:
-// export async function incrementCvAnalysisCount(suscripcionId) { ... }
-// Asegúrate de importar supabase correctamente al inicio del archivo.
-// Ejemplo de importación si no está:
-// import { supabase } from '../lib/supabase';
