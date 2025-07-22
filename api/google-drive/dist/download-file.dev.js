@@ -7,10 +7,8 @@ exports["default"] = handler;
 
 var _googleapis = require("googleapis");
 
-var _stream = require("stream");
-
 function handler(req, res) {
-  var _req$query, fileId, accessToken, oauth2Client, drive, fileMetadata, fileName, mimeType, response;
+  var _req$query, fileId, accessToken, auth, drive, fileMetadata, mimeType, fileName, response;
 
   return regeneratorRuntime.async(function handler$(_context) {
     while (1) {
@@ -38,25 +36,27 @@ function handler(req, res) {
           }));
 
         case 5:
-          oauth2Client = new _googleapis.google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET, process.env.GOOGLE_REDIRECT_URI);
-          oauth2Client.setCredentials({
+          _context.prev = 5;
+          auth = new _googleapis.google.auth.OAuth2();
+          auth.setCredentials({
             access_token: accessToken
           });
           drive = _googleapis.google.drive({
             version: 'v3',
-            auth: oauth2Client
-          });
-          _context.prev = 8;
+            auth: auth
+          }); // Get file metadata to determine mimeType
+
           _context.next = 11;
           return regeneratorRuntime.awrap(drive.files.get({
             fileId: fileId,
-            fields: 'name, mimeType'
+            fields: 'mimeType,name'
           }));
 
         case 11:
           fileMetadata = _context.sent;
-          fileName = fileMetadata.data.name;
           mimeType = fileMetadata.data.mimeType;
+          fileName = fileMetadata.data.name; // Download the file
+
           _context.next = 16;
           return regeneratorRuntime.awrap(drive.files.get({
             fileId: fileId,
@@ -67,27 +67,18 @@ function handler(req, res) {
 
         case 16:
           response = _context.sent;
+          res.setHeader('Content-Type', mimeType);
           res.setHeader('Content-Disposition', "attachment; filename=\"".concat(fileName, "\""));
-          res.setHeader('Content-Type', mimeType); // Pipe the Google Drive file stream directly to the response
-
-          response.data.on('end', function () {
-            console.log('File download complete.');
-          }).on('error', function (err) {
-            console.error('Error during file download:', err);
-            res.status(500).json({
-              message: 'Failed to download file.',
-              error: err.message
-            });
-          }).pipe(res);
+          response.data.pipe(res);
           _context.next = 26;
           break;
 
         case 22:
           _context.prev = 22;
-          _context.t0 = _context["catch"](8);
+          _context.t0 = _context["catch"](5);
           console.error('Error downloading Google Drive file:', _context.t0.message);
           res.status(500).json({
-            message: 'Failed to download Google Drive file.',
+            message: 'Failed to download file from Google Drive.',
             error: _context.t0.message
           });
 
@@ -96,5 +87,5 @@ function handler(req, res) {
           return _context.stop();
       }
     }
-  }, null, null, [[8, 22]]);
+  }, null, null, [[5, 22]]);
 }
