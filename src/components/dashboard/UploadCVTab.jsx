@@ -8,7 +8,7 @@ import { extractTextFromFile } from '../../lib/fileProcessing';
 import { APP_PLANS, PLAN_HIERARCHY } from '../../config/plans'; // Importar desde el archivo central
 import { useDashboardData } from '../../hooks/useDashboardData'; // Importar useDashboardData
 import { useToast } from '../ui/use-toast'; // Import useToast
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog'; // Import Dialog components
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog.jsx'; // Import Dialog components
 import { ScrollArea } from '../ui/scroll-area'; // Import ScrollArea
 import { Input } from '../ui/input'; // Import Input for search
 
