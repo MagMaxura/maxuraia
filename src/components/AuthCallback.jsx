@@ -54,15 +54,14 @@ export default function AuthCallback() {
         console.log("AuthCallback: [LOG] Session established successfully via code exchange.");
         
         toast({
-          title: "¡Email verificado!",
-          description: "Tu cuenta ha sido activada. Por favor, inicia sesión para continuar.",
+          title: "¡Autenticación exitosa!",
+          description: "Redirigiendo al panel de control...",
           variant: "default",
-          duration: 5000,
+          duration: 3000,
         });
         
-        // Redirigir a login. La página de login se encargará de
-        // verificar el perfil (y crearlo si es necesario) y luego redirigir.
-        navigate('/login');
+        // Redirigir al dashboard después de una autenticación exitosa
+        navigate('/dashboard');
 
       } catch (err) {
         // Este catch manejará cualquier error inesperado dentro del bloque try.
@@ -73,7 +72,7 @@ export default function AuthCallback() {
           description: "Ocurrió un error inesperado durante el proceso de autenticación.",
           variant: "destructive",
         });
-        navigate('/login');
+        navigate('/login'); // En caso de error inesperado, redirigir a login
       }
     };
 
