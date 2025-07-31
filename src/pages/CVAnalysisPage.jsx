@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react'; // Añadir useMemo
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cvService } from '@/services/cvService';
@@ -60,6 +60,7 @@ function CVAnalysisPage() {
           }
 
           // Solo actualizar el estado si los datos realmente han cambiado para evitar bucles de re-renderizado
+          // Usar JSON.stringify para una comparación profunda de objetos
           if (JSON.stringify(newAnalysisData) !== JSON.stringify(cvAnalysisData?.analysis)) {
             console.log("CVAnalysisPage: Actualizando cvAnalysisData.");
             setCvAnalysisData({
@@ -88,7 +89,7 @@ function CVAnalysisPage() {
   }, [candidateId, user?.id, toast, cvAnalysisData]); // Añadir cvAnalysisData a las dependencias para la comparación
 
   const handleBackToDashboard = () => {
-    navigate('/dashboard/cvsProcesados'); // Navegar de vuelta a la pestaña de CVs procesados
+    navigate('/dashboard/cvsProcesados');
   };
 
   if (isLoading) {
@@ -142,8 +143,6 @@ function CVAnalysisPage() {
           originalFile={cvAnalysisData.originalFile}
           cvDatabaseId={cvAnalysisData.cv_database_id}
           candidateDatabaseId={cvAnalysisData.candidate_database_id}
-          // onSaveSuccess y onDeleteCV no son necesarios aquí, ya que esta página es solo para visualización
-          // y la edición/eliminación se maneja en el dashboard principal.
         />
       </div>
     </div>
