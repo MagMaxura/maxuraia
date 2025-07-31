@@ -230,7 +230,7 @@ function ProcessedCVsTab({
                 onClick={() => handleCVClick(originalIndex)}
               >
                 <div className="flex-grow truncate mr-2"> {/* Añadido mr-2 para espacio */}
-                  <span className="text-slate-700 font-medium" title={file.name}>{file.name}</span>
+                  <span className="text-blue-600 hover:underline font-medium cursor-pointer" title={file.name}>{file.name}</span>
                 </div>
                 <div className="flex items-center flex-shrink-0">
                   {file.uploadedDate && (
