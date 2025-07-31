@@ -190,6 +190,7 @@ function Dashboard() {
 
 
   const handleCVClick = (index) => {
+    console.log("handleCVClick llamado con índice:", index);
     setSelectedCV(index);
     // cvFiles[index].analysis también podría ser una Promesa si no se resolvió al guardar.
     // Es más seguro re-evaluar o asegurar que se guardó el objeto resuelto.
