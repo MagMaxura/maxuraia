@@ -17,6 +17,7 @@ function CVAnalysisPage() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log("CVAnalysisPage useEffect - candidateId:", candidateId, "user?.id:", user?.id);
     const fetchCvData = async () => {
       if (!candidateId || !user?.id) {
         setError("ID de candidato o ID de usuario no disponible.");
@@ -27,9 +28,6 @@ function CVAnalysisPage() {
       setIsLoading(true);
       setError(null);
       try {
-        // Aquí necesitamos una forma de obtener un CV específico por candidate_id
-        // cvService.getCandidatosConCVsByRecruiterId devuelve todos los candidatos
-        // Necesitamos una función que devuelva un solo candidato con su CV principal
         const fetchedCandidatos = await cvService.getCandidatosConCVsByRecruiterId(user.id);
         const targetCandidato = fetchedCandidatos.find(c => c.id === candidateId);
 
@@ -38,36 +36,42 @@ function CVAnalysisPage() {
             ? targetCandidato.cvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
             : null;
 
-          let analysisData = cvPrincipal?.analysis_result || {};
+          // Construir newAnalysisData de forma inmutable para evitar re-renders innecesarios
+          const newAnalysisData = { ...cvPrincipal?.analysis_result || {} };
           
-          // Poblar análisis con datos del candidato si no están en analysis_result
-          analysisData.nombre = targetCandidato.name || analysisData.nombre;
-          analysisData.email = targetCandidato.email || analysisData.email;
-          analysisData.telefono = targetCandidato.phone || analysisData.telefono;
-          analysisData.localidad = targetCandidato.location || analysisData.localidad;
-          analysisData.nivel_escolarizacion = targetCandidato.title || analysisData.nivel_escolarizacion || analysisData.title;
-          analysisData.resumen = targetCandidato.summary || analysisData.summary;
-          analysisData.experiencia = targetCandidato.experience || analysisData.experiencia;
+          newAnalysisData.nombre = targetCandidato.name || newAnalysisData.nombre;
+          newAnalysisData.email = targetCandidato.email || newAnalysisData.email;
+          newAnalysisData.telefono = targetCandidato.phone || newAnalysisData.telefono;
+          newAnalysisData.localidad = targetCandidato.location || newAnalysisData.localidad;
+          newAnalysisData.nivel_escolarizacion = targetCandidato.title || newAnalysisData.nivel_escolarizacion || newAnalysisData.title;
+          newAnalysisData.resumen = targetCandidato.summary || newAnalysisData.summary;
+          newAnalysisData.experiencia = targetCandidato.experience || newAnalysisData.experiencia;
           
           if (Array.isArray(targetCandidato.skills) && targetCandidato.skills.length > 0) {
-             analysisData.habilidades = { tecnicas: targetCandidato.skills, blandas: [] };
+             newAnalysisData.habilidades = { tecnicas: targetCandidato.skills, blandas: [] };
           } else if (cvPrincipal?.analysis_result?.habilidades) {
-            analysisData.habilidades = cvPrincipal.analysis_result.habilidades;
+            newAnalysisData.habilidades = cvPrincipal.analysis_result.habilidades;
           } else {
-            analysisData.habilidades = { tecnicas: [], blandas: [] };
+            newAnalysisData.habilidades = { tecnicas: [], blandas: [] };
           }
 
-          if (cvPrincipal?.content && (!analysisData.textoCompleto || analysisData.textoCompleto.trim() === '')) {
-            analysisData.textoCompleto = cvPrincipal.content;
+          if (cvPrincipal?.content && (!newAnalysisData.textoCompleto || newAnalysisData.textoCompleto.trim() === '')) {
+            newAnalysisData.textoCompleto = cvPrincipal.content;
           }
 
-          setCvAnalysisData({
-            analysis: analysisData,
-            cv_database_id: cvPrincipal?.id || targetCandidato.cv_id || null,
-            candidate_database_id: targetCandidato.id,
-            name: targetCandidato.name || cvPrincipal?.file_name || `Candidato ${targetCandidato.id}`,
-            originalFile: null, // No tenemos el archivo original aquí
-          });
+          // Solo actualizar el estado si los datos realmente han cambiado para evitar bucles de re-renderizado
+          if (JSON.stringify(newAnalysisData) !== JSON.stringify(cvAnalysisData?.analysis)) {
+            console.log("CVAnalysisPage: Actualizando cvAnalysisData.");
+            setCvAnalysisData({
+              analysis: newAnalysisData,
+              cv_database_id: cvPrincipal?.id || targetCandidato.cv_id || null,
+              candidate_database_id: targetCandidato.id,
+              name: targetCandidato.name || cvPrincipal?.file_name || `Candidato ${targetCandidato.id}`,
+              originalFile: null,
+            });
+          } else {
+            console.log("CVAnalysisPage: cvAnalysisData no ha cambiado, evitando actualización de estado.");
+          }
         } else {
           setError("Candidato no encontrado.");
         }
@@ -81,7 +85,7 @@ function CVAnalysisPage() {
     };
 
     fetchCvData();
-  }, [candidateId, user?.id, toast]);
+  }, [candidateId, user?.id, toast, cvAnalysisData]); // Añadir cvAnalysisData a las dependencias para la comparación
 
   const handleBackToDashboard = () => {
     navigate('/dashboard/cvsProcesados'); // Navegar de vuelta a la pestaña de CVs procesados
