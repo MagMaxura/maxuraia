@@ -20,6 +20,7 @@ function ProcessedCVsTab({
   onDeleteCV,
   hasUnsavedCVs, // Añadir esta prop
   onSaveAllCVs, // Añadir esta prop
+  navigate, // Añadir navigate como prop
 }) {
 
   useEffect(() => {
@@ -227,7 +228,12 @@ function ProcessedCVsTab({
                 } ${
                   selectedCV !== originalIndex ? "hover:shadow-sm" : ""
                 }`}
-                onClick={() => handleCVClick(originalIndex)}
+                onClick={() => {
+                  handleCVClick(originalIndex);
+                  if (file.candidate_database_id) {
+                    navigate(`/dashboard/cv-analysis/${file.candidate_database_id}`);
+                  }
+                }}
               >
                 <div className="flex-grow truncate mr-2"> {/* Añadido mr-2 para espacio */}
                   <span className="text-blue-600 hover:underline font-medium cursor-pointer" title={file.name}>{file.name}</span>
