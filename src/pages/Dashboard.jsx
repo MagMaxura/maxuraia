@@ -100,14 +100,19 @@ function Dashboard() {
  
   // Efecto para manejar la selección de CV desde la URL o al cargar la lista
   useEffect(() => {
+    console.log("Dashboard useEffect - urlCandidateId:", urlCandidateId, "cvFiles.length:", cvFiles.length, "selectedCV:", selectedCV);
     if (urlCandidateId && cvFiles.length > 0) {
       const cvIndex = cvFiles.findIndex(cv => cv.candidate_database_id === urlCandidateId);
       if (cvIndex !== -1 && selectedCV !== cvIndex) {
+        console.log("Dashboard useEffect - Encontrado CV en índice:", cvIndex, "Seleccionando y activando pestaña.");
         setSelectedCV(cvIndex);
         setCvAnalysis(cvFiles[cvIndex].analysis);
         setActiveTab("cvsProcesados"); // Asegurarse de que la pestaña correcta esté activa
+      } else if (cvIndex === -1) {
+        console.log("Dashboard useEffect - No se encontró CV para urlCandidateId:", urlCandidateId);
       }
     } else if (cvFiles.length > 0 && selectedCV === null && cvAnalysis === null) {
+      console.log("Dashboard useEffect - Seleccionando el CV más reciente por defecto.");
       // Lógica existente para seleccionar el CV más reciente si no hay uno seleccionado
       let latestCvIndex = 0;
       if (cvFiles.every(cv => cv.uploadedDate)) {
