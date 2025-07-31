@@ -230,7 +230,19 @@ function ProcessedCVsTab({
                 onClick={() => handleCVClick(originalIndex)}
               >
                 <div className="flex-grow truncate mr-2"> {/* Añadido mr-2 para espacio */}
-                  <span className="text-slate-700 font-medium" title={file.name}>{file.name}</span>
+                  <a
+                    href={`/dashboard/cv-analysis/${file.candidate_database_id}`}
+                    className="text-blue-600 hover:underline font-medium"
+                    title={`Ver análisis de ${file.name}`}
+                    onClick={(e) => {
+                      // Prevenir que el click en el enlace active el handleCVClick del div padre
+                      e.stopPropagation();
+                      // Opcional: Si quieres que el click en el enlace también seleccione el CV en la lista
+                      // handleCVClick(originalIndex);
+                    }}
+                  >
+                    {file.name}
+                  </a>
                 </div>
                 <div className="flex items-center flex-shrink-0">
                   {file.uploadedDate && (

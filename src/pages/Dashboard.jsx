@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from "react"; // Añadir useEffect y useCallback
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom"; // Importar useNavigate
+import { useNavigate, useParams } from "react-router-dom"; // Importar useNavigate y useParams
 import { Upload, Users, Briefcase, LogOut, FileText, CreditCard, FileUp, Brain } from "lucide-react"; // Añadido FileText, CreditCard, FileUp, Brain
 import { useToast } from "@/components/ui/use-toast";
 import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
@@ -20,10 +20,11 @@ import { useDashboardData } from "@/hooks/useDashboardData.js"; // Importar el n
 import { useCvUploader } from "@/hooks/useCvUploader.js"; // Importar el hook de subida de CVs
 
 function Dashboard() {
-  const { user, logout, refreshUser } = useAuth(); // Obtener refreshUser
+  const { user, logout, refreshUser } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("cargarNuevoCV"); // Pestaña inicial
-  const navigate = useNavigate(); // Inicializar useNavigate
+  const [activeTab, setActiveTab] = useState("cargarNuevoCV");
+  const navigate = useNavigate();
+  const { candidateId: urlCandidateId } = useParams(); // Obtener candidateId de la URL
 
   // Usar el hook para obtener datos y funciones de seteo
   const {
@@ -97,15 +98,33 @@ function Dashboard() {
   // La lógica de carga de datos inicial (useEffect, fetchUserCVs, fetchUserJobs)
   // ha sido movida a useDashboardData.js
  
+  // Efecto para manejar la selección de CV desde la URL o al cargar la lista
+  useEffect(() => {
+    if (urlCandidateId && cvFiles.length > 0) {
+      const cvIndex = cvFiles.findIndex(cv => cv.candidate_database_id === urlCandidateId);
+      if (cvIndex !== -1 && selectedCV !== cvIndex) {
+        setSelectedCV(cvIndex);
+        setCvAnalysis(cvFiles[cvIndex].analysis);
+        setActiveTab("cvsProcesados"); // Asegurarse de que la pestaña correcta esté activa
+      }
+    } else if (cvFiles.length > 0 && selectedCV === null && cvAnalysis === null) {
+      // Lógica existente para seleccionar el CV más reciente si no hay uno seleccionado
+      let latestCvIndex = 0;
+      if (cvFiles.every(cv => cv.uploadedDate)) {
+        latestCvIndex = cvFiles.reduce((latestIndex, currentCv, currentIndex, arr) => {
+          return new Date(currentCv.uploadedDate) > new Date(arr[latestIndex].uploadedDate) ? currentIndex : latestIndex;
+        }, 0);
+      } else {
+        latestCvIndex = cvFiles.length - 1;
+      }
+      setSelectedCV(latestCvIndex);
+      setCvAnalysis(cvFiles[latestCvIndex].analysis);
+    }
+  }, [urlCandidateId, cvFiles, selectedCV, cvAnalysis, setActiveTab]);
+
    const handleSaveSuccess = (cvId, candidateId, updatedAnalysis) => {
-    // Actualizar el cvFile en el estado cvFiles con los nuevos IDs y el análisis actualizado
-    // Esto es importante para que la próxima vez que se seleccione este CV,
-    // se sepa que ya existe en la BD y se pueda actualizar en lugar de crear uno nuevo.
-    // También asegura que si el análisis fue editado, se refleje en la lista.
     setCvFiles(prevCvFiles => {
       return prevCvFiles.map((cvFile, index) => {
-        // Identificar el CV por su ID de base de datos si existe, o por el índice seleccionado si es un CV nuevo
-        // Esto es crucial para asegurar que el CV correcto se actualice en el estado.
         const isCurrentlySelected = index === selectedCV;
         const isMatchingSavedCv = (cvFile.cv_database_id && cvFile.cv_database_id === cvId) ||
                                    (cvFile.candidate_database_id && cvFile.candidate_database_id === candidateId);
@@ -113,7 +132,7 @@ function Dashboard() {
         if (isCurrentlySelected || isMatchingSavedCv) {
           return {
             ...cvFile,
-            analysis: updatedAnalysis, // Guardar el análisis posiblemente editado
+            analysis: updatedAnalysis,
             cv_database_id: cvId,
             candidate_database_id: candidateId,
           };
@@ -121,9 +140,6 @@ function Dashboard() {
         return cvFile;
       });
     });
-    // Opcionalmente, podrías querer re-seleccionar el CV para forzar una actualización de 'cvAnalysis'
-    // si el objeto 'updatedAnalysis' es diferente en estructura al que ya está en 'cvAnalysis' state.
-    // Pero setCvAnalysis(updatedAnalysis) ya debería estar manejado por el flujo normal si es necesario.
   };
 
   const menuItems = [
