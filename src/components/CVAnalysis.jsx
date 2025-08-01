@@ -1,6 +1,6 @@
 import React, { useState, useEffect, memo } from "react"; // Importar memo
 import { motion } from "framer-motion";
-import { Briefcase, MapPin, Mail, Phone, User, Save, Award, Brain, Zap, Trash2 } from "lucide-react"; // Añadido Trash2
+import { Briefcase, MapPin, Mail, Phone, User, Save, Award, Brain, Zap, Trash2, FileText } from "lucide-react"; // Añadido Trash2 y FileText
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea.jsx";
@@ -344,55 +344,68 @@ function CVAnalysis({
         />
       </div>
 
-      <div className="flex justify-end items-center gap-4 mt-6">
-        <Button
-          onClick={async () => {
-            if (cvDatabaseId) {
-              if (window.confirm(`¿Estás seguro de que quieres eliminar este CV y los datos del candidato asociado? Esta acción no se puede deshacer.`)) {
-                setIsSaving(true); // Reutilizar isSaving para deshabilitar botones
-                try {
-                  // onDeleteCV se espera que venga de ProcessedCVsTab -> Dashboard
-                  // y que maneje la llamada al servicio y la actualización del estado.
-                  // Aquí solo invocamos la prop si existe.
-                  // La lógica real de eliminación estará en Dashboard.jsx
-                  if (onDeleteCV) { // onDeleteCV es la prop que vendrá de ProcessedCVsTab
-                    await onDeleteCV(cvDatabaseId);
-                    toast({ title: "CV Eliminado", description: "El CV y los datos del candidato han sido eliminados."});
-                    // El componente se desmontará o recibirá nuevas props si la lista se actualiza en el padre.
-                  } else {
-                    console.warn("onDeleteCV prop no fue proporcionada a CVAnalysis");
-                    toast({ title: "Error de configuración", description: "La función de eliminar no está disponible.", variant: "destructive"});
-                  }
-                } catch (error) {
-                  console.error("Error al intentar eliminar CV desde CVAnalysis:", error);
-                  toast({ title: "Error al Eliminar", description: error.message, variant: "destructive"});
-                } finally {
-                  setIsSaving(false);
-                }
-              }
-            } else {
-              toast({ title: "No se puede eliminar", description: "Este CV aún no ha sido guardado en la base de datos.", variant: "destructive"});
-            }
-          }}
-          variant="destructive"
-          disabled={isSaving || !cvDatabaseId}
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Eliminar CV
-        </Button>
-        {cvDatabaseId && candidateDatabaseId && !hasUnsavedChanges ? (
-          <p className="text-green-600 font-semibold flex items-center">
-            <Save className="w-4 h-4 mr-2" />
-            CV Guardado
-          </p>
-        ) : (
-          <Button onClick={handleSave} disabled={isSaving || !hasUnsavedChanges} className="bg-blue-600 hover:bg-blue-700">
-            <Save className="mr-2 h-4 w-4" />
-            {isSaving ? "Guardando..." : "Guardar Cambios"}
-          </Button>
-        )}
-      </div>
-    </motion.div>
+     {/* Contenido Completo del CV */}
+     <div className="linkedin-card p-6">
+       <h3 className="section-header flex items-center">
+         <FileText className="h-5 w-5 mr-2 text-[#0a66c2]" />
+         <span>Contenido Completo del CV</span>
+       </h3>
+       <Textarea
+         value={editableAnalysis.textoCompleto || "No disponible"}
+         readOnly
+         className="text-[#333333] leading-relaxed text-base mt-2 min-h-[200px] bg-gray-50"
+       />
+     </div>
+
+     <div className="flex justify-end items-center gap-4 mt-6">
+       <Button
+         onClick={async () => {
+           if (cvDatabaseId) {
+             if (window.confirm(`¿Estás seguro de que quieres eliminar este CV y los datos del candidato asociado? Esta acción no se puede deshacer.`)) {
+               setIsSaving(true); // Reutilizar isSaving para deshabilitar botones
+               try {
+                 // onDeleteCV se espera que venga de ProcessedCVsTab -> Dashboard
+                 // y que maneje la llamada al servicio y la actualización del estado.
+                 // Aquí solo invocamos la prop si existe.
+                 // La lógica real de eliminación estará en Dashboard.jsx
+                 if (onDeleteCV) { // onDeleteCV es la prop que vendrá de ProcessedCVsTab
+                   await onDeleteCV(cvDatabaseId);
+                   toast({ title: "CV Eliminado", description: "El CV y los datos del candidato han sido eliminados."});
+                   // El componente se desmontará o recibirá nuevas props si la lista se actualiza en el padre.
+                 } else {
+                   console.warn("onDeleteCV prop no fue proporcionada a CVAnalysis");
+                   toast({ title: "Error de configuración", description: "La función de eliminar no está disponible.", variant: "destructive"});
+                 }
+               } catch (error) {
+                 console.error("Error al intentar eliminar CV desde CVAnalysis:", error);
+                 toast({ title: "Error al Eliminar", description: error.message, variant: "destructive"});
+               } finally {
+                 setIsSaving(false);
+               }
+             }
+           } else {
+             toast({ title: "No se puede eliminar", description: "Este CV aún no ha sido guardado en la base de datos.", variant: "destructive"});
+           }
+         }}
+         variant="destructive"
+         disabled={isSaving || !cvDatabaseId}
+       >
+         <Trash2 className="mr-2 h-4 w-4" />
+         Eliminar CV
+       </Button>
+       {cvDatabaseId && candidateDatabaseId && !hasUnsavedChanges ? (
+         <p className="text-green-600 font-semibold flex items-center">
+           <Save className="w-4 h-4 mr-2" />
+           CV Guardado
+         </p>
+       ) : (
+         <Button onClick={handleSave} disabled={isSaving || !hasUnsavedChanges} className="bg-blue-600 hover:bg-blue-700">
+           <Save className="mr-2 h-4 w-4" />
+           {isSaving ? "Guardando..." : "Guardar Cambios"}
+         </Button>
+       )}
+     </div>
+   </motion.div>
   );
 }
 

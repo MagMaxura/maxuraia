@@ -19,6 +19,7 @@ function CVAnalysisPage() {
   useEffect(() => {
     const fetchCvData = async () => {
       if (!candidateId || !user?.id) {
+        console.log("[CVAnalysisPage] ID de candidato o ID de usuario no disponible. candidateId:", candidateId, "user.id:", user?.id);
         setError("ID de candidato o ID de usuario no disponible.");
         setIsLoading(false);
         return;
@@ -27,13 +28,18 @@ function CVAnalysisPage() {
       setIsLoading(true);
       setError(null);
       try {
+        console.log("[CVAnalysisPage] Iniciando fetch de datos de CV para candidateId:", candidateId, "y recruiterId:", user.id);
         const fetchedCandidatos = await cvService.getCandidatosConCVsByRecruiterId(user.id);
+        console.log("[CVAnalysisPage] Candidatos obtenidos:", fetchedCandidatos.length);
         const targetCandidato = fetchedCandidatos.find(c => c.id === candidateId);
+        console.log("[CVAnalysisPage] Candidato objetivo encontrado:", !!targetCandidato);
 
         if (targetCandidato) {
           setFetchedCandidato(targetCandidato);
+          console.log("[CVAnalysisPage] Estado fetchedCandidato actualizado con:", targetCandidato.id);
         } else {
           setError("Candidato no encontrado.");
+          console.warn("[CVAnalysisPage] Candidato no encontrado para ID:", candidateId);
         }
       } catch (err) {
         console.error("Error al cargar el análisis del CV:", err);
@@ -41,6 +47,7 @@ function CVAnalysisPage() {
         toast({ title: "Error", description: "No se pudo cargar el análisis del CV.", variant: "destructive" });
       } finally {
         setIsLoading(false);
+        console.log("[CVAnalysisPage] Finalizado el fetch de datos de CV. isLoading:", false);
       }
     };
 
@@ -48,12 +55,15 @@ function CVAnalysisPage() {
   }, [candidateId, user?.id, toast]);
 
   const cvAnalysisData = useMemo(() => {
+    console.log("[CVAnalysisPage] useMemo: Recalculando cvAnalysisData. fetchedCandidato:", !!fetchedCandidato);
     if (!fetchedCandidato) return null;
 
     const cvPrincipal = fetchedCandidato.cvs && fetchedCandidato.cvs.length > 0
       ? fetchedCandidato.cvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
       : null;
+    console.log("[CVAnalysisPage] useMemo: CV principal identificado:", cvPrincipal?.id, "Nombre archivo:", cvPrincipal?.file_name);
 
+    console.log("[CVAnalysisPage] cvPrincipal?.analysis_result:", cvPrincipal?.analysis_result);
     const newAnalysisData = { ...cvPrincipal?.analysis_result || {} };
     
     newAnalysisData.nombre = fetchedCandidato.name || newAnalysisData.nombre;
@@ -74,6 +84,7 @@ function CVAnalysisPage() {
 
     if (cvPrincipal?.content && (!newAnalysisData.textoCompleto || newAnalysisData.textoCompleto.trim() === '')) {
       newAnalysisData.textoCompleto = cvPrincipal.content;
+      console.log("[CVAnalysisPage] useMemo: Texto completo del CV actualizado desde cvPrincipal.content.");
     }
 
     return {
@@ -83,7 +94,8 @@ function CVAnalysisPage() {
       name: fetchedCandidato.name || cvPrincipal?.file_name || `Candidato ${fetchedCandidato.id}`,
       originalFile: null,
     };
-  }, [fetchedCandidato]);
+  }, [fetchedCandidato]); // Dependencia: fetchedCandidato
+  console.log("[CVAnalysisPage] useMemo: cvAnalysisData final:", cvAnalysisData);
 
   const handleBackToDashboard = () => {
     navigate('/dashboard/cvsProcesados');
