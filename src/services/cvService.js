@@ -8,6 +8,7 @@ export const cvService = {
       return [];
     }
     try {
+      console.log(`[cvService] getCandidatosConCVsByRecruiterId: Intentando obtener candidatos para recruiterId: ${recruiterId}`);
       const { data, error } = await supabase
         .from('candidatos')
         .select(`
@@ -22,6 +23,7 @@ export const cvService = {
         `)
         .eq('recruiter_id', recruiterId)
         .order('created_at', { ascending: false });
+      console.log(`[cvService] getCandidatosConCVsByRecruiterId: Resultado de Supabase - Error: ${error ? JSON.stringify(error) : 'null'}, Data length: ${data ? data.length : 'null'}`);
 
       if (error) {
         console.error(`cvService.getCandidatosConCVsByRecruiterId: Supabase query error for recruiterId ${recruiterId}:`, JSON.stringify(error, null, 2));
