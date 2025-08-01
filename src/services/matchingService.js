@@ -195,7 +195,7 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
         recommendation: false,
         error: true,
       });
-      continue;
+      throw fetchOrApiError; // Relanzar el error para que sea capturado por el componente llamador
     }
     
     let decision_text_part = `Decisión de Recomendación: ${comparisonResult.recommendation_decision || 'N/A'}`;
