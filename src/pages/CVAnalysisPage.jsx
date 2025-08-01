@@ -37,6 +37,7 @@ function CVAnalysisPage() {
         if (targetCandidato) {
           setFetchedCandidato(targetCandidato);
           console.log("[CVAnalysisPage] Estado fetchedCandidato actualizado con:", targetCandidato.id);
+          console.log("[CVAnalysisPage] CVs del candidato encontrado:", targetCandidato.cvs); // Nuevo log para inspeccionar cvs
         } else {
           setError("Candidato no encontrado.");
           console.warn("[CVAnalysisPage] Candidato no encontrado para ID:", candidateId);
