@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom"; // Importar Link
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Briefcase as BriefcaseIcon, Users, Search } from 'lucide-react';
@@ -107,7 +108,9 @@ function CandidateSelection({ candidates: propCandidates }) { // Recibe candidat
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="font-medium text-gray-900">{candidate.name} - {candidate.title || candidate.nivel_escolarizacion || "Sin título"}</h3>
+                    <Link to={`/dashboard/candidate-profile/${candidate.id}`} className="text-blue-600 hover:underline">
+                      <h3 className="font-medium text-gray-900">{candidate.name} - {candidate.title || candidate.nivel_escolarizacion || "Sin título"}</h3>
+                    </Link>
                     <p className="text-sm text-gray-500">{candidate.matchReason}</p>
                   </div>
                   <div className="flex items-center space-x-2">

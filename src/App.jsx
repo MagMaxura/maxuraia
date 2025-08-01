@@ -18,6 +18,7 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancelled from "./pages/PaymentCancelled";
 import CheckoutPage from "./pages/CheckoutPage"; // Importa CheckoutPage
 import CVAnalysisPage from "./pages/CVAnalysisPage"; // Importar la nueva página de análisis de CV
+import CandidateProfilePage from "./pages/CandidateProfilePage"; // Importar la nueva página de perfil de candidato
 // import SupabaseTestPage from "./pages/SupabaseTestPage"; // Ya no se importa
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -79,6 +80,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <CVAnalysisPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/candidate-profile/:candidateId"
+              element={
+                <ProtectedRoute>
+                  <CandidateProfilePage />
                 </ProtectedRoute>
               }
             />

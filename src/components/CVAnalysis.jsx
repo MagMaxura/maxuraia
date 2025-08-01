@@ -1,4 +1,5 @@
 import React, { useState, useEffect, memo } from "react"; // Importar memo
+import { Link } from "react-router-dom"; // Importar Link
 import { motion } from "framer-motion";
 import { Briefcase, MapPin, Mail, Phone, User, Save, Award, Brain, Zap, Trash2, FileText } from "lucide-react"; // Añadido Trash2 y FileText
 import { Button } from "@/components/ui/button.jsx";
@@ -234,7 +235,17 @@ function CVAnalysis({
             <User className="h-8 w-8 text-[#0a66c2]" />
           </div>
           <div className="flex-1 space-y-3">
-            <Input name="nombre" value={editableAnalysis.nombre || ""} onChange={handleChange} placeholder="Nombre completo" className="card-title text-lg font-semibold p-0 border-0 focus-visible:ring-0 h-auto" />
+            {/* Nombre del candidato como enlace a su perfil */}
+            <Link to={`/dashboard/candidate-profile/${candidateDatabaseId}`} className="block">
+              <Input
+                name="nombre"
+                value={editableAnalysis.nombre || ""}
+                onChange={handleChange}
+                placeholder="Nombre completo"
+                className="card-title text-lg font-semibold p-0 border-0 focus-visible:ring-0 h-auto cursor-pointer text-blue-600 hover:underline"
+                readOnly // Hacer el input de solo lectura ya que es un enlace
+              />
+            </Link>
             <div className="flex items-center">
               <MapPin className="h-4 w-4 mr-2 text-[#0a66c2]" />
               <Input name="localidad" value={editableAnalysis.localidad || ""} onChange={handleChange} placeholder="Localidad" className="info-value text-slate-700 p-0 border-0 focus-visible:ring-0 h-auto" />
@@ -251,7 +262,7 @@ function CVAnalysis({
             </div>
           <div className="text-right">
             <div className="flex items-center">
-              <Input name="edad" type="number" value={editableAnalysis.edad || ""} onChange={handleChange} placeholder="Edad" className="text-[#000000] font-medium text-lg p-0 border-0 focus-visible:ring-0 h-auto w-12 text-right" /> 
+              <Input name="edad" type="number" value={editableAnalysis.edad || ""} onChange={handleChange} placeholder="Edad" className="text-[#000000] font-medium text-lg p-0 border-0 focus-visible:ring-0 h-auto w-12 text-right" />
               <span className="text-[#000000] font-medium text-lg ml-1">años</span>
             </div>
           </div>
