@@ -59,8 +59,11 @@ function CVAnalysisPage() {
     console.log("[CVAnalysisPage] useMemo: Recalculando cvAnalysisData. fetchedCandidato:", !!fetchedCandidato);
     if (!fetchedCandidato) return null;
 
-    const cvPrincipal = fetchedCandidato.cvs && fetchedCandidato.cvs.length > 0
-      ? fetchedCandidato.cvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+    // Asegurarse de que fetchedCandidato.cvs sea un array para poder ordenarlo
+    const candidateCvs = Array.isArray(fetchedCandidato.cvs) ? fetchedCandidato.cvs : (fetchedCandidato.cvs ? [fetchedCandidato.cvs] : []);
+
+    const cvPrincipal = candidateCvs.length > 0
+      ? candidateCvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
       : null;
     console.log("[CVAnalysisPage] useMemo: CV principal identificado:", cvPrincipal?.id, "Nombre archivo:", cvPrincipal?.file_name);
 
