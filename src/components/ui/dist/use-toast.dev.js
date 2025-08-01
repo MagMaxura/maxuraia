@@ -73,7 +73,7 @@ function useToast() {
       handlers["delete"](addToast);
     };
   }, []);
-  var addToast = useCallback(function (_ref2) {
+  var addToast = (0, _react.useCallback)(function (_ref2) {
     var props = _extends({}, _ref2);
 
     var id = generateId();
