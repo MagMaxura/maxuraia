@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom"; // Importar Link
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Briefcase as BriefcaseIcon, Users, Search } from 'lucide-react';
