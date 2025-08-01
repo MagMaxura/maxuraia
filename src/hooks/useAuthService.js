@@ -114,18 +114,36 @@ export function useAuthService() {
             console.error("[DEBUG] useAuthService: Exception during trial subscription creation:", subCreationError);
           }
         }
-        setUser(userToSet);
+        // Solo actualizar el estado user si el objeto userToSet es diferente del user actual
+        // Esto evita re-renderizados innecesarios si los datos del usuario no han cambiado
+        if (JSON.stringify(user) !== JSON.stringify(userToSet)) {
+          setUser(userToSet);
+          console.debug("[DEBUG] useAuthService: User state updated due to content change.");
+        } else {
+          console.debug("[DEBUG] useAuthService: User state not updated, content is the same.");
+        }
       } catch (error) {
         console.error("[DEBUG] useAuthService: Error fetching full user profile or creating subscription:", error);
-        setUser(supabaseAuthUser);
-        auth.user = supabaseAuthUser;
-        lastFetchedUserId.current = supabaseAuthUser.id;
+        // Si hay un error, asegúrate de que el estado del usuario sea consistente
+        if (JSON.stringify(user) !== JSON.stringify(supabaseAuthUser)) {
+          setUser(supabaseAuthUser);
+          auth.user = supabaseAuthUser;
+          lastFetchedUserId.current = supabaseAuthUser.id;
+          console.debug("[DEBUG] useAuthService: User state updated to basic Supabase Auth user due to error.");
+        } else {
+          console.debug("[DEBUG] useAuthService: User state not updated, basic Supabase Auth user content is the same.");
+        }
       }
     } else {
       console.debug("[DEBUG] useAuthService: No active session, clearing user state.");
-      setUser(null);
-      auth.clearAuthUser();
-      lastFetchedUserId.current = null;
+      if (user !== null) { // Solo actualizar si no es ya null
+        setUser(null);
+        auth.clearAuthUser();
+        lastFetchedUserId.current = null;
+        console.debug("[DEBUG] useAuthService: User state cleared.");
+      } else {
+        console.debug("[DEBUG] useAuthService: User state already null.");
+      }
     }
 
     setAuthChecked(true);

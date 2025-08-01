@@ -35,7 +35,7 @@ export function useToast() {
     }
   }, [])
 
-  const addToast = ({ ...props }) => {
+  const addToast = useCallback(({ ...props }) => {
     const id = generateId()
 
     const update = (props) =>
@@ -71,7 +71,7 @@ export function useToast() {
       dismiss,
       update,
     }
-  }
+  }, [setState]); // setState es una referencia estable proporcionada por useState
 
   useEffect(() => {
     const timeouts = Array.from(toastTimeouts.values())
