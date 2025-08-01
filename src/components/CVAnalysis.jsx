@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo } from "react"; // Importar memo
 import { motion } from "framer-motion";
 import { Briefcase, MapPin, Mail, Phone, User, Save, Award, Brain, Zap, Trash2 } from "lucide-react"; // Añadido Trash2
 import { Button } from "@/components/ui/button.jsx";
@@ -21,7 +21,6 @@ function CVAnalysis({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
-    console.log("CVAnalysis: initialAnalysis prop:", initialAnalysis);
     if (initialAnalysis && typeof initialAnalysis.then !== 'function') {
       const habilidades = {
         tecnicas: Array.isArray(initialAnalysis.habilidades?.tecnicas)
@@ -237,19 +236,19 @@ function CVAnalysis({
           <div className="flex-1 space-y-3">
             <Input name="nombre" value={editableAnalysis.nombre || ""} onChange={handleChange} placeholder="Nombre completo" className="card-title text-lg font-semibold p-0 border-0 focus-visible:ring-0 h-auto" />
             <div className="flex items-center">
-              <MapPin className="h-4 w-4 mr-2 text-[#0a66c2] flex-shrink-0" />
+              <MapPin className="h-4 w-4 mr-2 text-[#0a66c2]" />
               <Input name="localidad" value={editableAnalysis.localidad || ""} onChange={handleChange} placeholder="Localidad" className="info-value text-slate-700 p-0 border-0 focus-visible:ring-0 h-auto" />
             </div>
             <div className="flex items-center">
-              <Mail className="h-4 w-4 mr-2 text-[#0a66c2] flex-shrink-0" />
+              <Mail className="h-4 w-4 mr-2 text-[#0a66c2]" />
               <Input name="email" type="email" value={editableAnalysis.email || ""} onChange={handleChange} placeholder="Email" className="info-value text-slate-700 p-0 border-0 focus-visible:ring-0 h-auto" />
             </div>
             <div className="flex items-center">
-              <Phone className="h-4 w-4 mr-2 text-[#0a66c2] flex-shrink-0" />
-              <Input name="telefono" value={editableAnalysis.telefono || ""} onChange={handleChange} placeholder="Teléfono" className="info-value text-slate-700 p-0 border-0 focus-visible:ring-0 h-auto" />
+              <Phone className="h-4 w-4 mr-2 text-[#0a66c2]" />
+            <Input name="telefono" value={editableAnalysis.telefono || ""} onChange={handleChange} placeholder="Teléfono" className="info-value text-slate-700 p-0 border-0 focus-visible:ring-0 h-auto" />
             </div>
             <p className="text-xs text-red-600 mt-1 ml-6">*Recomendamos cambiar el teléfono a +549... y eliminar el (15) para luego poder enviarles WhatsApp al candidato.</p>
-          </div>
+            </div>
           <div className="text-right">
             <div className="flex items-center">
               <Input name="edad" type="number" value={editableAnalysis.edad || ""} onChange={handleChange} placeholder="Edad" className="text-[#000000] font-medium text-lg p-0 border-0 focus-visible:ring-0 h-auto w-12 text-right" /> 
@@ -397,4 +396,4 @@ function CVAnalysis({
   );
 }
 
-export default CVAnalysis;
+export default memo(CVAnalysis); // Envolver el componente con memo

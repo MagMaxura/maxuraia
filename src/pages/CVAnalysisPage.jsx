@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'; // Añadir useMemo
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cvService } from '@/services/cvService';
@@ -12,12 +12,11 @@ function CVAnalysisPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [cvAnalysisData, setCvAnalysisData] = useState(null);
+  const [fetchedCandidato, setFetchedCandidato] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log("CVAnalysisPage useEffect - candidateId:", candidateId, "user?.id:", user?.id);
     const fetchCvData = async () => {
       if (!candidateId || !user?.id) {
         setError("ID de candidato o ID de usuario no disponible.");
@@ -32,47 +31,7 @@ function CVAnalysisPage() {
         const targetCandidato = fetchedCandidatos.find(c => c.id === candidateId);
 
         if (targetCandidato) {
-          const cvPrincipal = targetCandidato.cvs && targetCandidato.cvs.length > 0
-            ? targetCandidato.cvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
-            : null;
-
-          // Construir newAnalysisData de forma inmutable para evitar re-renders innecesarios
-          const newAnalysisData = { ...cvPrincipal?.analysis_result || {} };
-          
-          newAnalysisData.nombre = targetCandidato.name || newAnalysisData.nombre;
-          newAnalysisData.email = targetCandidato.email || newAnalysisData.email;
-          newAnalysisData.telefono = targetCandidato.phone || newAnalysisData.telefono;
-          newAnalysisData.localidad = targetCandidato.location || newAnalysisData.localidad;
-          newAnalysisData.nivel_escolarizacion = targetCandidato.title || newAnalysisData.nivel_escolarizacion || newAnalysisData.title;
-          newAnalysisData.resumen = targetCandidato.summary || newAnalysisData.summary;
-          newAnalysisData.experiencia = targetCandidato.experience || newAnalysisData.experiencia;
-          
-          if (Array.isArray(targetCandidato.skills) && targetCandidato.skills.length > 0) {
-             newAnalysisData.habilidades = { tecnicas: targetCandidato.skills, blandas: [] };
-          } else if (cvPrincipal?.analysis_result?.habilidades) {
-            newAnalysisData.habilidades = cvPrincipal.analysis_result.habilidades;
-          } else {
-            newAnalysisData.habilidades = { tecnicas: [], blandas: [] };
-          }
-
-          if (cvPrincipal?.content && (!newAnalysisData.textoCompleto || newAnalysisData.textoCompleto.trim() === '')) {
-            newAnalysisData.textoCompleto = cvPrincipal.content;
-          }
-
-          // Solo actualizar el estado si los datos realmente han cambiado para evitar bucles de re-renderizado
-          // Usar JSON.stringify para una comparación profunda de objetos
-          if (JSON.stringify(newAnalysisData) !== JSON.stringify(cvAnalysisData?.analysis)) {
-            console.log("CVAnalysisPage: Actualizando cvAnalysisData.");
-            setCvAnalysisData({
-              analysis: newAnalysisData,
-              cv_database_id: cvPrincipal?.id || targetCandidato.cv_id || null,
-              candidate_database_id: targetCandidato.id,
-              name: targetCandidato.name || cvPrincipal?.file_name || `Candidato ${targetCandidato.id}`,
-              originalFile: null,
-            });
-          } else {
-            console.log("CVAnalysisPage: cvAnalysisData no ha cambiado, evitando actualización de estado.");
-          }
+          setFetchedCandidato(targetCandidato);
         } else {
           setError("Candidato no encontrado.");
         }
@@ -86,7 +45,45 @@ function CVAnalysisPage() {
     };
 
     fetchCvData();
-  }, [candidateId, user?.id, toast, cvAnalysisData]); // Añadir cvAnalysisData a las dependencias para la comparación
+  }, [candidateId, user?.id, toast]);
+
+  const cvAnalysisData = useMemo(() => {
+    if (!fetchedCandidato) return null;
+
+    const cvPrincipal = fetchedCandidato.cvs && fetchedCandidato.cvs.length > 0
+      ? fetchedCandidato.cvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+      : null;
+
+    const newAnalysisData = { ...cvPrincipal?.analysis_result || {} };
+    
+    newAnalysisData.nombre = fetchedCandidato.name || newAnalysisData.nombre;
+    newAnalysisData.email = fetchedCandidato.email || newAnalysisData.email;
+    newAnalysisData.telefono = fetchedCandidato.phone || newAnalysisData.telefono;
+    newAnalysisData.localidad = fetchedCandidato.location || newAnalysisData.localidad;
+    newAnalysisData.nivel_escolarizacion = fetchedCandidato.title || newAnalysisData.nivel_escolarizacion || newAnalysisData.title;
+    newAnalysisData.resumen = fetchedCandidato.summary || newAnalysisData.summary;
+    newAnalysisData.experiencia = fetchedCandidato.experience || newAnalysisData.experiencia;
+    
+    if (Array.isArray(fetchedCandidato.skills) && fetchedCandidato.skills.length > 0) {
+       newAnalysisData.habilidades = { tecnicas: fetchedCandidato.skills, blandas: [] };
+    } else if (cvPrincipal?.analysis_result?.habilidades) {
+      newAnalysisData.habilidades = cvPrincipal.analysis_result.habilidades;
+    } else {
+      newAnalysisData.habilidades = { tecnicas: [], blandas: [] };
+    }
+
+    if (cvPrincipal?.content && (!newAnalysisData.textoCompleto || newAnalysisData.textoCompleto.trim() === '')) {
+      newAnalysisData.textoCompleto = cvPrincipal.content;
+    }
+
+    return {
+      analysis: newAnalysisData,
+      cv_database_id: cvPrincipal?.id || fetchedCandidato.cv_id || null,
+      candidate_database_id: fetchedCandidato.id,
+      name: fetchedCandidato.name || cvPrincipal?.file_name || `Candidato ${fetchedCandidato.id}`,
+      originalFile: null,
+    };
+  }, [fetchedCandidato]);
 
   const handleBackToDashboard = () => {
     navigate('/dashboard/cvsProcesados');
