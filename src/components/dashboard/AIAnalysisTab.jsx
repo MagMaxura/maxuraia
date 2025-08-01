@@ -156,9 +156,11 @@ export function AIAnalysisTab({
       }
       
       const formattedResults = data.map(match => {
-        const parsed = parseAnalysisText(match.analysis);
+        const analysisText = match.analysis || ''; // Asegurar que sea una cadena
+        const parsed = parseAnalysisText(analysisText);
         return {
-          ...match, 
+          ...match,
+          analysis: analysisText, // Asegurar que el 'analysis' en el resultado sea una cadena
           candidato_name: match.candidatos?.name || 'N/A',
           recommendation: parsed.recommendation_boolean,
           summary_display: parsed.summary,
