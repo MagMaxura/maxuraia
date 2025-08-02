@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Briefcase, Edit, Trash2 } from 'lucide-react'; // Importar iconos
+import { useNavigate } from 'react-router-dom'; // Importar useNavigate
 
-function PublishedJobsTab({ jobs, isLoadingJobs, setActiveTab, onEditJob, onDeleteJob, currentJobCount, effectiveLimits }) {
+function PublishedJobsTab({ jobs, isLoadingJobs, onEditJob, onDeleteJob, currentJobCount, effectiveLimits }) {
+  const navigate = useNavigate();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -13,7 +15,7 @@ function PublishedJobsTab({ jobs, isLoadingJobs, setActiveTab, onEditJob, onDele
     >
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold text-slate-800">Puestos de Trabajo Publicados</h2>
-        <Button onClick={() => setActiveTab('nuevoPuesto')} variant="outline" size="sm" className="flex items-center">
+        <Button onClick={() => navigate('/dashboard/nuevo-puesto')} variant="outline" size="sm" className="flex items-center">
           <Briefcase className="mr-2 h-4 w-4" /> Crear Nuevo Puesto
         </Button>
       </div>
@@ -56,7 +58,7 @@ function PublishedJobsTab({ jobs, isLoadingJobs, setActiveTab, onEditJob, onDele
           <Briefcase className="mx-auto h-12 w-12 text-slate-400" />
           <h3 className="mt-2 text-lg font-medium text-slate-800">No hay puestos publicados</h3>
           <p className="mt-1 text-sm text-slate-500">Empieza creando tu primer puesto de trabajo.</p>
-          <Button onClick={() => setActiveTab('nuevoPuesto')} className="mt-6">
+          <Button onClick={() => navigate('/dashboard/nuevo-puesto')} className="mt-6">
             Crear Nuevo Puesto
           </Button>
         </div>

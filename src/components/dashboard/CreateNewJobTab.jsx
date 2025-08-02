@@ -11,7 +11,7 @@ import CreateJobAIForm from '../CreateJobAIForm.jsx'; // Importar el componente 
 import { APP_PLANS } from '@/config/plans'; // Importar APP_PLANS
 import { useDashboardData } from '@/hooks/useDashboardData'; // Importar useDashboardData
 
-function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob, effectiveLimits, isBonusPlanActive, bonusJobUsed, bonusJobTotal }) {
+function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob, effectiveLimits, isBonusPlanActive, bonusJobUsed, bonusJobTotal }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { isBasePlanActive, basePlan } = useDashboardData(); // Obtener directamente del hook
@@ -138,9 +138,6 @@ function CreateNewJobTab({ setActiveTab, currentJobsCount, onJobPublishedOrUpdat
       setIsEditing(false); // Asegurarse de que el estado local también se resetee
 
       // Opcional: Cambiar a la pestaña de puestos publicados
-      if (setActiveTab) {
-        setActiveTab("puestosPublicados");
-      }
 
     } catch (error) {
       console.error('CreateNewJobTab: Error al guardar/actualizar el puesto:', error);
