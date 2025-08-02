@@ -83,14 +83,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/dashboard/candidate-profile/:candidateId"
-              element={
-                <ProtectedRoute>
-                  <CandidateProfilePage />
-                </ProtectedRoute>
-              }
-            />
 
             </Routes>
             <Toaster />

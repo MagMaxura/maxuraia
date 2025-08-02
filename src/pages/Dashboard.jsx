@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Routes, Route, Outlet, useLocation, useParams } from "react-router-dom";
 import { Upload, Users, Briefcase, LogOut, FileText, CreditCard, FileUp, Brain } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
@@ -22,8 +22,9 @@ import { useCvUploader } from "@/hooks/useCvUploader.js";
 function Dashboard() {
   const { user, logout, refreshUser } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("cargarNuevoCV");
   const navigate = useNavigate();
+  const location = useLocation();
+  const { candidateId } = useParams(); // Obtener candidateId de la URL
 
   const {
     cvFiles,
@@ -87,9 +88,18 @@ function Dashboard() {
     location: '',
   });
 
-  // Efecto para manejar la selección del CV más reciente al cargar la lista
+  // Efecto para manejar la selección del CV más reciente al cargar la lista o al cambiar el candidateId de la URL
   useEffect(() => {
-    if (cvFiles.length > 0 && selectedCV === null && cvAnalysis === null) {
+    if (candidateId) {
+      const foundIndex = cvFiles.findIndex(cv => cv.candidate_database_id === candidateId);
+      if (foundIndex !== -1) {
+        setSelectedCV(foundIndex);
+        setCvAnalysis(cvFiles[foundIndex].analysis);
+      } else {
+        // Si el candidato no se encuentra, quizás navegar a la lista de CVs o mostrar un mensaje de error
+        navigate("/dashboard/cvs-procesados"); // Navegar a la lista si el candidato no se encuentra
+      }
+    } else if (cvFiles.length > 0 && selectedCV === null && cvAnalysis === null && location.pathname === "/dashboard/cvs-procesados") {
       let latestCvIndex = 0;
       if (cvFiles.every(cv => cv.uploadedDate)) {
         latestCvIndex = cvFiles.reduce((latestIndex, currentCv, currentIndex, arr) => {
@@ -101,7 +111,7 @@ function Dashboard() {
       setSelectedCV(latestCvIndex);
       setCvAnalysis(cvFiles[latestCvIndex].analysis);
     }
-  }, [cvFiles, selectedCV, cvAnalysis]);
+  }, [cvFiles, selectedCV, cvAnalysis, candidateId, navigate, location.pathname]);
 
    const handleSaveSuccess = (cvId, candidateId, updatedAnalysis) => {
     setCvFiles(prevCvFiles => {
@@ -124,12 +134,12 @@ function Dashboard() {
   };
 
   const menuItems = [
-    { id: "cargarNuevoCV", label: "Cargar Nuevo CV", icon: Upload },
-    { id: "cvsProcesados", label: "CVs Procesados", icon: Users },
-    { id: "nuevoPuesto", label: "Nuevo Puesto de trabajo", icon: Briefcase },
-    { id: "puestosPublicados", label: "Puestos de trabajo publicados", icon: FileText },
-    { id: "analisisIA", label: "Análisis IA Candidatos", icon: Brain },
-    { id: "planActual", label: "Plan actual", icon: CreditCard },
+    { id: "cargarNuevoCV", label: "Cargar Nuevo CV", icon: Upload, path: "/dashboard" },
+    { id: "cvsProcesados", label: "CVs Procesados", icon: Users, path: "/dashboard/cvs-procesados" },
+    { id: "nuevoPuesto", label: "Nuevo Puesto de trabajo", icon: Briefcase, path: "/dashboard/nuevo-puesto" },
+    { id: "puestosPublicados", label: "Puestos de trabajo publicados", icon: FileText, path: "/dashboard/puestos-publicados" },
+    { id: "analisisIA", label: "Análisis IA Candidatos", icon: Brain, path: "/dashboard/analisis-ia" },
+    { id: "planActual", label: "Plan actual", icon: CreditCard, path: "/dashboard/plan-actual" },
   ];
 
   const {
@@ -147,7 +157,6 @@ function Dashboard() {
     setCvFiles,
     setSelectedCV,
     setCvAnalysis,
-    setActiveTab,
     currentCvCount: currentAnalysisCount,
   });
 
@@ -237,7 +246,7 @@ function Dashboard() {
 
   const handleEditJob = (jobToEdit) => {
     setEditingJob(jobToEdit);
-    setActiveTab("nuevoPuesto");
+    navigate("/dashboard/nuevo-puesto");
   };
 
   const handleJobPublishedOrUpdated = (job) => {
@@ -355,15 +364,15 @@ function Dashboard() {
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => navigate(item.path)}
                 className={`w-full flex items-center space-x-3 p-2.5 rounded-md text-left text-sm font-medium transition-colors
                   ${
-                    activeTab === item.id
+                    location.pathname === item.path || (item.id === "cargarNuevoCV" && location.pathname === "/dashboard")
                       ? "bg-blue-50 text-blue-700 shadow-sm"
                       : "text-slate-600 hover:bg-gray-100 hover:text-slate-800"
                   }`}
               >
-                <item.icon className={`h-5 w-5 ${activeTab === item.id ? "text-blue-600" : "text-slate-400"}`} />
+                <item.icon className={`h-5 w-5 ${location.pathname === item.path || (item.id === "cargarNuevoCV" && location.pathname === "/dashboard") ? "text-blue-600" : "text-slate-400"}`} />
                 <span>{item.label}</span>
               </button>
             ))}
@@ -402,27 +411,95 @@ function Dashboard() {
             );
           })()}
 
-          {activeTab === "cvsProcesados" && (() => {
-            return (
-            <ProcessedCVsTab
-              cvFiles={cvFiles}
-              selectedCV={selectedCV}
-              handleCVClick={handleCVClick}
-              cvAnalysis={cvAnalysis}
-              isLoadingCVs={isLoadingCVs}
-              isProcessing={isProcessing}
-              userId={user?.id}
-              onSaveSuccess={handleSaveSuccess}
-              onDeleteCV={handleDeleteCV}
-              cvFilters={cvFilters}
-              onCvFilterChange={setCvFilters}
-              hasUnsavedCVs={hasUnsavedCVs}
-              onSaveAllCVs={handleSaveAllCVs}
-              isCvSaved={!!cvFiles[selectedCV]?.cv_database_id || !!cvFiles[selectedCV]?.candidate_database_id}
-              navigate={navigate}
-            />
-            );
-          })()}
+          <Routes>
+            <Route path="/" element={
+              <UploadCVTab
+                handleFileUpload={handleFileUpload}
+                fileInputRef={fileInputRef}
+                isBulkProcessing={isBulkProcessing}
+                isProcessing={isProcessing}
+                totalFilesToUpload={totalFilesToUpload}
+                filesUploadedCount={filesUploadedCount}
+                currentFileProcessingName={currentFileProcessingName}
+                handleDragOver={handleDragOver}
+                handleDrop={handleDrop}
+                userSubscription={userSubscription}
+                analysisLimit={analysisLimit}
+                currentAnalysisCount={currentAnalysisCount}
+                optimisticCurrentAnalysisCount={optimisticCvCount}
+                effectiveLimits={effectiveLimits}
+                isBonusPlanActive={isBonusPlanActive}
+                bonusCvUsed={bonusCvUsed}
+                bonusCvTotal={bonusCvTotal}
+                bonusJobUsed={bonusJobUsed}
+                bonusJobTotal={bonusJobTotal}
+                bonusMatchUsed={bonusMatchUsed}
+                bonusMatchTotal={bonusMatchTotal}
+                isBasePlanActive={isBasePlanActive}
+                basePlan={basePlan}
+                onCvUploadSuccess={refreshUser}
+              />
+            } />
+            <Route path="cvs-procesados" element={
+              <ProcessedCVsTab
+                cvFiles={cvFiles}
+                selectedCV={selectedCV}
+                handleCVClick={handleCVClick}
+                cvAnalysis={cvAnalysis}
+                isLoadingCVs={isLoadingCVs}
+                isProcessing={isProcessing}
+                userId={user?.id}
+                onSaveSuccess={handleSaveSuccess}
+                onDeleteCV={handleDeleteCV}
+                cvFilters={cvFilters}
+                onCvFilterChange={setCvFilters}
+                hasUnsavedCVs={hasUnsavedCVs}
+                onSaveAllCVs={handleSaveAllCVs}
+                isCvSaved={!!cvFiles[selectedCV]?.cv_database_id || !!cvFiles[selectedCV]?.candidate_database_id}
+                navigate={navigate}
+              />
+            } />
+            <Route path="candidate-profile/:candidateId" element={<CVAnalysis analysis={cvAnalysis} />} />
+            <Route path="nuevo-puesto" element={
+              <CreateNewJobTab
+                setActiveTab={setActiveTab}
+                currentJobsCount={currentJobCount}
+                onJobPublishedOrUpdated={handleJobPublishedOrUpdated}
+                editingJob={editingJob}
+                setEditingJob={setEditingJob}
+                effectiveLimits={effectiveLimits}
+                isBonusPlanActive={isBonusPlanActive}
+                bonusJobUsed={bonusJobUsed}
+                bonusJobTotal={bonusJobTotal}
+                isBasePlanActive={isBasePlanActive}
+                basePlan={basePlan}
+              />
+            } />
+            <Route path="puestos-publicados" element={
+              <PublishedJobsTab
+                jobs={jobs}
+                isLoadingJobs={isLoadingJobs}
+                onDeleteJob={handleDeleteJob}
+                onEditJob={handleEditJob}
+                setActiveTab={setActiveTab}
+                currentJobCount={currentJobCount}
+                effectiveLimits={effectiveLimits}
+              />
+            } />
+            <Route path="analisis-ia" element={
+              <AIAnalysisTab
+                jobs={jobs}
+                recruiterId={user?.id}
+                matchLimit={matchLimit}
+                currentMatchCount={currentMatchCount}
+                cvFilesFromDashboard={cvFiles}
+                isLoadingCandidates={isLoadingCVs}
+                isLoadingJobs={isLoadingJobs}
+              />
+            } />
+            <Route path="plan-actual" element={<CurrentPlanTab />} />
+          </Routes>
+          <Outlet />
 
           {activeTab === "nuevoPuesto" && (() => {
             return (
