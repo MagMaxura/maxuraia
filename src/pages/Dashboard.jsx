@@ -97,8 +97,8 @@ function Dashboard() {
         setSelectedCV(foundIndex);
         setCvAnalysis(cvFiles[foundIndex].analysis);
       } else {
-        // Si el candidato no se encuentra, quizás navegar a la lista de CVs o mostrar un mensaje de error
-        navigate("/dashboard/cvs-procesados"); // Navegar a la lista si el candidato no se encuentra
+        // Si el candidato no se encuentra, simplemente no se selecciona nada o se maneja de otra forma
+        // No navegar, ya que queremos permanecer en la misma pestaña
       }
     } else if (cvFiles.length > 0 && selectedCV === null && cvAnalysis === null && location.pathname === "/dashboard/cvs-procesados") {
       let latestCvIndex = 0;
@@ -112,7 +112,7 @@ function Dashboard() {
       setSelectedCV(latestCvIndex);
       setCvAnalysis(cvFiles[latestCvIndex].analysis);
     }
-  }, [cvFiles, selectedCV, cvAnalysis, candidateId, navigate, location.pathname]);
+  }, [cvFiles, selectedCV, cvAnalysis, candidateId, location.pathname]);
 
    const handleSaveSuccess = (cvId, candidateId, updatedAnalysis) => {
     setCvFiles(prevCvFiles => {
@@ -433,7 +433,6 @@ function Dashboard() {
                 navigate={navigate}
               />
             } />
-            <Route path="candidate-profile/:candidateId" element={<CVAnalysis analysis={cvAnalysis} />} />
             <Route path="nuevo-puesto" element={
               <CreateNewJobTab
                 currentJobsCount={currentJobCount}

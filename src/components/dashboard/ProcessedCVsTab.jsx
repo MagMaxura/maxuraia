@@ -230,9 +230,6 @@ function ProcessedCVsTab({
                 }`}
                 onClick={() => {
                   handleCVClick(originalIndex);
-                  if (file.candidate_database_id) {
-                    navigate(`/dashboard/cv-analysis/${file.candidate_database_id}`);
-                  }
                 }}
               >
                 <div className="flex-grow truncate mr-2"> {/* Añadido mr-2 para espacio */}
