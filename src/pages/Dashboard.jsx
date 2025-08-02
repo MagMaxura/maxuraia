@@ -432,7 +432,6 @@ function Dashboard() {
             <Route path="candidate-profile/:candidateId" element={<CVAnalysis analysis={cvAnalysis} />} />
             <Route path="nuevo-puesto" element={
               <CreateNewJobTab
-                setActiveTab={setActiveTab}
                 currentJobsCount={currentJobCount}
                 onJobPublishedOrUpdated={handleJobPublishedOrUpdated}
                 editingJob={editingJob}
@@ -451,7 +450,6 @@ function Dashboard() {
                 isLoadingJobs={isLoadingJobs}
                 onDeleteJob={handleDeleteJob}
                 onEditJob={handleEditJob}
-                setActiveTab={setActiveTab}
                 currentJobCount={currentJobCount}
                 effectiveLimits={effectiveLimits}
               />
