@@ -25,6 +25,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { candidateId } = useParams(); // Obtener candidateId de la URL
+  const [activeTab, setActiveTab] = useState(location.pathname);
 
   const {
     cvFiles,
@@ -364,15 +365,18 @@ function Dashboard() {
             {menuItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => navigate(item.path)}
+                onClick={() => {
+                  navigate(item.path);
+                  setActiveTab(item.path);
+                }}
                 className={`w-full flex items-center space-x-3 p-2.5 rounded-md text-left text-sm font-medium transition-colors
                   ${
-                    location.pathname === item.path || (item.id === "cargarNuevoCV" && location.pathname === "/dashboard")
+                    activeTab === item.path || (item.id === "cargarNuevoCV" && activeTab === "/dashboard")
                       ? "bg-blue-50 text-blue-700 shadow-sm"
                       : "text-slate-600 hover:bg-gray-100 hover:text-slate-800"
                   }`}
               >
-                <item.icon className={`h-5 w-5 ${location.pathname === item.path || (item.id === "cargarNuevoCV" && location.pathname === "/dashboard") ? "text-blue-600" : "text-slate-400"}`} />
+                <item.icon className={`h-5 w-5 ${activeTab === item.path || (item.id === "cargarNuevoCV" && activeTab === "/dashboard") ? "text-blue-600" : "text-slate-400"}`} />
                 <span>{item.label}</span>
               </button>
             ))}
