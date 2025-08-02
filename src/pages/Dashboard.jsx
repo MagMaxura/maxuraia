@@ -380,36 +380,6 @@ function Dashboard() {
         </aside>
 
         <main className="flex-1 p-4 md:p-6 overflow-auto">
-          {activeTab === "cargarNuevoCV" && (() => {
-            return (
-            <UploadCVTab
-              handleFileUpload={handleFileUpload}
-              fileInputRef={fileInputRef}
-              isBulkProcessing={isBulkProcessing}
-              isProcessing={isProcessing}
-              totalFilesToUpload={totalFilesToUpload}
-              filesUploadedCount={filesUploadedCount}
-              currentFileProcessingName={currentFileProcessingName}
-              handleDragOver={handleDragOver}
-              handleDrop={handleDrop}
-              userSubscription={userSubscription}
-              analysisLimit={analysisLimit}
-              currentAnalysisCount={currentAnalysisCount}
-              optimisticCurrentAnalysisCount={optimisticCvCount}
-              effectiveLimits={effectiveLimits}
-              isBonusPlanActive={isBonusPlanActive}
-              bonusCvUsed={bonusCvUsed}
-              bonusCvTotal={bonusCvTotal}
-              bonusJobUsed={bonusJobUsed}
-              bonusJobTotal={bonusJobTotal}
-              bonusMatchUsed={bonusMatchUsed}
-              bonusMatchTotal={bonusMatchTotal}
-              isBasePlanActive={isBasePlanActive}
-              basePlan={basePlan}
-              onCvUploadSuccess={refreshUser}
-            />
-            );
-          })()}
 
           <Routes>
             <Route path="/" element={
@@ -501,57 +471,6 @@ function Dashboard() {
           </Routes>
           <Outlet />
 
-          {activeTab === "nuevoPuesto" && (() => {
-            return (
-            <CreateNewJobTab
-              setActiveTab={setActiveTab}
-              currentJobsCount={currentJobCount}
-              onJobPublishedOrUpdated={handleJobPublishedOrUpdated}
-              editingJob={editingJob}
-              setEditingJob={setEditingJob}
-              effectiveLimits={effectiveLimits}
-              isBonusPlanActive={isBonusPlanActive}
-              bonusJobUsed={bonusJobUsed}
-              bonusJobTotal={bonusJobTotal}
-              isBasePlanActive={isBasePlanActive}
-              basePlan={basePlan}
-            />
-            );
-          })()}
-
-          {activeTab === "puestosPublicados" && (() => {
-            return (
-            <PublishedJobsTab
-              jobs={jobs}
-              isLoadingJobs={isLoadingJobs}
-              onDeleteJob={handleDeleteJob}
-              onEditJob={handleEditJob}
-              setActiveTab={setActiveTab}
-              currentJobCount={currentJobCount}
-              effectiveLimits={effectiveLimits}
-            />
-            );
-          })()}
-
-          {activeTab === "analisisIA" && (() => {
-            return (
-            <AIAnalysisTab
-              jobs={jobs}
-              recruiterId={user?.id}
-              matchLimit={matchLimit}
-              currentMatchCount={currentMatchCount}
-              cvFilesFromDashboard={cvFiles}
-              isLoadingCandidates={isLoadingCVs}
-              isLoadingJobs={isLoadingJobs}
-            />
-            );
-          })()}
-
-          {activeTab === "planActual" && (() => {
-            return (
-            <CurrentPlanTab />
-            );
-          })()}
         </main>
       </div>
     </div>
