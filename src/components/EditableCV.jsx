@@ -42,7 +42,7 @@ function EditableCV({ analysis, onSave, isSaving, readOnly = false }) { // Añad
         {/* Información Personal */}
         <div className="bg-[#f3f2ef] rounded-lg p-6 mb-6">
           <h3 className="text-lg font-medium text-[#000000] mb-4">Información Personal</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-[#000000] mb-1">Nombre</label>
               {readOnly ? (
@@ -82,6 +82,9 @@ function EditableCV({ analysis, onSave, isSaving, readOnly = false }) { // Añad
                 />
               )}
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {/* Nueva cuadrícula para Email y Teléfono */}
             <div>
               <label className="block text-sm font-medium text-[#000000] mb-1">Email</label>
               {readOnly ? (
