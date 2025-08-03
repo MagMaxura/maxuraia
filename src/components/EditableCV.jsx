@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Button } from "../components/ui/button";
 import { Save, Plus, X } from "lucide-react";
 
-function EditableCV({ analysis, onSave, isSaving }) { // Recibir isSaving como prop
+function EditableCV({ analysis, onSave, isSaving, readOnly = false }) { // Añadir prop readOnly
   const [editedAnalysis, setEditedAnalysis] = useState(analysis);
 
   const handleInputChange = (field, value) => {
@@ -35,7 +35,9 @@ function EditableCV({ analysis, onSave, isSaving }) { // Recibir isSaving como p
       className="bg-white rounded-lg shadow-sm border border-gray-200"
     >
       <div className="p-6">
-        <h2 className="text-xl font-semibold text-[#000000] mb-6">Editar CV</h2>
+        <h2 className="text-xl font-semibold text-[#000000] mb-6">
+          {readOnly ? "Perfil del Candidato" : "Editar CV"}
+        </h2>
         
         {/* Información Personal */}
         <div className="bg-[#f3f2ef] rounded-lg p-6 mb-6">
@@ -43,48 +45,68 @@ function EditableCV({ analysis, onSave, isSaving }) { // Recibir isSaving como p
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-[#000000] mb-1">Nombre</label>
-              <input
-                type="text"
-                value={editedAnalysis.nombre}
-                onChange={(e) => handleInputChange('nombre', e.target.value)}
-                className="input-field"
-              />
+              {readOnly ? (
+                <p className="text-base text-gray-800">{editedAnalysis.nombre || 'N/A'}</p>
+              ) : (
+                <input
+                  type="text"
+                  value={editedAnalysis.nombre}
+                  onChange={(e) => handleInputChange('nombre', e.target.value)}
+                  className="input-field"
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#000000] mb-1">Edad</label>
-              <input
-                type="text"
-                value={editedAnalysis.edad}
-                onChange={(e) => handleInputChange('edad', e.target.value)}
-                className="input-field"
-              />
+              {readOnly ? (
+                <p className="text-base text-gray-800">{editedAnalysis.edad || 'N/A'}</p>
+              ) : (
+                <input
+                  type="text"
+                  value={editedAnalysis.edad}
+                  onChange={(e) => handleInputChange('edad', e.target.value)}
+                  className="input-field"
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#000000] mb-1">Localidad</label>
-              <input
-                type="text"
-                value={editedAnalysis.localidad}
-                onChange={(e) => handleInputChange('localidad', e.target.value)}
-                className="input-field"
-              />
+              {readOnly ? (
+                <p className="text-base text-gray-800">{editedAnalysis.localidad || 'N/A'}</p>
+              ) : (
+                <input
+                  type="text"
+                  value={editedAnalysis.localidad}
+                  onChange={(e) => handleInputChange('localidad', e.target.value)}
+                  className="input-field"
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#000000] mb-1">Email</label>
-              <input
-                type="email"
-                value={editedAnalysis.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-                className="input-field"
-              />
+              {readOnly ? (
+                <p className="text-base text-gray-800">{editedAnalysis.email || 'N/A'}</p>
+              ) : (
+                <input
+                  type="email"
+                  value={editedAnalysis.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  className="input-field"
+                />
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-[#000000] mb-1">Teléfono</label>
-              <input
-                type="text"
-                value={editedAnalysis.telefono}
-                onChange={(e) => handleInputChange('telefono', e.target.value)}
-                className="input-field"
-              />
+              {readOnly ? (
+                <p className="text-base text-gray-800">{editedAnalysis.telefono || 'N/A'}</p>
+              ) : (
+                <input
+                  type="text"
+                  value={editedAnalysis.telefono}
+                  onChange={(e) => handleInputChange('telefono', e.target.value)}
+                  className="input-field"
+                />
+              )}
             </div>
           </div>
         </div>
@@ -93,69 +115,91 @@ function EditableCV({ analysis, onSave, isSaving }) { // Recibir isSaving como p
         <div className="mb-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-[#000000]">Habilidades</h3>
-            <Button
-              onClick={addSkill}
-              variant="outline"
-              size="sm"
-              className="linkedin-button-outline"
-            >
-              <Plus className="w-4 h-4 mr-1" />
-              Añadir Habilidad
-            </Button>
+            {!readOnly && (
+              <Button
+                onClick={addSkill}
+                variant="outline"
+                size="sm"
+                className="linkedin-button-outline"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Añadir Habilidad
+              </Button>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
-            {editedAnalysis.habilidades.map((skill, index) => (
-              <div key={index} className="skill-tag group flex items-center">
-                <input
-                  type="text"
-                  value={skill}
-                  onChange={(e) => handleSkillChange(index, e.target.value)}
-                  className="bg-transparent text-[#0a66c2] focus:outline-none text-sm w-auto"
-                />
-                <button
-                  onClick={() => removeSkill(index)}
-                  className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="w-4 h-4 text-[#0a66c2]" />
-                </button>
-              </div>
-            ))}
+            {editedAnalysis.habilidades && editedAnalysis.habilidades.length > 0 ? (
+              editedAnalysis.habilidades.map((skill, index) => (
+                <div key={index} className="skill-tag group flex items-center">
+                  {readOnly ? (
+                    <span className="text-[#0a66c2] text-sm">{skill}</span>
+                  ) : (
+                    <input
+                      type="text"
+                      value={skill}
+                      onChange={(e) => handleSkillChange(index, e.target.value)}
+                      className="bg-transparent text-[#0a66c2] focus:outline-none text-sm w-auto"
+                    />
+                  )}
+                  {!readOnly && (
+                    <button
+                      onClick={() => removeSkill(index)}
+                      className="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-4 h-4 text-[#0a66c2]" />
+                    </button>
+                  )}
+                </div>
+              ))
+            ) : (
+              readOnly && <p className="text-gray-600">No hay habilidades registradas.</p>
+            )}
           </div>
         </div>
 
         {/* Resumen */}
         <div className="mb-6">
           <h3 className="text-lg font-medium text-[#000000] mb-2">Resumen</h3>
-          <textarea
-            value={editedAnalysis.resumen}
-            onChange={(e) => handleInputChange('resumen', e.target.value)}
-            className="w-full h-32 input-field"
-            placeholder="Resumen profesional..."
-          />
+          {readOnly ? (
+            <p className="text-base text-gray-800 whitespace-pre-wrap">{editedAnalysis.resumen || 'N/A'}</p>
+          ) : (
+            <textarea
+              value={editedAnalysis.resumen}
+              onChange={(e) => handleInputChange('resumen', e.target.value)}
+              className="w-full h-32 input-field"
+              placeholder="Resumen profesional..."
+            />
+          )}
         </div>
 
         {/* Experiencia */}
         <div className="mb-6">
           <h3 className="text-lg font-medium text-[#000000] mb-2">Experiencia</h3>
-          <textarea
-            value={editedAnalysis.experiencia}
-            onChange={(e) => handleInputChange('experiencia', e.target.value)}
-            className="w-full h-48 input-field"
-            placeholder="Experiencia profesional detallada..."
-          />
+          {readOnly ? (
+            <p className="text-base text-gray-800 whitespace-pre-wrap">{editedAnalysis.experiencia || 'N/A'}</p>
+          ) : (
+            <textarea
+              value={editedAnalysis.experiencia}
+              onChange={(e) => handleInputChange('experiencia', e.target.value)}
+              className="w-full h-48 input-field"
+              placeholder="Experiencia profesional detallada..."
+            />
+          )}
         </div>
 
         {/* Botón Guardar */}
-        <div className="flex justify-end">
-          <Button
-            onClick={() => onSave(editedAnalysis)}
-            className="linkedin-button"
-            disabled={isSaving} // Deshabilitar el botón si isSaving es true
-          >
-            <Save className="w-4 h-4 mr-2" />
-            {isSaving ? "Guardando..." : "Guardar Cambios"} {/* Cambiar texto del botón */}
-          </Button>
-        </div>
+        {!readOnly && (
+          <div className="flex justify-end">
+            <Button
+              onClick={() => onSave(editedAnalysis)}
+              className="linkedin-button"
+              disabled={isSaving} // Deshabilitar el botón si isSaving es true
+            >
+              <Save className="w-4 h-4 mr-2" />
+              {isSaving ? "Guardando..." : "Guardar Cambios"} {/* Cambiar texto del botón */}
+            </Button>
+          </div>
+        )}
       </div>
     </motion.div>
   );
