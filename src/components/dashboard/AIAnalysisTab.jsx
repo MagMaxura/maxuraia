@@ -218,7 +218,13 @@ export function AIAnalysisTab({
         setCandidateProfileData({
           ...data,
           cvPrincipal: cvPrincipal,
-          analysis: cvPrincipal?.analysis_result || {},
+          analysis: {
+            ...(cvPrincipal?.analysis_result || {}),
+            habilidades: {
+              tecnicas: cvPrincipal?.analysis_result?.habilidades?.tecnicas || [],
+              blandas: cvPrincipal?.analysis_result?.habilidades?.blandas || [],
+            }
+          },
         });
       } else {
         setCandidateProfileData(null);
