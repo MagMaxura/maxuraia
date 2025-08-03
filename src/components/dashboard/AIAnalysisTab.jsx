@@ -220,10 +220,10 @@ export function AIAnalysisTab({
           cvPrincipal: cvPrincipal,
           analysis: {
             ...(cvPrincipal?.analysis_result || {}),
-            habilidades: {
-              tecnicas: cvPrincipal?.analysis_result?.habilidades?.tecnicas || [],
-              blandas: cvPrincipal?.analysis_result?.habilidades?.blandas || [],
-            }
+            habilidades: [
+              ...(cvPrincipal?.analysis_result?.habilidades?.tecnicas || []),
+              ...(cvPrincipal?.analysis_result?.habilidades?.blandas || []),
+            ].filter(Boolean), // Asegurar que no haya valores nulos/undefined
           },
         });
       } else {
