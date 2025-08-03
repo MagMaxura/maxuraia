@@ -5,6 +5,7 @@ import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
 import { supabase } from '../../lib/supabase';
 import { Input } from '../ui/input'; // Importar el componente Input
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 
 // Componentes simples para la UI
 const Select = ({ value, onChange, options, placeholder, disabled }) => (
