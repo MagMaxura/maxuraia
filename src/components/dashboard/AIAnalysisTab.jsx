@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { processJobMatches } from '../../services/matchingService';
+import EditableCV from '../EditableCV'; // Importar EditableCV
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
 import { supabase } from '../../lib/supabase';
@@ -102,6 +103,10 @@ export function AIAnalysisTab({
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [error, setError] = useState('');
   const [titleFilter, setTitleFilter] = useState(''); // Nuevo estado para el filtro de título
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false); // Estado para controlar la visibilidad del modal
+  const [selectedCandidateProfileId, setSelectedCandidateProfileId] = useState(null); // Estado para el ID del candidato en el modal
+  const [candidateProfileData, setCandidateProfileData] = useState(null); // Estado para los datos del perfil del candidato
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false); // Estado para la carga del perfil
 
   const { toast } = useToast();
 
@@ -179,7 +184,53 @@ export function AIAnalysisTab({
     } finally {
       setIsLoadingAnalysis(false);
     }
-  }, [toast]); 
+  }, [toast]);
+
+  const fetchCandidateProfile = useCallback(async (candidateId) => {
+    if (!candidateId || !recruiterId) {
+      setCandidateProfileData(null);
+      return;
+    }
+    setIsLoadingProfile(true);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('candidatos')
+        .select(`
+          *,
+          cvs (id, file_name, analysis_result, created_at, content)
+        `)
+        .eq('id', candidateId)
+        .eq('recruiter_id', recruiterId)
+        .single();
+
+      if (fetchError) {
+        console.error("[AIAnalysisTab] Error fetching candidate profile:", fetchError);
+        throw fetchError;
+      }
+
+      if (data) {
+        const candidateCvs = Array.isArray(data.cvs) ? data.cvs : (data.cvs ? [data.cvs] : []);
+        const cvPrincipal = candidateCvs.length > 0
+          ? candidateCvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+          : null;
+
+        setCandidateProfileData({
+          ...data,
+          cvPrincipal: cvPrincipal,
+          analysis: cvPrincipal?.analysis_result || {},
+        });
+      } else {
+        setCandidateProfileData(null);
+        toast({ title: "Error", description: "Candidato no encontrado.", variant: "destructive" });
+      }
+    } catch (err) {
+      console.error("[AIAnalysisTab] Error in fetchCandidateProfile:", err);
+      toast({ title: "Error", description: "No se pudo cargar el perfil del candidato.", variant: "destructive" });
+      setCandidateProfileData(null);
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  }, [recruiterId, toast]);
 
   useEffect(() => {
     if (selectedJobId) {
@@ -187,7 +238,15 @@ export function AIAnalysisTab({
     } else {
       setAnalysisResults([]);
     }
-  }, [selectedJobId]); // fetchExistingMatchesForJob ahora es estable, el efecto solo necesita depender de selectedJobId.
+  }, [selectedJobId, fetchExistingMatchesForJob]);
+
+  useEffect(() => {
+    if (isProfileModalOpen && selectedCandidateProfileId) {
+      fetchCandidateProfile(selectedCandidateProfileId);
+    } else if (!isProfileModalOpen) {
+      setCandidateProfileData(null); // Limpiar datos cuando el modal se cierra
+    }
+  }, [isProfileModalOpen, selectedCandidateProfileId, fetchCandidateProfile]);
 
   const handleCandidateSelection = (candidateId) => {
     setSelectedCandidateIds(prev => {
@@ -385,6 +444,7 @@ export function AIAnalysisTab({
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Decisión</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Razonamiento</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resumen General</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th> {/* Nueva columna */}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -393,10 +453,22 @@ export function AIAnalysisTab({
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{match.candidato_name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{match.match_score}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {match.recommendation ? 'Sí' : 'No'} 
+                        {match.recommendation ? 'Sí' : 'No'}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-500">{match.recommendation_reasoning_display || 'N/A'}</td>
                       <td className="px-6 py-4 text-sm text-gray-500">{match.summary_display || 'N/A'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Button
+                          onClick={() => {
+                            setSelectedCandidateProfileId(match.candidato_id);
+                            setIsProfileModalOpen(true);
+                          }}
+                          variant="link"
+                          className="text-blue-600 hover:text-blue-900 p-0 h-auto"
+                        >
+                          Ver Perfil
+                        </Button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -408,5 +480,38 @@ export function AIAnalysisTab({
         </div>
       )}
     </div>
+
+      {/* Modal de Perfil de Candidato */}
+      <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {isLoadingProfile ? "Cargando Perfil..." : (candidateProfileData?.name || "Perfil del Candidato")}
+            </DialogTitle>
+            <DialogDescription>
+              {isLoadingProfile ? "Obteniendo datos del candidato." : "Información detallada del candidato."}
+            </DialogDescription>
+          </DialogHeader>
+          {isLoadingProfile ? (
+            <div className="text-center py-10">Cargando perfil...</div>
+          ) : candidateProfileData ? (
+            <EditableCV
+              analysis={candidateProfileData.analysis}
+              onSave={async (updatedAnalysis) => {
+                // Aquí puedes añadir la lógica para guardar si es necesario,
+                // pero para este caso de uso, solo estamos mostrando.
+                // Si se permite la edición, la lógica de guardado debería ir aquí.
+                // Por ahora, solo cerramos el modal.
+                toast({ title: "Información", description: "La edición de perfiles no está habilitada en esta vista." });
+                setIsProfileModalOpen(false);
+              }}
+              isSaving={false} // No se permite guardar desde este modal por ahora
+              readOnly={true} // Hacer el componente de solo lectura
+            />
+          ) : (
+            <div className="text-center py-10">No se pudo cargar la información del candidato.</div>
+          )}
+        </DialogContent>
+      </Dialog>
   );
 }
