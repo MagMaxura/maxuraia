@@ -479,8 +479,6 @@ export function AIAnalysisTab({
           )}
         </div>
       )}
-    </div>
-
       {/* Modal de Perfil de Candidato */}
       <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
@@ -513,5 +511,6 @@ export function AIAnalysisTab({
           )}
         </DialogContent>
       </Dialog>
+    </div>
   );
 }
