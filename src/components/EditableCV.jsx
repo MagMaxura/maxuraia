@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "../components/ui/button";
-import { Save, Plus, X } from "lucide-react";
+import { Save, Plus, X, MessageCircle } from "lucide-react"; // Importar MessageCircle
 
 function EditableCV({ analysis, onSave, isSaving, readOnly = false }) { // Añadir prop readOnly
   const [editedAnalysis, setEditedAnalysis] = useState(analysis);
+  const [tempPhoneNumber, setTempPhoneNumber] = useState(analysis.telefono || ''); // Nuevo estado para el número temporal
 
   const handleInputChange = (field, value) => {
     setEditedAnalysis(prev => ({
@@ -102,16 +103,33 @@ function EditableCV({ analysis, onSave, isSaving, readOnly = false }) { // Añad
           {/* Teléfono */}
           <div className="mb-6"> {/* Añadir mb-6 para espacio con la siguiente sección */}
             <label className="block text-sm font-medium text-[#000000] mb-1">Teléfono</label>
-            {readOnly ? (
-              <p className="text-base text-gray-800">{editedAnalysis.telefono || 'N/A'}</p>
-            ) : (
+            <p className="text-base text-gray-800 mb-2">{editedAnalysis.telefono || 'N/A'}</p> {/* Siempre mostrar el teléfono original */}
+
+            {/* Nuevo campo para el número de WhatsApp */}
+            <div className="flex items-center gap-2">
               <input
                 type="text"
-                value={editedAnalysis.telefono}
-                onChange={(e) => handleInputChange('telefono', e.target.value)}
-                className="input-field"
+                value={tempPhoneNumber}
+                onChange={(e) => setTempPhoneNumber(e.target.value)}
+                className="input-field flex-grow"
+                placeholder="coloca aquí el numero de telefono en este formato 549XXXXXXXXXX (sin 15)"
               />
-            )}
+              <a
+                href={`https://web.whatsapp.com/send?phone=${tempPhoneNumber || editedAnalysis.telefono}&text=Hola%20te%20contacto%20por%20un%20puesto%20de%20trabajo.`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`p-2 rounded-full ${!tempPhoneNumber && !editedAnalysis.telefono ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-green-500 text-white hover:bg-green-600'}`}
+                aria-disabled={!tempPhoneNumber && !editedAnalysis.telefono}
+                onClick={(e) => {
+                  if (!tempPhoneNumber && !editedAnalysis.telefono) {
+                    e.preventDefault();
+                  }
+                }}
+              >
+                <MessageCircle className="w-5 h-5" />
+                <span className="sr-only">Enviar mensaje de WhatsApp</span>
+              </a>
+            </div>
           </div>
         </div>
 
