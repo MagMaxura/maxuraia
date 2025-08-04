@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useNavigate, Routes, Route, Outlet, useLocation, useParams } from "react-router-dom";
-import { Upload, Users, Briefcase, LogOut, FileText, CreditCard, FileUp, Brain } from "lucide-react";
+import { Upload, Users, Briefcase, LogOut, FileText, CreditCard, FileUp, Brain, Calendar } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
 import CVAnalysis from "@/components/CVAnalysis";
@@ -16,6 +16,7 @@ import CurrentPlanTab from "@/components/dashboard/CurrentPlanTab.jsx";
 import CreateNewJobTab from "@/components/dashboard/CreateNewJobTab.jsx";
 import PublishedJobsTab from "@/components/dashboard/PublishedJobsTab.jsx";
 import { AIAnalysisTab } from "@/components/dashboard/AIAnalysisTab.jsx";
+import CalendarTab from "@/components/dashboard/CalendarTab.jsx";
 import { useDashboardData } from "@/hooks/useDashboardData.js";
 import { useCvUploader } from "@/hooks/useCvUploader.js";
 
@@ -140,6 +141,7 @@ function Dashboard() {
     { id: "nuevoPuesto", label: "Nuevo Puesto de trabajo", icon: Briefcase, path: "/dashboard/nuevo-puesto" },
     { id: "puestosPublicados", label: "Puestos de trabajo publicados", icon: FileText, path: "/dashboard/puestos-publicados" },
     { id: "analisisIA", label: "Análisis IA Candidatos", icon: Brain, path: "/dashboard/analisis-ia" },
+    { id: "calendario", label: "Calendario", icon: Calendar, path: "/dashboard/calendario" },
     { id: "planActual", label: "Plan actual", icon: CreditCard, path: "/dashboard/plan-actual" },
   ];
 
@@ -468,6 +470,7 @@ function Dashboard() {
                 isLoadingJobs={isLoadingJobs}
               />
             } />
+            <Route path="calendario" element={<CalendarTab />} />
             <Route path="plan-actual" element={<CurrentPlanTab />} />
           </Routes>
           <Outlet />

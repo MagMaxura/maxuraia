@@ -1,17 +1,28 @@
 import { google } from 'googleapis';
+import { getAndRefreshGoogleAccessToken } from '../_lib/googleAuthUtils';
+import { getAuthUser } from '../_lib/authUtils'; // Asumiendo que tienes una función para obtener el usuario autenticado
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const { fileId, accessToken } = req.query;
+  const { fileId } = req.query;
 
-  if (!fileId || !accessToken) {
-    return res.status(400).json({ message: 'File ID and access token are required.' });
+  // Obtener el ID del usuario autenticado
+  const { user, error: authError } = await getAuthUser(req);
+  if (authError || !user) {
+    return res.status(401).json({ message: 'Unauthorized', error: authError?.message });
+  }
+
+  if (!fileId) {
+    return res.status(400).json({ message: 'File ID is required.' });
   }
 
   try {
+    // Obtener el access_token (y refrescarlo si es necesario)
+    const accessToken = await getAndRefreshGoogleAccessToken(user.id);
+
     const auth = new google.auth.OAuth2();
     auth.setCredentials({ access_token: accessToken });
 
