@@ -84,33 +84,34 @@ function EditableCV({ analysis, onSave, isSaving, readOnly = false }) { // Añad
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4"> {/* Nueva cuadrícula para Email y Teléfono */}
-            <div>
-              <label className="block text-sm font-medium text-[#000000] mb-1">Email</label>
-              {readOnly ? (
-                <p className="text-base text-gray-800">{editedAnalysis.email || 'N/A'}</p>
-              ) : (
-                <input
-                  type="email"
-                  value={editedAnalysis.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="input-field"
-                />
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-[#000000] mb-1">Teléfono</label>
-              {readOnly ? (
-                <p className="text-base text-gray-800">{editedAnalysis.telefono || 'N/A'}</p>
-              ) : (
-                <input
-                  type="text"
-                  value={editedAnalysis.telefono}
-                  onChange={(e) => handleInputChange('telefono', e.target.value)}
-                  className="input-field"
-                />
-              )}
-            </div>
+          {/* Email */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-[#000000] mb-1">Email</label>
+            {readOnly ? (
+              <p className="text-base text-gray-800">{editedAnalysis.email || 'N/A'}</p>
+            ) : (
+              <input
+                type="email"
+                value={editedAnalysis.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                className="input-field"
+              />
+            )}
+          </div>
+
+          {/* Teléfono */}
+          <div className="mb-6"> {/* Añadir mb-6 para espacio con la siguiente sección */}
+            <label className="block text-sm font-medium text-[#000000] mb-1">Teléfono</label>
+            {readOnly ? (
+              <p className="text-base text-gray-800">{editedAnalysis.telefono || 'N/A'}</p>
+            ) : (
+              <input
+                type="text"
+                value={editedAnalysis.telefono}
+                onChange={(e) => handleInputChange('telefono', e.target.value)}
+                className="input-field"
+              />
+            )}
           </div>
         </div>
 
