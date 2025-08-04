@@ -1,6 +1,11 @@
 import { google } from 'googleapis';
-import { supabase } from '../../src/lib/supabase'; // Asumiendo que supabase está configurado aquí
+import { createClient } from '@supabase/supabase-js'; // Importar createClient
 import { send } from 'micro';
+
+// Inicializar Supabase para el entorno de backend
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE_KEY si necesitas privilegios elevados
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } = process.env;
 

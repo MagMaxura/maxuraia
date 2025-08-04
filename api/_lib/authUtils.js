@@ -1,4 +1,9 @@
-import { supabase } from '../../src/lib/supabase'; // Asegúrate de que esta ruta sea correcta para el entorno de Vercel
+import { createClient } from '@supabase/supabase-js'; // Importar createClient
+
+// Inicializar Supabase para el entorno de backend
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE_KEY
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export async function getAuthUser(req) {
   try {

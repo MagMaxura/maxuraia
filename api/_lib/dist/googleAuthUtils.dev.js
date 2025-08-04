@@ -7,9 +7,14 @@ exports.getAndRefreshGoogleAccessToken = getAndRefreshGoogleAccessToken;
 
 var _googleapis = require("googleapis");
 
-var _supabase = require("../../src/lib/supabase");
+var _supabaseJs = require("@supabase/supabase-js");
 
-// Asegúrate de que esta ruta sea correcta para el entorno de Vercel
+// Importar createClient
+// Inicializar Supabase para el entorno de backend
+var supabaseUrl = process.env.VITE_SUPABASE_URL;
+var supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE_KEY
+
+var supabase = (0, _supabaseJs.createClient)(supabaseUrl, supabaseKey);
 var _process$env = process.env,
     GOOGLE_CLIENT_ID = _process$env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET,
@@ -32,7 +37,7 @@ function getAndRefreshGoogleAccessToken(userId) {
 
         case 2:
           _context.next = 4;
-          return regeneratorRuntime.awrap(_supabase.supabase.from('user_google_tokens').select('access_token, refresh_token, expiry_date').eq('user_id', userId).single());
+          return regeneratorRuntime.awrap(supabase.from('user_google_tokens').select('access_token, refresh_token, expiry_date').eq('user_id', userId).single());
 
         case 4:
           _ref = _context.sent;
@@ -77,7 +82,7 @@ function getAndRefreshGoogleAccessToken(userId) {
           // 4. Actualizar el nuevo access_token y expiry_date en Supabase
 
           _context.next = 23;
-          return regeneratorRuntime.awrap(_supabase.supabase.from('user_google_tokens').update({
+          return regeneratorRuntime.awrap(supabase.from('user_google_tokens').update({
             access_token: access_token,
             expiry_date: expiry_date // No actualizamos refresh_token aquí, ya que Google solo lo devuelve la primera vez
 

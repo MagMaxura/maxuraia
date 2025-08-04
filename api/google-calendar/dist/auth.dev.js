@@ -7,11 +7,16 @@ exports["default"] = void 0;
 
 var _googleapis = require("googleapis");
 
-var _supabase = require("../../src/lib/supabase");
+var _supabaseJs = require("@supabase/supabase-js");
 
 var _micro = require("micro");
 
-// Asumiendo que supabase está configurado aquí
+// Importar createClient
+// Inicializar Supabase para el entorno de backend
+var supabaseUrl = process.env.VITE_SUPABASE_URL;
+var supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE_KEY si necesitas privilegios elevados
+
+var supabase = (0, _supabaseJs.createClient)(supabaseUrl, supabaseKey);
 var _process$env = process.env,
     GOOGLE_CLIENT_ID = _process$env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET,
@@ -50,7 +55,7 @@ var _callee = function _callee(req, res) {
           _ref = _context.sent;
           tokens = _ref.tokens;
           _context.next = 11;
-          return regeneratorRuntime.awrap(_supabase.supabase.from('user_google_tokens') // Tabla para almacenar tokens de Google por usuario
+          return regeneratorRuntime.awrap(supabase.from('user_google_tokens') // Tabla para almacenar tokens de Google por usuario
           .upsert({
             user_id: userId,
             access_token: tokens.access_token,
