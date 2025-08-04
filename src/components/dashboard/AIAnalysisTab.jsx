@@ -6,6 +6,7 @@ import { useToast } from '../ui/use-toast';
 import { supabase } from '../../lib/supabase';
 import { Input } from '../ui/input'; // Importar el componente Input
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
+import { X } from 'lucide-react'; // Importar el icono X
 
 // Componentes simples para la UI
 const Select = ({ value, onChange, options, placeholder, disabled }) => (
@@ -488,7 +489,7 @@ export function AIAnalysisTab({
       )}
       {/* Modal de Perfil de Candidato */}
       <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto relative"> {/* Añadir relative para posicionar el botón */}
           <DialogHeader>
             <DialogTitle>
               {isLoadingProfile ? "Cargando Perfil..." : (candidateProfileData?.name || "Perfil del Candidato")}
@@ -497,6 +498,15 @@ export function AIAnalysisTab({
               {isLoadingProfile ? "Obteniendo datos del candidato." : "Información detallada del candidato."}
             </DialogDescription>
           </DialogHeader>
+          <Button
+            onClick={() => setIsProfileModalOpen(false)}
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
+            variant="ghost"
+            size="icon"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Cerrar</span>
+          </Button>
           {isLoadingProfile ? (
             <div className="text-center py-10">Cargando perfil...</div>
           ) : candidateProfileData ? (
