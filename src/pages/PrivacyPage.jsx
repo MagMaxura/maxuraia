@@ -12,7 +12,6 @@ const PrivacyPage = () => {
         <h1 className="text-4xl font-bold mb-8 text-center">Política de Privacidad</h1>
 
         <section className="mb-12">
-          {/* Contenido de Política de Privacidad extraído de LegalPage.jsx (líneas 86-146) */}
           <h2 className="text-2xl font-semibold mb-4 border-b pb-2">Política de Privacidad</h2>
           <p className="mb-2 text-sm text-gray-600">Última actualización: 14 de mayo de 2025</p>
           <p className="mb-4">
@@ -23,7 +22,7 @@ const PrivacyPage = () => {
           <p className="mb-4">Podemos recopilar los siguientes datos:</p>
           <ul className="list-disc list-inside mb-4 ml-4">
             <li>Información de contacto (nombre, correo electrónico, teléfono).</li>
-            <li>Datos profesionales (currículum, experiencia laboral).</li>
+            <li>Datos profesionales (currículum, experiencia laboral). Para facilitar la postulación, ofrecemos la opción de que los usuarios suban sus currículums directamente desde su cuenta de Google Drive. Con el consentimiento expreso del usuario, nuestra aplicación accede a los documentos de su Drive únicamente con permisos de lectura (https://www.googleapis.com/auth/drive.readonly) para cargar el archivo seleccionado en nuestra plataforma. El acceso se limita a la sesión del usuario y el archivo es procesado para su postulación.</li>
             <li>Información de uso del sitio (cookies, dirección IP).</li>
             <li>Datos de navegación y comportamiento en la plataforma.</li>
           </ul>
