@@ -44,18 +44,29 @@ export default async (req, res) => {
         return send(res, 500, { error: 'Failed to store tokens.' });
       }
 
-      // Devolver solo el access_token al frontend
-      send(res, 200, { access_token: tokens.access_token, expiry_date: tokens.expiry_date });
+      // Devolver el access_token y el userId al frontend
+      send(res, 200, { access_token: tokens.access_token, expiry_date: tokens.expiry_date, userId: userId });
 
     } catch (error) {
       console.error('Error during token exchange:', error);
       send(res, 500, { error: 'Failed to exchange code for tokens.', details: error.message });
     }
   } else if (req.method === 'GET') {
-    // Manejar el refresco de tokens o la obtención de eventos
-    // Esto es un placeholder, la lógica real de eventos se manejará en otro endpoint
-    // o se expandirá aquí. Por ahora, solo se enfoca en la autenticación.
-    send(res, 405, { error: 'Method Not Allowed' });
+    // Iniciar el flujo de autenticación de Google
+    const scopes = [
+      'https://www.googleapis.com/auth/calendar',
+      'https://www.googleapis.com/auth/drive.file', // O 'https://www.googleapis.com/auth/drive' para acceso completo
+      'https://www.googleapis.com/auth/userinfo.email', // Para obtener el email del usuario
+      'https://www.googleapis.com/auth/userinfo.profile' // Para obtener el perfil del usuario
+    ];
+
+    const authorizationUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline', // Esto asegura que obtengamos un refresh_token
+      scope: scopes.join(' '),
+      prompt: 'consent', // Solicita el consentimiento cada vez para asegurar el refresh_token
+    });
+
+    send(res, 302, null, { Location: authorizationUrl }); // Redirigir al usuario a la URL de autorización
   } else {
     send(res, 405, { error: 'Method Not Allowed' });
   }

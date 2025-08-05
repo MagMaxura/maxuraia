@@ -24,7 +24,7 @@ var _process$env = process.env,
 var oauth2Client = new _googleapis.google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
 
 var _callee = function _callee(req, res) {
-  var _req$body, code, userId, _ref, tokens, _ref2, data, error;
+  var _req$body, code, userId, _ref, tokens, _ref2, data, error, scopes, authorizationUrl;
 
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
@@ -84,10 +84,11 @@ var _callee = function _callee(req, res) {
           }));
 
         case 17:
-          // Devolver solo el access_token al frontend
+          // Devolver el access_token y el userId al frontend
           (0, _micro.send)(res, 200, {
             access_token: tokens.access_token,
-            expiry_date: tokens.expiry_date
+            expiry_date: tokens.expiry_date,
+            userId: userId
           });
           _context.next = 24;
           break;
@@ -107,12 +108,21 @@ var _callee = function _callee(req, res) {
 
         case 26:
           if (req.method === 'GET') {
-            // Manejar el refresco de tokens o la obtención de eventos
-            // Esto es un placeholder, la lógica real de eventos se manejará en otro endpoint
-            // o se expandirá aquí. Por ahora, solo se enfoca en la autenticación.
-            (0, _micro.send)(res, 405, {
-              error: 'Method Not Allowed'
+            // Iniciar el flujo de autenticación de Google
+            scopes = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive.file', // O 'https://www.googleapis.com/auth/drive' para acceso completo
+            'https://www.googleapis.com/auth/userinfo.email', // Para obtener el email del usuario
+            'https://www.googleapis.com/auth/userinfo.profile' // Para obtener el perfil del usuario
+            ];
+            authorizationUrl = oauth2Client.generateAuthUrl({
+              access_type: 'offline',
+              // Esto asegura que obtengamos un refresh_token
+              scope: scopes.join(' '),
+              prompt: 'consent' // Solicita el consentimiento cada vez para asegurar el refresh_token
+
             });
+            (0, _micro.send)(res, 302, null, {
+              Location: authorizationUrl
+            }); // Redirigir al usuario a la URL de autorización
           } else {
             (0, _micro.send)(res, 405, {
               error: 'Method Not Allowed'
