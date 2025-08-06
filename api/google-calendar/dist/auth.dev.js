@@ -31,15 +31,22 @@ var _callee = function _callee(req, res) {
       switch (_context.prev = _context.next) {
         case 0:
           if (!(req.method === 'POST')) {
-            _context.next = 26;
+            _context.next = 30;
             break;
           }
 
           _context.prev = 1;
           _req$body = req.body, code = _req$body.code, userId = _req$body.userId;
+          console.log('Auth Request Body:', {
+            code: code ? 'present' : 'missing',
+            userId: userId
+          });
+          console.log('Google Client ID:', GOOGLE_CLIENT_ID ? 'present' : 'missing');
+          console.log('Google Client Secret:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing');
+          console.log('Google Redirect URI:', GOOGLE_REDIRECT_URI ? 'present' : 'missing');
 
           if (!(!code || !userId)) {
-            _context.next = 5;
+            _context.next = 9;
             break;
           }
 
@@ -47,14 +54,14 @@ var _callee = function _callee(req, res) {
             error: 'Code and userId are required.'
           }));
 
-        case 5:
-          _context.next = 7;
+        case 9:
+          _context.next = 11;
           return regeneratorRuntime.awrap(oauth2Client.getToken(code));
 
-        case 7:
+        case 11:
           _ref = _context.sent;
           tokens = _ref.tokens;
-          _context.next = 11;
+          _context.next = 15;
           return regeneratorRuntime.awrap(supabase.from('user_google_tokens') // Tabla para almacenar tokens de Google por usuario
           .upsert({
             user_id: userId,
@@ -68,13 +75,13 @@ var _callee = function _callee(req, res) {
             onConflict: 'user_id'
           }));
 
-        case 11:
+        case 15:
           _ref2 = _context.sent;
           data = _ref2.data;
           error = _ref2.error;
 
           if (!error) {
-            _context.next = 17;
+            _context.next = 21;
             break;
           }
 
@@ -83,18 +90,18 @@ var _callee = function _callee(req, res) {
             error: 'Failed to store tokens.'
           }));
 
-        case 17:
+        case 21:
           // Devolver el access_token y el userId al frontend
           (0, _micro.send)(res, 200, {
             access_token: tokens.access_token,
             expiry_date: tokens.expiry_date,
             userId: userId
           });
-          _context.next = 24;
+          _context.next = 28;
           break;
 
-        case 20:
-          _context.prev = 20;
+        case 24:
+          _context.prev = 24;
           _context.t0 = _context["catch"](1);
           console.error('Error during token exchange:', _context.t0);
           (0, _micro.send)(res, 500, {
@@ -102,11 +109,11 @@ var _callee = function _callee(req, res) {
             details: _context.t0.message
           });
 
-        case 24:
-          _context.next = 27;
+        case 28:
+          _context.next = 31;
           break;
 
-        case 26:
+        case 30:
           if (req.method === 'GET') {
             // Iniciar el flujo de autenticación de Google
             scopes = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive.file', // O 'https://www.googleapis.com/auth/drive' para acceso completo
@@ -129,12 +136,12 @@ var _callee = function _callee(req, res) {
             });
           }
 
-        case 27:
+        case 31:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[1, 20]]);
+  }, null, null, [[1, 24]]);
 };
 
 exports["default"] = _callee;

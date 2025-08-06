@@ -21,6 +21,12 @@ export default async (req, res) => {
     try {
       const { code, userId } = req.body;
 
+      console.log('Auth Request Body:', { code: code ? 'present' : 'missing', userId });
+      console.log('Google Client ID:', GOOGLE_CLIENT_ID ? 'present' : 'missing');
+      console.log('Google Client Secret:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing');
+      console.log('Google Redirect URI:', GOOGLE_REDIRECT_URI ? 'present' : 'missing');
+
+
       if (!code || !userId) {
         return send(res, 400, { error: 'Code and userId are required.' });
       }
