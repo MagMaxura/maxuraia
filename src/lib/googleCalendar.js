@@ -37,12 +37,20 @@ export const getCalendarEvents = async (accessToken) => {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Failed to fetch calendar events');
+      console.error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+      let errorDetails = 'Failed to fetch calendar events';
+      try {
+        const errorData = await response.json();
+        errorDetails = errorData.error?.message || JSON.stringify(errorData);
+      } catch (parseError) {
+        const responseText = await response.text();
+        errorDetails = `Failed to parse error response: ${parseError.message}. Response text: ${responseText}`;
+      }
+      throw new Error(errorDetails);
     }
 
     const data = await response.json();
-    console.log('Raw Google Calendar API response data:', data); // Añadir este log
+    console.log('Raw Google Calendar API response data:', data);
 
     // Formatear eventos para react-big-calendar
     const formattedEvents = data.items.map(event => ({
