@@ -42,6 +42,8 @@ export const getCalendarEvents = async (accessToken) => {
     }
 
     const data = await response.json();
+    console.log('Raw Google Calendar API response data:', data); // Añadir este log
+
     // Formatear eventos para react-big-calendar
     const formattedEvents = data.items.map(event => ({
       title: event.summary,
