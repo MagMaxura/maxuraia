@@ -6,7 +6,6 @@ const PrivacyPage = () => {
     <>
       <head>
         <title>Política de Privacidad - EmploySmartIA</title>
-        <meta name="robots" content="noindex, nofollow" />
       </head>
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <h1 className="text-4xl font-bold mb-8 text-center">Política de Privacidad</h1>

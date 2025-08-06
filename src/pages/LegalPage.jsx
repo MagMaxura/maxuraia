@@ -6,7 +6,6 @@ const LegalPage = () => {
     <>
       <head>
         <title>Términos, Privacidad y Reembolsos - EmploySmartIA</title>
-        <meta name="robots" content="noindex, nofollow" />
       </head>
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <h1 className="text-4xl font-bold mb-4 text-center">Información Legal de EmploySmartIA</h1>

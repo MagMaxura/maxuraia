@@ -6,7 +6,6 @@ const TermsPage = () => {
     <>
       <head>
         <title>Términos y Condiciones - EmploySmartIA</title>
-        <meta name="robots" content="noindex, nofollow" />
       </head>
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <h1 className="text-4xl font-bold mb-8 text-center">Términos y Condiciones de Uso</h1>
