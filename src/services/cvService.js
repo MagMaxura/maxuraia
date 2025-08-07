@@ -277,6 +277,30 @@ export const cvService = {
     }
     return data;
   },
+
+  async updateCandidateNotes(candidateId, notes, recruiterId) {
+    if (!candidateId || notes === undefined || !recruiterId) {
+      throw new Error("ID del candidato, notas y ID del reclutador son requeridos para actualizar las notas.");
+    }
+    try {
+      const { data, error } = await supabase
+        .from('candidatos')
+        .update({ notas: notes })
+        .eq('id', candidateId)
+        .eq('recruiter_id', recruiterId) // Asegurar que solo el reclutador propietario pueda actualizar
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error actualizando notas del candidato en Supabase:", JSON.stringify(error, null, 2));
+        throw error;
+      }
+      return data;
+    } catch (error) {
+      console.error("Excepción en cvService.updateCandidateNotes:", error);
+      throw error;
+    }
+  },
   
   async deleteCV(cvDatabaseId, candidateDatabaseId) {
     

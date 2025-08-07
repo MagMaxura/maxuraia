@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cvService } from '@/services/cvService';
 import EditableCV from '@/components/EditableCV';
+import CandidateNotes from '@/components/CandidateNotes';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 
@@ -14,6 +15,7 @@ function CandidateProfilePage() {
 
   const [candidateData, setCandidateData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSavingNotes, setIsSavingNotes] = useState(false); // Nuevo estado para guardar notas
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -41,6 +43,7 @@ function CandidateProfilePage() {
             ...targetCandidato,
             cvPrincipal: cvPrincipal,
             analysis: cvPrincipal?.analysis_result || {},
+            notes: targetCandidato.notas || "", // Cargar notas
           });
         } else {
           setError("Candidato no encontrado.");
@@ -119,6 +122,25 @@ function CandidateProfilePage() {
     }
   };
 
+  const handleSaveNotes = async (id, newNotes) => {
+    if (!id || !user?.id) {
+      toast({ title: "Error", description: "No se pudo guardar las notas: faltan datos.", variant: "destructive" });
+      return;
+    }
+
+    setIsSavingNotes(true);
+    try {
+      await cvService.updateCandidateNotes(id, newNotes, user.id);
+      setCandidateData(prev => ({ ...prev, notes: newNotes }));
+      toast({ title: "Notas Guardadas", description: "Las notas del candidato han sido actualizadas exitosamente." });
+    } catch (err) {
+      console.error("Error al guardar las notas del candidato:", err);
+      toast({ title: "Error al Guardar Notas", description: "No se pudo guardar las notas del candidato.", variant: "destructive" });
+    } finally {
+      setIsSavingNotes(false);
+    }
+  };
+
   const handleBackToDashboard = () => {
     navigate('/dashboard/cvsProcesados');
   };
@@ -164,14 +186,22 @@ function CandidateProfilePage() {
       <Button onClick={handleBackToDashboard} className="mb-4 bg-gray-200 text-gray-800 hover:bg-gray-300">
         ← Volver a CVs Procesados
       </Button>
-      <div className="bg-white p-6 rounded-xl shadow-xl">
-        <h2 className="text-xl font-semibold text-slate-800 mb-4">
-          Perfil del Candidato: {candidateData.name || "Sin Nombre"}
-        </h2>
-        <EditableCV
-          analysis={candidateData.analysis}
-          onSave={handleSaveCandidate}
-          isSaving={isLoading} // Pasar isLoading como isSaving
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-xl shadow-xl">
+          <h2 className="text-xl font-semibold text-slate-800 mb-4">
+            Perfil del Candidato: {candidateData.name || "Sin Nombre"}
+          </h2>
+          <EditableCV
+            analysis={candidateData.analysis}
+            onSave={handleSaveCandidate}
+            isSaving={isLoading} // Pasar isLoading como isSaving
+          />
+        </div>
+        <CandidateNotes
+          candidateId={candidateData.id}
+          initialNotes={candidateData.notes}
+          onSave={handleSaveNotes}
+          isSaving={isSavingNotes}
         />
       </div>
     </div>
