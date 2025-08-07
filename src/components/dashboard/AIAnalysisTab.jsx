@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { processJobMatches } from '../../services/matchingService';
 import EditableCV from '../EditableCV'; // Importar EditableCV
+import CandidateNotes from '../CandidateNotes'; // Importar CandidateNotes
 import { Button } from '../ui/button';
 import { useToast } from '../ui/use-toast';
 import { supabase } from '../../lib/supabase';
@@ -109,6 +110,7 @@ export function AIAnalysisTab({
   const [selectedCandidateProfileId, setSelectedCandidateProfileId] = useState(null); // Estado para el ID del candidato en el modal
   const [candidateProfileData, setCandidateProfileData] = useState(null); // Estado para los datos del perfil del candidato
   const [isLoadingProfile, setIsLoadingProfile] = useState(false); // Estado para la carga del perfil
+  const [isSavingProfileNotes, setIsSavingProfileNotes] = useState(false); // Nuevo estado para guardar notas del perfil
 
   const { toast } = useToast();
 
@@ -226,6 +228,7 @@ export function AIAnalysisTab({
               ...(cvPrincipal?.analysis_result?.habilidades?.blandas || []),
             ].filter(Boolean), // Asegurar que no haya valores nulos/undefined
           },
+          notes: data.notas || "", // Cargar notas del candidato
         });
       } else {
         setCandidateProfileData(null);
@@ -237,6 +240,25 @@ export function AIAnalysisTab({
       setCandidateProfileData(null);
     } finally {
       setIsLoadingProfile(false);
+    }
+  }, [recruiterId, toast]);
+
+  const handleSaveProfileNotes = useCallback(async (id, newNotes) => {
+    if (!id || !recruiterId) {
+      toast({ title: "Error", description: "No se pudo guardar las notas: faltan datos.", variant: "destructive" });
+      return;
+    }
+
+    setIsSavingProfileNotes(true);
+    try {
+      await cvService.updateCandidateNotes(id, newNotes, recruiterId);
+      setCandidateProfileData(prev => ({ ...prev, notes: newNotes }));
+      toast({ title: "Notas Guardadas", description: "Las notas del candidato han sido actualizadas exitosamente." });
+    } catch (err) {
+      console.error("Error al guardar las notas del candidato desde el modal:", err);
+      toast({ title: "Error al Guardar Notas", description: "No se pudo guardar las notas del candidato.", variant: "destructive" });
+    } finally {
+      setIsSavingProfileNotes(false);
     }
   }, [recruiterId, toast]);
 
@@ -489,7 +511,7 @@ export function AIAnalysisTab({
       )}
       {/* Modal de Perfil de Candidato */}
       <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
-        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto relative"> {/* Añadir relative para posicionar el botón */}
+        <DialogContent className="sm:max-w-[1200px] max-h-[90vh] overflow-y-auto relative"> {/* Aumentar el ancho del modal */}
           <DialogHeader>
             <DialogTitle>
               {isLoadingProfile ? "Cargando Perfil..." : (candidateProfileData?.name || "Perfil del Candidato")}
@@ -510,19 +532,26 @@ export function AIAnalysisTab({
           {isLoadingProfile ? (
             <div className="text-center py-10">Cargando perfil...</div>
           ) : candidateProfileData ? (
-            <EditableCV
-              analysis={candidateProfileData.analysis}
-              onSave={async (updatedAnalysis) => {
-                // Aquí puedes añadir la lógica para guardar si es necesario,
-                // pero para este caso de uso, solo estamos mostrando.
-                // Si se permite la edición, la lógica de guardado debería ir aquí.
-                // Por ahora, solo cerramos el modal.
-                toast({ title: "Información", description: "La edición de perfiles no está habilitada en esta vista." });
-                setIsProfileModalOpen(false);
-              }}
-              isSaving={false} // No se permite guardar desde este modal por ahora
-              readOnly={true} // Hacer el componente de solo lectura
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6"> {/* Diseño de dos paneles */}
+              <div className="p-4 bg-white rounded-xl shadow-xl"> {/* Contenedor para EditableCV */}
+                <h3 className="text-lg font-semibold text-slate-800 mb-4">Información del Perfil</h3>
+                <EditableCV
+                  analysis={candidateProfileData.analysis}
+                  onSave={async (updatedAnalysis) => {
+                    // La edición del perfil no está habilitada directamente desde este modal
+                    toast({ title: "Información", description: "La edición del perfil no está habilitada en esta vista." });
+                  }}
+                  isSaving={false}
+                  readOnly={true} // El perfil es de solo lectura
+                />
+              </div>
+              <CandidateNotes
+                candidateId={candidateProfileData.id}
+                initialNotes={candidateProfileData.notes}
+                onSave={handleSaveProfileNotes}
+                isSaving={isSavingProfileNotes}
+              />
+            </div>
           ) : (
             <div className="text-center py-10">No se pudo cargar la información del candidato.</div>
           )}
