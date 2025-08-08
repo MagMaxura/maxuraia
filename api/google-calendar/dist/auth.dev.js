@@ -18,10 +18,10 @@ var supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE
 
 var supabase = (0, _supabaseJs.createClient)(supabaseUrl, supabaseKey);
 var _process$env = process.env,
-    GOOGLE_CLIENT_ID = _process$env.GOOGLE_CLIENT_ID,
+    VITE_GOOGLE_CLIENT_ID = _process$env.VITE_GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET,
-    GOOGLE_REDIRECT_URI = _process$env.GOOGLE_REDIRECT_URI;
-var oauth2Client = new _googleapis.google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
+    VITE_GOOGLE_REDIRECT_URI = _process$env.VITE_GOOGLE_REDIRECT_URI;
+var oauth2Client = new _googleapis.google.auth.OAuth2(VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI);
 
 var _callee = function _callee(req, res) {
   var _req$body, code, userId, _ref, tokens, _ref2, data, error, scopes, authorizationUrl;
@@ -41,9 +41,9 @@ var _callee = function _callee(req, res) {
             code: code ? 'present' : 'missing',
             userId: userId
           });
-          console.log('Google Client ID:', GOOGLE_CLIENT_ID ? 'present' : 'missing');
+          console.log('Google Client ID:', VITE_GOOGLE_CLIENT_ID ? 'present' : 'missing');
           console.log('Google Client Secret:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing');
-          console.log('Google Redirect URI:', GOOGLE_REDIRECT_URI ? 'present' : 'missing');
+          console.log('Google Redirect URI:', VITE_GOOGLE_REDIRECT_URI ? 'present' : 'missing');
 
           if (!(!code || !userId)) {
             _context.next = 9;

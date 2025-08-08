@@ -7,12 +7,12 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE_KEY si necesitas privilegios elevados
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } = process.env;
+const { VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI } = process.env;
 
 const oauth2Client = new google.auth.OAuth2(
-  GOOGLE_CLIENT_ID,
+  VITE_GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
-  GOOGLE_REDIRECT_URI
+  VITE_GOOGLE_REDIRECT_URI
 );
 
 export default async (req, res) => {
@@ -22,9 +22,9 @@ export default async (req, res) => {
       const { code, userId } = req.body;
 
       console.log('Auth Request Body:', { code: code ? 'present' : 'missing', userId });
-      console.log('Google Client ID:', GOOGLE_CLIENT_ID ? 'present' : 'missing');
+      console.log('Google Client ID:', VITE_GOOGLE_CLIENT_ID ? 'present' : 'missing');
       console.log('Google Client Secret:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing');
-      console.log('Google Redirect URI:', GOOGLE_REDIRECT_URI ? 'present' : 'missing');
+      console.log('Google Redirect URI:', VITE_GOOGLE_REDIRECT_URI ? 'present' : 'missing');
 
 
       if (!code || !userId) {
