@@ -511,7 +511,7 @@ export function AIAnalysisTab({
       )}
       {/* Modal de Perfil de Candidato */}
       <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
-        <DialogContent className="w-full max-w-full sm:max-w-[90vw] md:max-w-[1400px] lg:max-w-screen-2xl max-h-[90vh] overflow-y-auto relative"> {/* Ajustar el ancho del modal para ser más responsive */}
+        <DialogContent className="w-full !max-w-none sm:!max-w-[90vw] md:!max-w-[1400px] lg:!max-w-screen-2xl max-h-[90vh] overflow-y-auto relative mx-auto"> {/* Forzar el ancho del modal y centrarlo */}
           <DialogHeader>
             <DialogTitle>
               {isLoadingProfile ? "Cargando Perfil..." : (candidateProfileData?.name || "Perfil del Candidato")}
