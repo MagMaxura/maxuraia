@@ -522,7 +522,7 @@ export function AIAnalysisTab({
           </DialogHeader>
           <Button
             onClick={() => setIsProfileModalOpen(false)}
-            className="absolute top-4 right-8 p-2 rounded-full hover:bg-gray-100 z-10" {/* Aumentar right y añadir z-index */}
+            className="absolute top-4 right-8 p-2 rounded-full hover:bg-gray-100 z-10"
             variant="ghost"
             size="icon"
           >
