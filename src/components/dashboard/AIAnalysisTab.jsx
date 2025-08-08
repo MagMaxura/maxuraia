@@ -511,7 +511,7 @@ export function AIAnalysisTab({
       )}
       {/* Modal de Perfil de Candidato */}
       <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
-        <DialogContent className="w-full !max-w-none sm:!max-w-[90vw] md:!max-w-[1400px] lg:!max-w-screen-2xl max-h-[90vh] overflow-y-auto relative mx-auto"> {/* Forzar el ancho del modal y centrarlo */}
+        <DialogContent className="w-full !max-w-[95vw] max-h-[90vh] overflow-y-auto relative !p-0"> {/* Forzar el ancho del modal, eliminar padding y centrar */}
           <DialogHeader>
             <DialogTitle>
               {isLoadingProfile ? "Cargando Perfil..." : (candidateProfileData?.name || "Perfil del Candidato")}
@@ -532,8 +532,8 @@ export function AIAnalysisTab({
           {isLoadingProfile ? (
             <div className="text-center py-10">Cargando perfil...</div>
           ) : candidateProfileData ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full"> {/* Diseño de dos paneles, asegurar ancho completo */}
-              <div className="p-4 bg-white rounded-xl shadow-xl overflow-auto"> {/* Contenedor para EditableCV, añadir overflow-auto */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full h-full"> {/* Diseño de dos paneles, asegurar ancho y alto completo */}
+              <div className="p-6 bg-white rounded-xl shadow-xl overflow-auto"> {/* Contenedor para EditableCV, añadir overflow-auto y padding */}
                 <h3 className="text-lg font-semibold text-slate-800 mb-4">Información del Perfil</h3>
                 <EditableCV
                   analysis={candidateProfileData.analysis}
