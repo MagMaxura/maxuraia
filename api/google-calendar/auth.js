@@ -9,6 +9,10 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 const { VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI } = process.env;
 
+console.log('DEBUG - VITE_GOOGLE_CLIENT_ID:', VITE_GOOGLE_CLIENT_ID);
+console.log('DEBUG - GOOGLE_CLIENT_SECRET:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing'); // No loguear el secreto directamente
+console.log('DEBUG - VITE_GOOGLE_REDIRECT_URI:', VITE_GOOGLE_REDIRECT_URI);
+
 const oauth2Client = new google.auth.OAuth2(
   VITE_GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
