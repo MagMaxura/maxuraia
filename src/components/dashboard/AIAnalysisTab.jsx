@@ -511,7 +511,7 @@ export function AIAnalysisTab({
       )}
       {/* Modal de Perfil de Candidato */}
       <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
-        <DialogContent className="w-full max-w-full sm:max-w-[90vw] md:max-w-[1400px] lg:max-w-screen-2xl max-h-[90vh] overflow-y-auto relative" style={{ width: 'fit-content', minWidth: '90vw' }}> {/* Forzar el ancho del modal para ser más responsive */}
+        <DialogContent className="w-full max-w-full sm:max-w-[90vw] md:max-w-[1400px] lg:max-w-screen-2xl max-h-[90vh] overflow-y-auto relative"> {/* Ajustar el ancho del modal para ser más responsive */}
           <DialogHeader>
             <DialogTitle>
               {isLoadingProfile ? "Cargando Perfil..." : (candidateProfileData?.name || "Perfil del Candidato")}
@@ -522,7 +522,7 @@ export function AIAnalysisTab({
           </DialogHeader>
           <Button
             onClick={() => setIsProfileModalOpen(false)}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
+            className="absolute top-4 right-8 p-2 rounded-full hover:bg-gray-100 z-10" {/* Aumentar right y añadir z-index */}
             variant="ghost"
             size="icon"
           >
