@@ -21,11 +21,8 @@ var _process$env = process.env,
     VITE_GOOGLE_CLIENT_ID = _process$env.VITE_GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET,
     VITE_GOOGLE_REDIRECT_URI = _process$env.VITE_GOOGLE_REDIRECT_URI;
-console.log('DEBUG - VITE_GOOGLE_CLIENT_ID:', VITE_GOOGLE_CLIENT_ID);
-console.log('DEBUG - GOOGLE_CLIENT_SECRET:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing'); // No loguear el secreto directamente
-
-console.log('DEBUG - VITE_GOOGLE_REDIRECT_URI:', VITE_GOOGLE_REDIRECT_URI);
-var oauth2Client = new _googleapis.google.auth.OAuth2(VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI);
+var oauth2Client = new _googleapis.google.auth.OAuth2(VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI.replace(/\/$/, '') // Eliminar barra final si existe
+);
 
 var _callee = function _callee(req, res) {
   var _req$body, code, userId, _ref, tokens, _ref2, data, error, scopes, authorizationUrl;

@@ -186,8 +186,8 @@ function CandidateProfilePage() {
       <Button onClick={handleBackToDashboard} className="mb-4 bg-gray-200 text-gray-800 hover:bg-gray-300">
         ← Volver a CVs Procesados
       </Button>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-xl">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 bg-white p-6 rounded-xl shadow-xl">
           <h2 className="text-xl font-semibold text-slate-800 mb-4">
             Perfil del Candidato: {candidateData.name || "Sin Nombre"}
           </h2>
@@ -197,12 +197,14 @@ function CandidateProfilePage() {
             isSaving={isLoading} // Pasar isLoading como isSaving
           />
         </div>
-        <CandidateNotes
-          candidateId={candidateData.id}
-          initialNotes={candidateData.notes}
-          onSave={handleSaveNotes}
-          isSaving={isSavingNotes}
-        />
+        <div className="md:col-span-1">
+          <CandidateNotes
+            candidateId={candidateData.id}
+            initialNotes={candidateData.notes}
+            onSave={handleSaveNotes}
+            isSaving={isSavingNotes}
+          />
+        </div>
       </div>
     </div>
   );
