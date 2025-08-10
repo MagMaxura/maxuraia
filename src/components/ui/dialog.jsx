@@ -5,7 +5,7 @@ const Dialog = ({ children, open, onOpenChange }) => {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl mx-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-4xl mx-auto" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
     </div>
