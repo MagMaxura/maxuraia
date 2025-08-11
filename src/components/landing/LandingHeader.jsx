@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Brain } from 'lucide-react';
+import { Brain, Globe } from 'lucide-react'; // Importar Globe
 import { useTranslation } from 'react-i18next'; // Importar useTranslation
 
 import { useAuth } from '@/contexts/AuthContext'; // Importar useAuth
@@ -10,9 +9,11 @@ import { useAuth } from '@/contexts/AuthContext'; // Importar useAuth
 function LandingHeader() {
   const { user, isAuthenticated } = useAuth(); // Obtener usuario e isAuthenticated
   const { t, i18n } = useTranslation(); // Obtener la función de traducción y el objeto i18n
+  const [showLanguageDropdown, setShowLanguageDropdown] = React.useState(false); // Estado para el dropdown
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
+    setShowLanguageDropdown(false); // Cerrar el dropdown después de seleccionar
   };
 
   return (
@@ -34,21 +35,32 @@ function LandingHeader() {
                 {t('pricing')}
               </Button>
             </a>
-            <div className="flex items-center space-x-2">
+            <div className="relative"> {/* Contenedor para el botón del idioma y el dropdown */}
               <Button
                 variant="ghost"
-                className={`text-white hover:bg-white/20 px-2 sm:px-3 ${i18n.language === 'es' ? 'font-bold' : ''}`}
-                onClick={() => changeLanguage('es')}
+                className="text-white hover:bg-white/20 px-2 sm:px-3"
+                onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
               >
-                ES
+                <Globe className="h-5 w-5" />
               </Button>
-              <Button
-                variant="ghost"
-                className={`text-white hover:bg-white/20 px-2 sm:px-3 ${i18n.language === 'en' ? 'font-bold' : ''}`}
-                onClick={() => changeLanguage('en')}
-              >
-                EN
-              </Button>
+              {showLanguageDropdown && (
+                <div className="absolute right-0 mt-2 w-24 bg-white rounded-md shadow-lg py-1 z-10">
+                  <Button
+                    variant="ghost"
+                    className={`w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${i18n.language === 'es' ? 'font-bold' : ''}`}
+                    onClick={() => changeLanguage('es')}
+                  >
+                    Español
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className={`w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 ${i18n.language === 'en' ? 'font-bold' : ''}`}
+                    onClick={() => changeLanguage('en')}
+                  >
+                    English
+                  </Button>
+                </div>
+              )}
             </div>
             {isAuthenticated && user ? (
               <>
