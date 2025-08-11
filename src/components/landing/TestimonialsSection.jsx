@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Star } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const fadeInWhileInView = {
   initial: { opacity: 0, y: 20 },
@@ -9,30 +10,32 @@ const fadeInWhileInView = {
   transition: { duration: 0.5 }
 };
 
-const testimonials = [
-  {
-    quote: "EmploySmart IA ha transformado nuestra forma de contratar. El análisis de CVs es increíblemente preciso y nos ahorra horas.",
-    name: "MBA & Ing. Uranga Maximiliano ",
-    title: "CEO, Eternal Provider LLC"
-  },
-  {
-    quote: "La función de preselección automática es genial. Identifica a los mejores candidatos mucho más rápido que antes.",
-    name: "Willmott Daniel",
-    title: "Gerente de Talento, Potabilizar Solutions S.A"
-  },
-  {
-    quote: "Implementar esta herramienta fue sencillo y el soporte es excelente. ¡Altamente recomendado!",
-    name: "Posgr. en RRHH Matias Garcia Conde",
-    title: "Especialista en Reclutamiento, Emplotecnia S.R.L"
-  }
-];
-
 function TestimonialsSection() {
+  const { t } = useTranslation();
+
+  const testimonials = [
+    {
+      quoteKey: "testimonial1_quote",
+      nameKey: "testimonial1_name",
+      titleKey: "testimonial1_title"
+    },
+    {
+      quoteKey: "testimonial2_quote",
+      nameKey: "testimonial2_name",
+      titleKey: "testimonial2_title"
+    },
+    {
+      quoteKey: "testimonial3_quote",
+      nameKey: "testimonial3_name",
+      titleKey: "testimonial3_title"
+    }
+  ];
+
   return (
     <section className="bg-white/5 backdrop-blur-lg py-20 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto">
         <motion.h2 {...fadeInWhileInView} className="text-3xl sm:text-4xl font-bold text-center text-white mb-12">
-          Lo que dicen nuestros clientes
+          {t('testimonials_section_title')}
         </motion.h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
@@ -51,12 +54,12 @@ function TestimonialsSection() {
                   ))}
                 </div>
                 <p className="text-white/80 italic text-lg leading-relaxed">
-                  <span className="text-3xl text-white mr-1">“</span>{testimonial.quote}<span className="text-3xl text-white ml-1">”</span>
+                  <span className="text-3xl text-white mr-1">“</span>{t(testimonial.quoteKey)}<span className="text-3xl text-white ml-1">”</span>
                 </p>
               </div>
               <div className="mt-auto">
-                <p className="font-semibold text-white text-base">{testimonial.name}</p>
-                <p className="text-sm text-white/60">{testimonial.title}</p>
+                <p className="font-semibold text-white text-base">{t(testimonial.nameKey)}</p>
+                <p className="text-sm text-white/60">{t(testimonial.titleKey)}</p>
               </div>
             </motion.div>
           ))}

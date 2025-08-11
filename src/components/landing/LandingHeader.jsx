@@ -3,11 +3,17 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Brain } from 'lucide-react';
+import { useTranslation } from 'react-i18next'; // Importar useTranslation
 
 import { useAuth } from '@/contexts/AuthContext'; // Importar useAuth
 
 function LandingHeader() {
   const { user, isAuthenticated } = useAuth(); // Obtener usuario e isAuthenticated
+  const { t, i18n } = useTranslation(); // Obtener la función de traducción y el objeto i18n
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
+  };
 
   return (
     <header className="fixed w-full bg-white/10 backdrop-blur-md z-50 shadow-lg">
@@ -25,30 +31,44 @@ function LandingHeader() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <a href="/#pricing"> {/* Enlace a la sección de precios en la misma página */}
               <Button variant="ghost" className="text-white hover:bg-white/20 px-3 sm:px-4">
-                Precios
+                {t('pricing')}
               </Button>
             </a>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                className={`text-white hover:bg-white/20 px-2 sm:px-3 ${i18n.language === 'es' ? 'font-bold' : ''}`}
+                onClick={() => changeLanguage('es')}
+              >
+                ES
+              </Button>
+              <Button
+                variant="ghost"
+                className={`text-white hover:bg-white/20 px-2 sm:px-3 ${i18n.language === 'en' ? 'font-bold' : ''}`}
+                onClick={() => changeLanguage('en')}
+              >
+                EN
+              </Button>
+            </div>
             {isAuthenticated && user ? (
               <>
                 <span className="text-sm text-white/80 hidden sm:block">{user.email}</span>
-                {/* Podrías añadir un botón de Logout aquí si es el header principal post-login */}
-                {/* <Button onClick={logout} variant="ghost" className="text-white hover:bg-white/20">Logout</Button> */}
-                 <Link to="/dashboard">
+                <Link to="/dashboard">
                    <Button variant="outline" className="text-white border-white/50 hover:bg-white/20 px-3 sm:px-4">
-                     Dashboard
+                     {t('dashboard')}
                    </Button>
                  </Link>
               </>
             ) : (
               <>
-                <Link to="/login"> {/* Link to Login page */}
+                <Link to="/login">
                   <Button variant="ghost" className="text-white hover:bg-white/20 px-3 sm:px-4">
-                    Iniciar Sesión
+                    {t('login')}
                   </Button>
                 </Link>
                 <Link to="/register">
                   <Button className="bg-white text-blue-600 hover:bg-gray-100 shadow-md px-3 sm:px-4">
-                    Prueba Gratuita IA
+                    {t('register')}
                   </Button>
                 </Link>
               </>

@@ -11,6 +11,7 @@ import { useToast } from '../ui/use-toast'; // Import useToast
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog.jsx'; // Import Dialog components
 import { ScrollArea } from '../ui/scroll-area'; // Import ScrollArea
 import { Input } from '../ui/input'; // Import Input for search
+import { useTranslation } from 'react-i18next'; // Importar useTranslation
 
 function UploadCVTab({
   handleFileUpload,
@@ -40,6 +41,7 @@ function UploadCVTab({
   const { toast } = useToast();
   const { user } = useAuth();
   const { isBasePlanActive, basePlan } = useDashboardData(); // Obtener directamente del hook
+  const { t } = useTranslation(); // Obtener la función de traducción
 
   const [showGoogleDriveDialog, setShowGoogleDriveDialog] = useState(false);
   const [googleDriveFiles, setGoogleDriveFiles] = useState([]);
@@ -100,14 +102,14 @@ function UploadCVTab({
       const data = await response.json();
       setGoogleDriveFiles(data.files || []);
       toast({
-        title: "Archivos de Google Drive cargados",
-        description: `Se encontraron ${data.files.length} CVs en tu Google Drive.`,
+        title: t('google_drive_files_loaded_title'),
+        description: t('google_drive_files_loaded_message', { count: data.files.length }),
       });
     } catch (error) {
       console.error('Error listing Google Drive files:', error);
       toast({
-        title: "Error al cargar archivos de Google Drive",
-        description: error.message || "No se pudieron listar los archivos.",
+        title: t('error_loading_google_drive_files_title'),
+        description: error.message || t('could_not_list_files'),
         variant: "destructive",
       });
     } finally {
@@ -141,15 +143,15 @@ function UploadCVTab({
       await handleFileUpload({ target: { files: [file] } });
 
       toast({
-        title: "CV de Google Drive procesado",
-        description: "El CV ha sido analizado correctamente.",
+        title: t('google_drive_cv_processed_title'),
+        description: t('google_drive_cv_processed_message'),
       });
 
     } catch (error) {
       console.error('Error al procesar el CV de Google Drive:', error);
       toast({
-        title: "Error al procesar el CV de Google Drive",
-        description: "No se pudo procesar el archivo. Asegúrate de que sea un PDF o DOCX válido.",
+        title: t('error_processing_google_drive_cv_title'),
+        description: t('error_processing_google_drive_cv_message'),
         variant: "destructive",
       });
     } finally {
@@ -169,8 +171,8 @@ function UploadCVTab({
         animate={{ opacity: 1, y: 0 }}
         className="bg-white p-6 md:p-8 rounded-xl shadow-xl text-center text-slate-600"
       >
-        <h2 className="text-2xl font-semibold text-slate-800 mb-4">Cargar nuevo CV</h2>
-        <p>Cargando información de tu plan...</p>
+        <h2 className="text-2xl font-semibold text-slate-800 mb-4">{t('upload_new_cv')}</h2>
+        <p>{t('loading_plan_info')}</p>
       </motion.div>
     );
   }
@@ -181,7 +183,7 @@ function UploadCVTab({
       animate={{ opacity: 1, y: 0 }}
       className="bg-white p-6 md:p-8 rounded-xl shadow-xl"
     >
-      <h2 className="text-2xl font-semibold text-slate-800 mb-4">Cargar nuevo CV</h2>
+      <h2 className="text-2xl font-semibold text-slate-800 mb-4">{t('upload_new_cv')}</h2>
       
       {/* Mensaje de Plan Mensual Vencido */}
       {!isBasePlanActive && basePlan && (basePlan.type === 'monthly' || basePlan.type === 'enterprise') && (
@@ -192,7 +194,7 @@ function UploadCVTab({
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-700">
-                Tu plan mensual <strong className="font-semibold capitalize">{basePlan.name}</strong> ha expirado. Aunque tengas bonos puntuales activos, te recomendamos <Link to="/#pricing" className="underline hover:text-red-600 font-semibold">renovar tu suscripción</Link> para mantener todas las funcionalidades.
+                {t('monthly_plan_expired_message', { planName: t(basePlan.nameKey) })} {t('renew_subscription_recommendation')} <Link to="/#pricing" className="underline hover:text-red-600 font-semibold">{t('renew_subscription_link')}</Link> {t('to_maintain_features')}.
               </p>
             </div>
           </div>
@@ -202,12 +204,12 @@ function UploadCVTab({
       {/* Información de Uso y Límite */}
       {effectiveLimits.isSubscriptionActive && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-          <p className="font-semibold mb-2">Tu Plan Actual: <span className="capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || APP_PLANS[planId]?.name || planId}</span></p>
+          <p className="font-semibold mb-2">{t('your_current_plan')}: <span className="capitalize">{t(effectiveLimits?.effectiveCurrentPlan?.nameKey || APP_PLANS[planId]?.nameKey || planId)}</span></p>
           {/* Mostrar el uso de CVs del plan base si está activo, de lo contrario, mostrar los bonos */}
               <p>
-                CVs cargados este período: <strong className="font-semibold">{effectiveLimits.cvs_used}</strong> de <strong className="font-semibold">{effectiveLimits.cvLimit === Infinity ? 'Ilimitados' : effectiveLimits.cvLimit}</strong>
+                {t('cvs_uploaded_this_period')}: <strong className="font-semibold">{effectiveLimits.cvs_used}</strong> {t('of')} <strong className="font-semibold">{effectiveLimits.cvLimit === Infinity ? t('unlimited') : effectiveLimits.cvLimit}</strong>
                 {effectiveLimits.periodEndsAt && (
-                  <> Vencen el: <strong className="font-semibold">{new Date(effectiveLimits.periodEndsAt).toLocaleDateString()}</strong></>
+                  <> {t('expires_on')}: <strong className="font-semibold">{new Date(effectiveLimits.periodEndsAt).toLocaleDateString()}</strong></>
                 )}
               </p>
               <div className="mt-2 w-full bg-blue-200 rounded-full h-2.5">
@@ -219,7 +221,7 @@ function UploadCVTab({
               {effectiveLimits.cvLimit !== Infinity && effectiveLimits.cvs_used >= effectiveLimits.cvLimit && (
                 <Link to="/#pricing" className="mt-3 inline-block">
                   <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border-yellow-500">
-                    Actualizar Plan
+                    {t('upgrade_plan')}
                     <ArrowRightCircle className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
@@ -236,11 +238,11 @@ function UploadCVTab({
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                Has alcanzado tu límite de <strong className="font-semibold">{displayAnalysisLimit}</strong> análisis de CVs para tu plan <strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || APP_PLANS[planId]?.name || planId}</strong>.
+                {t('limit_reached_message', { limit: displayAnalysisLimit, planName: t(effectiveLimits?.effectiveCurrentPlan?.nameKey || APP_PLANS[planId]?.nameKey || planId) })}
                 {nextPlanDetails ? (
-                  <> Para analizar más CVs, por favor considera <Link to="/#pricing" className="underline hover:text-yellow-600 font-semibold">actualizar tu plan a {nextPlanDetails.name}</Link>.</>
+                  <> {t('consider_upgrade_message', { nextPlanName: t(nextPlanDetails.nameKey) })}</>
                 ) : (
-                  " Por favor, contacta a ventas si necesitas más capacidad."
+                  t('contact_sales_for_capacity')
                 )}
               </p>
             </div>
@@ -255,8 +257,8 @@ function UploadCVTab({
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-700">
-                Tu suscripción actual (<strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || userSubscription?.plan_id || 'desconocido'}</strong>) no te permite analizar nuevos CVs.
-                Por favor, <Link to="/#pricing" className="underline hover:text-red-600 font-semibold">revisa tu plan</Link> o contacta a soporte.
+                {t('subscription_not_allow_analysis', { planName: t(effectiveLimits?.effectiveCurrentPlan?.nameKey || userSubscription?.plan_id || 'unknown') })}
+                {t('review_plan_or_contact_support')}
               </p>
             </div>
           </div>
@@ -291,16 +293,16 @@ function UploadCVTab({
           />
           <FileUp className={`mx-auto h-12 w-12 mb-4 ${(!canAnalyzeMore || isBulkProcessing || isProcessing) ? 'text-gray-300' : 'text-gray-400'}`} />
           <p className={`font-medium text-base md:text-lg mb-1 ${(!canAnalyzeMore || isBulkProcessing || isProcessing) ? 'text-slate-400' : 'text-slate-700'}`}>
-            Arrastra y suelta tus CVs aquí, o haz clic para seleccionar
+            {t('drag_drop_cvs_message')}
           </p>
           <p className="text-xs text-slate-500">
-            Formatos aceptados: PDF, DOC, DOCX. Puedes seleccionar múltiples archivos.
+            {t('accepted_formats_message')}
           </p>
-          {isProcessing && !isBulkProcessing && <p className="mt-4 text-blue-600">Procesando CV individual...</p>}
+          {isProcessing && !isBulkProcessing && <p className="mt-4 text-blue-600">{t('processing_individual_cv')}</p>}
         </div>
 
         <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg w-full md:w-1/2 text-center">
-          <p className="text-gray-500 mb-4">O carga desde Google Drive</p>
+          <p className="text-gray-500 mb-4">{t('or_upload_from_google_drive')}</p>
           <Button
             onClick={() => {
               if (googleDriveAccessToken) {
@@ -311,7 +313,7 @@ function UploadCVTab({
             }}
             disabled={isProcessing || isBulkProcessing || !canAnalyzeMore}
           >
-            {isProcessing ? "Cargando..." : "Cargar desde Google Drive"}
+            {isProcessing ? t('loading_text') : t('upload_from_google_drive')}
           </Button>
         </div>
       </div>
@@ -319,7 +321,7 @@ function UploadCVTab({
       {isBulkProcessing && (
         <div className="mt-6 w-full">
           <p className="text-sm text-slate-700 mb-1 text-center">
-            Procesando lote: {currentFileProcessingName ? `Analizando ${currentFileProcessingName}...` : 'Iniciando...'}
+            {t('processing_batch')}: {currentFileProcessingName ? t('analyzing_file', { fileName: currentFileProcessingName }) : t('initializing')}
           </p>
           <div className="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
             <div
@@ -335,20 +337,20 @@ function UploadCVTab({
       <Dialog open={showGoogleDriveDialog} onOpenChange={setShowGoogleDriveDialog}>
         <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Seleccionar CV de Google Drive</DialogTitle>
+            <DialogTitle>{t('select_cv_from_google_drive')}</DialogTitle>
             <DialogDescription>
-              Selecciona un archivo PDF o DOCX de tu Google Drive.
+              {t('select_pdf_docx_from_google_drive')}
             </DialogDescription>
           </DialogHeader>
           <Input
-            placeholder="Buscar archivos..."
+            placeholder={t('search_files_placeholder')}
             value={googleDriveSearchTerm}
             onChange={(e) => setGoogleDriveSearchTerm(e.target.value)}
             className="mb-4"
           />
           {isListingGoogleDriveFiles ? (
             <div className="flex justify-center items-center h-full">
-              <p>Cargando archivos...</p>
+              <p>{t('loading_files')}</p>
             </div>
           ) : (
             <ScrollArea className="flex-grow pr-4">
@@ -366,12 +368,12 @@ function UploadCVTab({
                   ))}
                 </ul>
               ) : (
-                <p className="text-center text-gray-500">No se encontraron archivos PDF o DOCX.</p>
+                <p className="text-center text-gray-500">{t('no_pdf_docx_found')}</p>
               )}
             </ScrollArea>
           )}
           <div className="flex justify-end pt-4">
-            <Button onClick={() => setShowGoogleDriveDialog(false)}>Cerrar</Button>
+            <Button onClick={() => setShowGoogleDriveDialog(false)}>{t('close')}</Button>
           </div>
         </DialogContent>
       </Dialog>

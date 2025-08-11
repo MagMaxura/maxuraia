@@ -19,6 +19,7 @@ import { AIAnalysisTab } from "@/components/dashboard/AIAnalysisTab.jsx";
 import CalendarTab from "@/components/dashboard/CalendarTab.jsx";
 import { useDashboardData } from "@/hooks/useDashboardData.js";
 import { useCvUploader } from "@/hooks/useCvUploader.js";
+import { useTranslation } from 'react-i18next'; // Importar useTranslation
 
 function Dashboard() {
   const { user, logout, refreshUser } = useAuth();
@@ -27,6 +28,7 @@ function Dashboard() {
   const location = useLocation();
   const { candidateId } = useParams(); // Obtener candidateId de la URL
   const [activeTab, setActiveTab] = useState(location.pathname);
+  const { t } = useTranslation(); // Obtener la función de traducción
 
   const {
     cvFiles,
@@ -61,13 +63,13 @@ function Dashboard() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gray-100">
         <div className="bg-white p-8 rounded-xl shadow-xl text-center space-y-4">
-          <h2 className="text-2xl font-bold text-red-600">Tu período de prueba ha expirado</h2>
-          <p className="text-slate-700">Para seguir utilizando EmploySmart IA, por favor, activa un plan.</p>
+          <h2 className="text-2xl font-bold text-red-600">{t('trial_expired_title')}</h2>
+          <p className="text-slate-700">{t('trial_expired_message')}</p>
           <Button onClick={() => navigate('/#pricing')} className="bg-blue-600 hover:bg-blue-700 text-white">
-            Ver Planes Disponibles
+            {t('view_available_plans')}
           </Button>
           <Button variant="ghost" onClick={logout} className="text-slate-600 hover:underline">
-            Cerrar Sesión
+            {t('logout')}
           </Button>
         </div>
       </div>
@@ -136,13 +138,13 @@ function Dashboard() {
   };
 
   const menuItems = [
-    { id: "cargarNuevoCV", label: "Cargar Nuevo CV", icon: Upload, path: "/dashboard" },
-    { id: "cvsProcesados", label: "CVs Procesados", icon: Users, path: "/dashboard/cvs-procesados" },
-    { id: "nuevoPuesto", label: "Nuevo Puesto de trabajo", icon: Briefcase, path: "/dashboard/nuevo-puesto" },
-    { id: "puestosPublicados", label: "Puestos de trabajo publicados", icon: FileText, path: "/dashboard/puestos-publicados" },
-    { id: "analisisIA", label: "Análisis IA Candidatos", icon: Brain, path: "/dashboard/analisis-ia" },
-    { id: "calendario", label: "Calendario", icon: Calendar, path: "/dashboard/calendario" },
-    { id: "planActual", label: "Plan actual", icon: CreditCard, path: "/dashboard/plan-actual" },
+    { id: "cargarNuevoCV", label: t('upload_new_cv'), icon: Upload, path: "/dashboard" },
+    { id: "cvsProcesados", label: t('processed_cvs_tab'), icon: Users, path: "/dashboard/cvs-procesados" },
+    { id: "nuevoPuesto", label: t('create_new_job_tab'), icon: Briefcase, path: "/dashboard/nuevo-puesto" },
+    { id: "puestosPublicados", label: t('published_jobs_tab'), icon: FileText, path: "/dashboard/puestos-publicados" },
+    { id: "analisisIA", label: t('ai_analysis_tab'), icon: Brain, path: "/dashboard/analisis-ia" },
+    { id: "calendario", label: t('calendar_tab'), icon: Calendar, path: "/dashboard/calendario" },
+    { id: "planActual", label: t('current_plan_tab'), icon: CreditCard, path: "/dashboard/plan-actual" },
   ];
 
   const {
@@ -186,8 +188,8 @@ function Dashboard() {
     };
     setJobs([...jobs, newJob]);
     toast({
-      title: "Puesto añadido",
-      description: "Se ha creado un nuevo puesto de trabajo.",
+      title: t('job_added_title'),
+      description: t('job_created_message'),
     });
   };
 
@@ -197,13 +199,13 @@ function Dashboard() {
 
     if (!cvDatabaseIdToDelete && !candidateDatabaseIdToDelete) {
       console.warn("Dashboard: Intento de eliminar CV sin ID de BD o ID de Candidato. No se puede eliminar de Supabase:", cvFileToDelete);
-      toast({ title: "Error", description: "No se proporcionó ID de base de datos de CV ni de Candidato para eliminar. No se puede eliminar de Supabase.", variant: "destructive" });
+      toast({ title: t('error_title'), description: t('no_cv_id_provided_delete'), variant: "destructive" });
       return;
     }
 
     try {
       await cvService.deleteCV(cvDatabaseIdToDelete, candidateDatabaseIdToDelete);
-      toast({ title: "CV Eliminado", description: "El CV y los datos asociados han sido eliminados." });
+      toast({ title: t('cv_deleted_title'), description: t('cv_deleted_message') });
 
       const updatedCvFiles = cvFiles.filter(cv =>
         (cvDatabaseIdToDelete && cv.cv_database_id !== cvDatabaseIdToDelete) ||
@@ -225,25 +227,25 @@ function Dashboard() {
       }
     } catch (error) {
       console.error("Dashboard: Error al eliminar CV:", error);
-      toast({ title: "Error al Eliminar", description: `No se pudo eliminar el CV: ${error.message}`, variant: "destructive" });
+      toast({ title: t('error_deleting_title'), description: t('error_deleting_cv_message', { message: error.message }), variant: "destructive" });
     }
   };
 
   const handleDeleteJob = async (jobId) => {
     if (!jobId) {
-      toast({ title: "Error", description: "ID del puesto no proporcionado.", variant: "destructive" });
+      toast({ title: t('error_title'), description: t('no_job_id_provided'), variant: "destructive" });
       return;
     }
-    if (!window.confirm("¿Estás seguro de que quieres eliminar este puesto de trabajo?")) {
+    if (!window.confirm(t('confirm_delete_job'))) {
       return;
     }
     try {
       await cvService.deleteJobPost(jobId);
       setJobs(prevJobs => prevJobs.filter(job => job.id !== jobId));
-      toast({ title: "Puesto Eliminado", description: "El puesto de trabajo ha sido eliminado." });
+      toast({ title: t('job_deleted_title'), description: t('job_deleted_message') });
     } catch (error) {
       console.error("Dashboard: Error eliminando puesto:", error);
-      toast({ title: "Error al Eliminar", description: `No se pudo eliminar el puesto: ${error.message}`, variant: "destructive" });
+      toast({ title: t('error_deleting_title'), description: t('error_deleting_job_message', { message: error.message }), variant: "destructive" });
     }
   };
 
@@ -255,7 +257,7 @@ function Dashboard() {
   const handleJobPublishedOrUpdated = (job) => {
     if (editingJob) {
       setJobs(prevJobs => prevJobs.map(j => j.id === job.id ? job : j));
-      toast({ title: "Puesto Actualizado", description: `${job.title} ha sido actualizado.` });
+      toast({ title: t('job_updated_title'), description: t('job_updated_message', { jobTitle: job.title }) });
     } else {
       setJobs(prevJobs => [job, ...prevJobs]);
     }
@@ -267,15 +269,15 @@ function Dashboard() {
 
     if (unsavedCVs.length === 0) {
       toast({
-        title: "No hay CVs sin guardar",
-        description: "Todos los CVs ya están en la base de datos.",
+        title: t('no_unsaved_cvs_title'),
+        description: t('all_cvs_saved_message'),
       });
       return;
     }
 
     toast({
-      title: "Guardando CVs...",
-      description: `Iniciando el guardado de ${unsavedCVs.length} CVs.`,
+      title: t('saving_cvs_title'),
+      description: t('saving_cvs_message', { count: unsavedCVs.length }),
     });
 
     let savedCount = 0;
@@ -308,17 +310,17 @@ function Dashboard() {
         } else {
            console.error("Dashboard: Error saving CV, no data returned:", cvFile.name, result);
            toast({
-             title: "Error al guardar un CV",
-             description: `No se recibieron datos al intentar guardar ${cvFile.name}.`,
+             title: t('error_saving_cv_title'),
+             description: t('no_data_returned_save_cv', { fileName: cvFile.name }),
              variant: "destructive",
            });
-        }
+         }
 
       } catch (error) {
         console.error("Dashboard: Error al guardar CV:", cvFile.name, error);
         toast({
-          title: "Error al guardar un CV",
-          description: `No se pudo guardar ${cvFile.name}: ${error.message}`,
+          title: t('error_saving_cv_title'),
+          description: t('could_not_save_cv', { fileName: cvFile.name, message: error.message }),
           variant: "destructive",
         });
       }
@@ -328,17 +330,17 @@ function Dashboard() {
 
     if (savedCount > 0) {
       toast({
-        title: "Guardado Completo",
-        description: `Se guardaron ${savedCount} de ${unsavedCVs.length} CVs sin guardar.`,
+        title: t('save_complete_title'),
+        description: t('saved_cvs_count_message', { savedCount: savedCount, totalUnsaved: unsavedCVs.length }),
       });
     } else {
        toast({
-         title: "Guardado Finalizado",
-         description: "No se pudo guardar ningún CV.",
+         title: t('save_finished_title'),
+         description: t('no_cv_saved_message'),
          variant: "destructive",
        });
-    }
-  };
+     }
+   };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
@@ -347,7 +349,7 @@ function Dashboard() {
         </div>
         <div className="flex items-center space-x-4">
           {user?.company && (
-            <span className="text-sm font-medium hidden sm:inline">Empresa: {user.company}</span>
+            <span className="text-sm font-medium hidden sm:inline">{t('company')}: {user.company}</span>
           )}
           <Button
             variant="ghost"
@@ -355,14 +357,14 @@ function Dashboard() {
             onClick={logout}
           >
             <LogOut className="mr-2 h-4 w-4" />
-            Cerrar Sesión
+            {t('logout')}
           </Button>
         </div>
       </header>
 
       <div className="flex flex-1">
         <aside className="w-60 md:w-72 bg-white p-4 shadow-lg space-y-3 border-r border-gray-200">
-          <h1 className="text-2xl md:text-3xl font-bold text-blue-600 mb-5 px-2">HR Intelligence</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-blue-600 mb-5 px-2">{t('hr_intelligence_title')}</h1>
           <nav className="space-y-1">
             {menuItems.map((item) => (
               <button

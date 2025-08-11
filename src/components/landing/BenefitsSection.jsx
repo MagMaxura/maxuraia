@@ -2,6 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const fadeInWhileInView = {
   initial: { opacity: 0, y: 20 },
@@ -10,14 +11,16 @@ const fadeInWhileInView = {
   transition: { duration: 0.5 }
 };
 
-const benefits = [
-  { title: "Ahorra Tiempo Valioso", desc: "Reduce hasta un 70% el tiempo dedicado a la revisión manual de CVs y preselección." },
-  { title: "Mejora la Calidad de Contratación", desc: "Identifica a los candidatos más adecuados con nuestro ranking basado en IA." },
-  { title: "Optimiza tus Recursos", desc: "Automatiza tareas repetitivas y permite a tu equipo enfocarse en entrevistas estratégicas." },
-  { title: "Decisiones Basadas en Datos", desc: "Obtén insights objetivos para tomar decisiones de contratación más informadas y justas." }
-];
-
 function BenefitsSection() {
+  const { t } = useTranslation();
+
+  const benefits = [
+    { titleKey: "benefit1_title", descKey: "benefit1_description" },
+    { titleKey: "benefit2_title", descKey: "benefit2_description" },
+    { titleKey: "benefit3_title", descKey: "benefit3_description" },
+    { titleKey: "benefit4_title", descKey: "benefit4_description" }
+  ];
+
   return (
     <section className="py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
@@ -26,10 +29,10 @@ function BenefitsSection() {
           className="text-center mb-12"
         >
           <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-            ¿Por qué elegir EmploySmart IA?
+            {t('why_choose_us_title')}
           </h2>
           <p className="text-xl text-white/80 max-w-3xl mx-auto">
-            Optimiza tu proceso de selección, reduce costos y encuentra a los mejores talentos de forma más eficiente.
+            {t('why_choose_us_subtitle')}
           </p>
         </motion.div>
 
@@ -46,10 +49,10 @@ function BenefitsSection() {
               <CheckCircle2 className="h-7 w-7 text-green-400 flex-shrink-0 mt-1" />
               <div>
                 <h3 className="text-xl font-semibold text-white mb-2">
-                  {benefit.title}
+                  {t(benefit.titleKey)}
                 </h3>
                 <p className="text-white/70">
-                  {benefit.desc}
+                  {t(benefit.descKey)}
                 </p>
               </div>
             </motion.div>

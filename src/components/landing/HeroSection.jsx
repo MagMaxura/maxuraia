@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -12,6 +13,7 @@ const fadeIn = {
 };
 
 function HeroSection() {
+  const { t } = useTranslation();
   return (
     <section className="pt-32 pb-24 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden">
       <div className="absolute inset-0 bg-black/20 z-0"></div>
@@ -20,14 +22,14 @@ function HeroSection() {
       <div className="max-w-4xl mx-auto relative z-10">
         <motion.div {...fadeIn}>
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 leading-tight shadow-text">
-            Revoluciona tu Selección de Personal con IA
+            {t('hero_title')}
           </h1>
           <p className="text-lg sm:text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-            Automatiza el análisis de CVs, preselecciona candidatos y optimiza tu reclutamiento con la inteligencia artificial más avanzada.
+            {t('hero_subtitle')}
           </p>
           <Link to="/register">
             <Button size="lg" className="bg-white text-blue-700 hover:bg-gray-100 text-lg px-8 py-3 shadow-xl transform hover:scale-105 transition-transform duration-300">
-              Comenzar Prueba Gratuita <ArrowRight className="ml-2 h-5 w-5" />
+              {t('get_started')} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </Link>
           <p className="mt-4 text-sm text-white/60">Prueba gratuita de 7 días • No requiere tarjeta</p>

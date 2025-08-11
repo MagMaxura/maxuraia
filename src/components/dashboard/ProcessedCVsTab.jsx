@@ -4,6 +4,7 @@ import CVAnalysis from "@/components/CVAnalysis.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { Trash2 } from 'lucide-react'; // Asegurarse de que Trash2 esté importado
+import { useTranslation } from 'react-i18next';
 
 function ProcessedCVsTab({
   cvFiles,
@@ -22,25 +23,26 @@ function ProcessedCVsTab({
   onSaveAllCVs, // Añadir esta prop
   navigate, // Añadir navigate como prop
 }) {
-
-  useEffect(() => {
-    // Solo seleccionar un CV si no hay uno ya seleccionado y hay CVs disponibles
-    if (cvFiles && cvFiles.length > 0 && selectedCV === null && cvAnalysis === null) {
-      // Intentar encontrar el CV más reciente por uploadedDate
-      let latestCvIndex = 0;
-      if (cvFiles.every(cv => cv.uploadedDate)) {
-        latestCvIndex = cvFiles.reduce((latestIndex, currentCv, currentIndex, arr) => {
-          return new Date(currentCv.uploadedDate) > new Date(arr[latestIndex].uploadedDate) ? currentIndex : latestIndex;
-        }, 0);
-      } else {
-        // Si no todos tienen fecha, seleccionar el último del array como fallback
-        latestCvIndex = cvFiles.length - 1;
-      }
-      // Llamar a handleCVClick para establecer selectedCV y cvAnalysis
-      handleCVClick(latestCvIndex);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cvFiles, selectedCV, cvAnalysis]); // Incluir cvAnalysis en las dependencias
+  const { t } = useTranslation();
+ 
+   useEffect(() => {
+     // Solo seleccionar un CV si no hay uno ya seleccionado y hay CVs disponibles
+     if (cvFiles && cvFiles.length > 0 && selectedCV === null && cvAnalysis === null) {
+       // Intentar encontrar el CV más reciente por uploadedDate
+       let latestCvIndex = 0;
+       if (cvFiles.every(cv => cv.uploadedDate)) {
+         latestCvIndex = cvFiles.reduce((latestIndex, currentCv, currentIndex, arr) => {
+           return new Date(currentCv.uploadedDate) > new Date(arr[latestIndex].uploadedDate) ? currentIndex : latestIndex;
+         }, 0);
+       } else {
+         // Si no todos tienen fecha, seleccionar el último del array como fallback
+         latestCvIndex = cvFiles.length - 1;
+       }
+       // Llamar a handleCVClick para establecer selectedCV y cvAnalysis
+       handleCVClick(latestCvIndex);
+     }
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [cvFiles, selectedCV, cvAnalysis]); // Incluir cvAnalysis en las dependencias
 
   const handleFilterInputChange = (e) => {
     const { name, value } = e.target;
@@ -108,7 +110,7 @@ function ProcessedCVsTab({
             className="bg-white p-6 rounded-xl shadow-xl h-full" // h-full para ocupar altura disponible
           >
             <h2 className="text-xl font-semibold text-slate-800 mb-4">
-              Análisis del CV: {cvFiles[selectedCV]?.name}
+              {t('cv_analysis_title')}: {cvFiles[selectedCV]?.name}
             </h2>
             <CVAnalysis
               analysis={cvAnalysis}
@@ -124,17 +126,17 @@ function ProcessedCVsTab({
         )}
         {!isLoadingCVs && selectedCV === null && cvFiles.length > 0 && (
           <div className="bg-white p-6 rounded-xl shadow-xl text-center text-slate-500 h-full flex items-center justify-center">
-             <p>Selecciona un CV de la lista de la derecha para ver su análisis.</p>
+             <p>{t('select_cv_from_list')}</p>
           </div>
         )}
          {!isLoadingCVs && cvFiles.length === 0 && (
            <div className="bg-white p-6 rounded-xl shadow-xl text-center text-slate-500 h-full flex items-center justify-center">
-            <p>No hay CVs procesados o guardados todavía.</p>
+            <p>{t('no_processed_cvs')}</p>
            </div>
         )}
         {isLoadingCVs && (
             <div className="bg-white p-6 rounded-xl shadow-xl text-center text-slate-500 h-full flex items-center justify-center">
-                <p>Cargando CVs guardados...</p>
+                <p>{t('loading_saved_cvs')}</p>
             </div>
         )}
       </div>
@@ -145,38 +147,38 @@ function ProcessedCVsTab({
         animate={{ opacity: 1, x: 0 }}
         className="md:w-1/3 bg-white p-6 rounded-xl shadow-xl space-y-4 flex flex-col h-full" // Ocupa 1/3 y es una columna flex
       >
-        <h2 className="text-xl font-semibold text-slate-800 mb-4 flex-shrink-0">Lista de CVs</h2>
+            <h2 className="text-xl font-semibold text-slate-800 mb-4 flex-shrink-0">{t('cv_list_title')}</h2>
 
         {/* Sección de Filtros */}
         <div className="mb-4 p-4 border rounded-lg bg-slate-50 shadow-sm">
-          <h3 className="text-lg font-semibold text-slate-700 mb-3">Filtrar CVs</h3>
+          <h3 className="text-lg font-semibold text-slate-700 mb-3">{t('filter_cvs_title')}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             <div>
-              <label htmlFor="filterAgeMin" className="block text-xs font-medium text-gray-600 mb-1">Edad Mín.</label>
-              <Input type="number" name="ageMin" id="filterAgeMin" value={cvFilters.ageMin} onChange={handleFilterInputChange} placeholder="Ej: 25" className="text-sm" />
+              <label htmlFor="filterAgeMin" className="block text-xs font-medium text-gray-600 mb-1">{t('age_min_label')}</label>
+              <Input type="number" name="ageMin" id="filterAgeMin" value={cvFilters.ageMin} onChange={handleFilterInputChange} placeholder={t('age_min_placeholder')} className="text-sm" />
             </div>
             <div>
-              <label htmlFor="filterAgeMax" className="block text-xs font-medium text-gray-600 mb-1">Edad Máx.</label>
-              <Input type="number" name="ageMax" id="filterAgeMax" value={cvFilters.ageMax} onChange={handleFilterInputChange} placeholder="Ej: 40" className="text-sm" />
+              <label htmlFor="filterAgeMax" className="block text-xs font-medium text-gray-600 mb-1">{t('age_max_label')}</label>
+              <Input type="number" name="ageMax" id="filterAgeMax" value={cvFilters.ageMax} onChange={handleFilterInputChange} placeholder={t('age_max_placeholder')} className="text-sm" />
             </div>
             <div>
-              <label htmlFor="filterTitle" className="block text-xs font-medium text-gray-600 mb-1">Título/Escolaridad</label>
-              <Input name="title" id="filterTitle" value={cvFilters.title} onChange={handleFilterInputChange} placeholder="Ej: Ing., Lic." className="text-sm" />
+              <label htmlFor="filterTitle" className="block text-xs font-medium text-gray-600 mb-1">{t('title_education_label')}</label>
+              <Input name="title" id="filterTitle" value={cvFilters.title} onChange={handleFilterInputChange} placeholder={t('title_education_placeholder')} className="text-sm" />
             </div>
             <div>
-              <label htmlFor="filterLocation" className="block text-xs font-medium text-gray-600 mb-1">Localidad</label>
-              <Input name="location" id="filterLocation" value={cvFilters.location} onChange={handleFilterInputChange} placeholder="Ej: CABA" className="text-sm" />
+              <label htmlFor="filterLocation" className="block text-xs font-medium text-gray-600 mb-1">{t('location_label')}</label>
+              <Input name="location" id="filterLocation" value={cvFilters.location} onChange={handleFilterInputChange} placeholder={t('location_placeholder')} className="text-sm" />
             </div>
             <div>
-              <label htmlFor="filterSkills" className="block text-xs font-medium text-gray-600 mb-1">Habilidades (coma)</label>
-              <Input name="skills" id="filterSkills" value={cvFilters.skills} onChange={handleFilterInputChange} placeholder="Ej: React, Node" className="text-sm" />
+              <label htmlFor="filterSkills" className="block text-xs font-medium text-gray-600 mb-1">{t('skills_label')}</label>
+              <Input name="skills" id="filterSkills" value={cvFilters.skills} onChange={handleFilterInputChange} placeholder={t('skills_placeholder')} className="text-sm" />
             </div>
             <div>
-              <label htmlFor="filterExperienceKeywords" className="block text-xs font-medium text-gray-600 mb-1">Exp. Keywords</label>
-              <Input name="experienceKeywords" id="filterExperienceKeywords" value={cvFilters.experienceKeywords} onChange={handleFilterInputChange} placeholder="Ej: Proyectos" className="text-sm" />
+              <label htmlFor="filterExperienceKeywords" className="block text-xs font-medium text-gray-600 mb-1">{t('exp_keywords_label')}</label>
+              <Input name="experienceKeywords" id="filterExperienceKeywords" value={cvFilters.experienceKeywords} onChange={handleFilterInputChange} placeholder={t('exp_keywords_placeholder')} className="text-sm" />
             </div>
             <div className="sm:col-span-2 md:col-span-3 flex justify-end mt-2">
-              <Button variant="ghost" onClick={clearFilters} className="text-xs px-3 py-1 h-auto">Limpiar Filtros</Button>
+              <Button variant="ghost" onClick={clearFilters} className="text-xs px-3 py-1 h-auto">{t('clear_filters_button')}</Button>
             </div>
           </div>
         </div>
@@ -190,25 +192,25 @@ function ProcessedCVsTab({
             role="alert"
           >
             <div className="flex items-center mb-2 sm:mb-0">
-              <span className="font-bold mr-2">Advertencia:</span>
-              <span>Hay CVs procesados sin guardar permanentemente.</span>
+              <span className="font-bold mr-2">{t('warning_text')}:</span>
+              <span>{t('unsaved_cvs_warning')}</span>
             </div>
             <Button
               onClick={onSaveAllCVs}
               className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-md text-sm"
               disabled={isProcessing} // Deshabilitar si ya se está procesando algo
             >
-              {isProcessing ? 'Guardando...' : 'Guardar todos'}
+              {isProcessing ? t('saving_text') : t('save_all_button')}
             </Button>
           </motion.div>
         )}
 
         {/* Mensajes de carga/vacío para la lista de CVs */}
         {isLoadingCVs && !cvFiles.length && ( // Mostrar solo si no hay CVs aún para evitar duplicar mensaje de carga principal
-          <p className="text-slate-500 text-sm text-center py-4">Cargando...</p>
+          <p className="text-slate-500 text-sm text-center py-4">{t('loading_text')}...</p>
         )}
         {!isLoadingCVs && filteredCvFiles.length === 0 && cvFiles.length > 0 && (
-           <p className="text-slate-500 text-sm text-center py-4">Ningún CV coincide con los filtros.</p>
+           <p className="text-slate-500 text-sm text-center py-4">{t('no_cv_match_filters')}</p>
         )}
         {/* No mostrar "No hay CVs" aquí si el panel principal ya lo dice */}
 
@@ -248,14 +250,14 @@ function ProcessedCVsTab({
                     onClick={(e) => {
                       e.stopPropagation();
                       if (onDeleteCV) { // Verificar que onDeleteCV exista
-                        if (window.confirm(`¿Estás seguro de que quieres eliminar el CV "${file.name}"? Esta acción no se puede deshacer.`)) {
+                        if (window.confirm(t('confirm_delete_cv', { fileName: file.name }))) {
                           onDeleteCV(file); // Pasar el objeto file completo
                         }
                       } else {
                         console.warn("Intento de eliminar CV sin función onDeleteCV disponible:", file);
                       }
                     }}
-                    title="Eliminar CV"
+                    title={t('delete_cv_button_title')}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

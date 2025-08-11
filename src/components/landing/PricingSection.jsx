@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'; // Asumo que es de shadcn/ui o 
 import { CheckCircle2, CheckCircle, XCircle } from 'lucide-react'; // Loader2 no se usa aquí
 import { APP_PLANS } from '@/config/plans'; // Asegúrate que la ruta sea correcta
 import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from 'react-i18next'; // Importar useTranslation
 // import { useToast } from '@/components/ui/use-toast'; // No se usa, se puede quitar si no se añade funcionalidad de toast
 
 const fadeInWhileInView = {
@@ -34,6 +35,7 @@ const keyFeatures = [
 
 function PricingSection() {
   const { user, loading: loadingUser } = useAuth(); // Agregado loadingUser para evitar clics prematuros
+  const { t } = useTranslation(); // Obtener la función de traducción
   // const { toast } = useToast(); // Descomentar si se usa para notificaciones
   const navigate = useNavigate();
 
@@ -58,7 +60,7 @@ function PricingSection() {
     <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <motion.h2 {...fadeInWhileInView} className="text-4xl font-bold text-center text-white mb-14">
-          Planes Flexibles para cada Necesidad
+          {t('pricing_title')}
         </motion.h2>
 
         {/* Cards de planes */}
@@ -76,11 +78,11 @@ function PricingSection() {
             >
               {plan.isRecommended && (
                 <div className="absolute top-0 right-0 bg-yellow-400 text-black text-xs font-bold px-4 py-1 rounded-bl-lg">
-                  Recomendado
+                  {t('recommended')}
                 </div>
               )}
-              <h3 className="text-2xl font-semibold text-white mb-2">{plan.name}</h3>
-              <p className="text-white/70 text-sm mb-4 h-20 overflow-hidden">{plan.description}</p> {/* Altura fija para consistencia */}
+              <h3 className="text-2xl font-semibold text-white mb-2">{t(plan.nameKey)}</h3>
+              <p className="text-white/70 text-sm mb-4 h-20 overflow-hidden">{t(plan.descriptionKey)}</p> {/* Altura fija para consistencia */}
               <div className="mb-6">
                 <span className="text-3xl font-bold text-white">{plan.priceDisplay}</span>
               </div>
@@ -88,7 +90,7 @@ function PricingSection() {
                 {plan.features.slice(0, 5).map((feature, fIndex) => ( // Mostrar solo las primeras 5 características por brevedad
                   <li key={fIndex} className="flex items-start">
                     <CheckCircle2 className="h-4 w-4 text-green-400 mr-2 mt-1 flex-shrink-0" />
-                    <span>{feature}</span>
+                    <span>{t(feature)}</span>
                   </li>
                 ))}
               </ul>
@@ -98,13 +100,13 @@ function PricingSection() {
                     size="lg"
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                   >
-                    {plan.ctaLabel || 'Empezar Prueba'}
+                    {t(plan.ctaLabelKey || 'get_started')}
                   </Button>
                 </Link>
               ) : plan.type === 'enterprise' ? (
                 <a href="#contact" className="mt-auto block text-center">
                   <Button size="lg" className="w-full bg-gray-500 hover:bg-gray-600 text-white">
-                    {plan.ctaLabel || 'Contactar Ventas'}
+                    {t(plan.ctaLabelKey || 'contact_sales')}
                   </Button>
                 </a>
               ) : (
@@ -114,7 +116,7 @@ function PricingSection() {
                   onClick={() => handlePlanSelection(plan.stripePriceId)}
                   disabled={loadingUser} // Deshabilita si el usuario está cargando
                 >
-                  {plan.ctaLabel || 'Elegir Plan'}
+                  {t(plan.ctaLabelKey || 'choose_plan')}
                 </Button>
               )}
             </motion.div>
@@ -126,13 +128,13 @@ function PricingSection() {
           <table className="min-w-full table-auto">
             <thead>
               <tr>
-                <th className="text-left py-4 px-6 border-b border-white/10 text-white">Características</th>
+                <th className="text-left py-4 px-6 border-b border-white/10 text-white">{t('features_table_header')}</th>
                 {pricingPlans.map(p => (
                   <th
                     key={p.id}
                     className={`py-4 px-6 border-b border-white/10 text-center font-semibold text-white ${p.isRecommended ? 'text-yellow-400' : ''}`}
                   >
-                    {p.name}
+                    {t(p.nameKey)}
                   </th>
                 ))}
               </tr>
@@ -140,7 +142,7 @@ function PricingSection() {
             <tbody>
               {keyFeatures.map((feature, rowIndex) => (
                 <tr key={rowIndex} className="border-t border-white/10 hover:bg-white/5 transition-colors">
-                  <td className="py-3 px-6 text-sm font-medium text-white/90">{feature.label}</td>
+                  <td className="py-3 px-6 text-sm font-medium text-white/90">{t(feature.labelKey)}</td>
                   {feature.keys.map((value, colIndex) => (
                     <td
                       key={colIndex}

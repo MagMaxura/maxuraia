@@ -2,6 +2,9 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from '@/App';
 import '@/index.css';
+import './i18n'; // Importar la configuración de i18n
+import { I18nextProvider } from 'react-i18next';
+import i18n from './i18n';
 
 // Inicialización de Paddle.js (Comentado para la integración con Stripe)
 /*
@@ -57,6 +60,8 @@ if (typeof window !== 'undefined' && window.Paddle) {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <I18nextProvider i18n={i18n}>
+      <App />
+    </I18nextProvider>
   </React.StrictMode>
 );

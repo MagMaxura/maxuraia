@@ -10,11 +10,13 @@ import { Brain, AlertCircle, ArrowRightCircle } from 'lucide-react'; // Importar
 import CreateJobAIForm from '../CreateJobAIForm.jsx'; // Importar el componente del formulario AI (ruta corregida)
 import { APP_PLANS } from '@/config/plans'; // Importar APP_PLANS
 import { useDashboardData } from '@/hooks/useDashboardData'; // Importar useDashboardData
+import { useTranslation } from 'react-i18next'; // Importar useTranslation
 
 function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob, setEditingJob, effectiveLimits, isBonusPlanActive, bonusJobUsed, bonusJobTotal }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { isBasePlanActive, basePlan } = useDashboardData(); // Obtener directamente del hook
+  const { t } = useTranslation(); // Obtener la función de traducción
   console.log("CreateNewJobTab: effectiveLimits recibidos:", effectiveLimits); // Nuevo log para depuración
   const [jobDetails, setJobDetails] = useState({
     title: '',
@@ -61,13 +63,13 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
 
     if (!user?.id) {
       console.log("CreateNewJobTab: Validación fallida - Usuario no autenticado.");
-      toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
+      toast({ title: t('error_title'), description: t('unauthenticated_user'), variant: "destructive" });
       return;
     }
 
     if (!jobDetails.title || (!jobDetails.description && !jobDetails.ai_generated_description)) {
       console.log("CreateNewJobTab: Validación fallida - Título o descripción faltante.");
-      toast({ title: "Error", description: "El título y la descripción (o descripción IA) del puesto son obligatorios.", variant: "destructive" });
+      toast({ title: t('error_title'), description: t('job_title_description_required'), variant: "destructive" });
       return;
     }
 
@@ -82,8 +84,8 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
       if (!isEditing && (status !== 'active' && status !== 'trialing')) {
         console.log("CreateNewJobTab: Validación fallida - Suscripción no activa o en prueba.");
         toast({
-          title: "Suscripción no activa",
-          description: "Tu suscripción no está activa. Por favor, revisa tu plan.",
+          title: t('subscription_not_active_title'),
+          description: t('subscription_not_active_message'),
           variant: "destructive",
         });
         setIsProcessingJob(false);
@@ -95,8 +97,8 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
       if (!isEditing && currentJobsCount >= jobLimit) {
         console.log(`CreateNewJobTab: Validación fallida - Límite de puestos alcanzado (${currentJobsCount}/${jobLimit}).`);
         toast({
-          title: "Límite de Puestos Alcanzado",
-          description: `Has alcanzado el límite de ${jobLimit === Infinity ? 'puestos ilimitados' : `${jobLimit} puestos activos`} para tu plan "${effectiveLimits?.effectiveCurrentPlan?.name || planId}". Considera actualizar tu plan para crear más.`,
+          title: t('job_limit_reached_title'),
+          description: t('job_limit_reached_message', { limit: jobLimit === Infinity ? t('unlimited_jobs') : `${jobLimit} ${t('active_jobs')}`, planName: t(effectiveLimits?.effectiveCurrentPlan?.nameKey || planId) }),
           variant: "destructive",
           duration: 7000,
         });
@@ -119,12 +121,12 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
         console.log("CreateNewJobTab: Updating job with ID:", editingJob.id);
         savedJob = await cvService.updateJobPost(editingJob.id, jobDataToSave);
         console.log("CreateNewJobTab: updateJobPost result:", savedJob); // Nuevo log
-        toast({ title: "Puesto Actualizado", description: "El puesto de trabajo ha sido actualizado." });
+        toast({ title: t('job_updated_title'), description: t('job_updated_message_simple') });
       } else {
         console.log("CreateNewJobTab: Calling cvService.createJobPost with data:", jobDataToSave); // Log antes de la llamada
         savedJob = await cvService.createJobPost(jobDataToSave);
         console.log("CreateNewJobTab: cvService.createJobPost returned:", savedJob); // Log después de la llamada exitosa
-        toast({ title: "Puesto Publicado", description: "Se ha creado un nuevo puesto de trabajo." });
+        toast({ title: t('job_published_title'), description: t('job_created_message_simple') });
       }
 
       // Llamar a la función para actualizar la lista en el Dashboard
@@ -143,8 +145,8 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
       console.error('CreateNewJobTab: Error al guardar/actualizar el puesto:', error);
       console.trace('CreateNewJobTab: Stack trace for error:'); // Añadir stack trace
       toast({
-        title: "Error al guardar puesto",
-        description: `No se pudo guardar el puesto: ${error.message}`,
+        title: t('error_saving_job_title'),
+        description: t('could_not_save_job', { message: error.message }),
         variant: "destructive",
       });
     } finally {
@@ -176,7 +178,7 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
       animate={{ opacity: 1, y: 0 }}
       className="bg-white p-6 md:p-8 rounded-xl shadow-xl space-y-6"
     >
-      <h2 className="text-2xl font-semibold text-slate-800 mb-4">{isEditing ? 'Editar Puesto de Trabajo' : 'Crear Nuevo Puesto de Trabajo'}</h2>
+      <h2 className="text-2xl font-semibold text-slate-800 mb-4">{isEditing ? t('edit_job_title') : t('create_new_job_title')}</h2>
 
       {/* Mensaje de Plan Mensual Vencido */}
       {!isBasePlanActive && basePlan && (basePlan.type === 'monthly' || basePlan.type === 'enterprise') && (
@@ -187,7 +189,7 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
             </div>
             <div className="ml-3">
               <p className="text-sm text-red-700">
-                Tu plan mensual <strong className="font-semibold capitalize">{basePlan.name}</strong> ha expirado. Aunque tengas bonos puntuales activos, te recomendamos <a href="/#pricing" className="underline hover:text-red-600 font-semibold">renovar tu suscripción</a> para mantener todas las funcionalidades.
+                {t('monthly_plan_expired_message', { planName: t(basePlan.nameKey) })} {t('renew_subscription_recommendation')} <a href="/#pricing" className="underline hover:text-red-600 font-semibold">{t('renew_subscription_link')}</a> {t('to_maintain_features')}.
               </p>
             </div>
           </div>
@@ -197,9 +199,9 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
       {/* Información de Uso y Límite del Plan Actual */}
       {effectiveLimits.isSubscriptionActive && (
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-          <p className="font-semibold mb-2">Tu Plan Actual: <span className="capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || APP_PLANS[effectiveLimits?.effectiveCurrentPlan?.id || 'basico']?.name || 'Básico'}</span></p>
+          <p className="font-semibold mb-2">{t('your_current_plan')}: <span className="capitalize">{t(effectiveLimits?.effectiveCurrentPlan?.nameKey || APP_PLANS[effectiveLimits?.effectiveCurrentPlan?.id || 'basico']?.nameKey || 'basic')}</span></p>
           <p>
-            Puestos de trabajo creados: <strong className="font-semibold">{effectiveLimits.jobs_used}</strong> de <strong className="font-semibold">{effectiveLimits.jobLimit === Infinity ? 'Ilimitados' : effectiveLimits.jobLimit}</strong>
+            {t('jobs_created')}: <strong className="font-semibold">{effectiveLimits.jobs_used}</strong> {t('of')} <strong className="font-semibold">{effectiveLimits.jobLimit === Infinity ? t('unlimited') : effectiveLimits.jobLimit}</strong>
           </p>
           <div className="mt-2 w-full bg-blue-200 rounded-full h-2.5">
             <div
@@ -210,7 +212,7 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
           {effectiveLimits.jobLimit !== Infinity && effectiveLimits.jobs_used >= effectiveLimits.jobLimit && (
             <a href="/#pricing" className="mt-3 inline-block">
               <Button variant="outline" size="sm" className="bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border-yellow-500">
-                Actualizar Plan
+                {t('upgrade_plan')}
                 <ArrowRightCircle className="ml-2 h-4 w-4" />
               </Button>
             </a>
@@ -227,8 +229,8 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                Has alcanzado el límite de <strong className="font-semibold">{effectiveLimits.jobLimit === Infinity ? 'puestos ilimitados' : `${effectiveLimits.jobLimit} puestos activos`}</strong> para tu plan <strong className="font-semibold capitalize">{effectiveLimits?.effectiveCurrentPlan?.name || planId}</strong>.
-                Para crear más puestos, por favor considera <a href="/#pricing" className="underline hover:text-yellow-600">actualizar tu plan</a>.
+                {t('job_limit_reached_message', { limit: effectiveLimits.jobLimit === Infinity ? t('unlimited_jobs') : `${effectiveLimits.jobLimit} ${t('active_jobs')}`, planName: t(effectiveLimits?.effectiveCurrentPlan?.nameKey || planId) })}
+                {t('consider_upgrade_to_create_more')} <a href="/#pricing" className="underline hover:text-yellow-600">{t('upgrade_plan_link')}</a>.
               </p>
             </div>
           </div>
@@ -237,20 +239,20 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
 
        {/* Mensaje de Suscripción no activa (solo si NO estamos editando) */}
        {!isEditing && !(status === 'active' || status === 'trialing') && user?.suscripcion && (
-          <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-md shadow">
-           <div className="flex">
-             <div className="flex-shrink-0">
-               <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
-             </div>
-             <div className="ml-3">
-               <p className="text-sm text-red-700">
-                 Tu suscripción actual (<strong className="font-semibold capitalize">{status}</strong>) no te permite crear nuevos puestos.
-                 Por favor, <a href="/#pricing" className="underline hover:text-red-600">revisa tu plan</a> o contacta a soporte.
-               </p>
-             </div>
-           </div>
-         </div>
-        )}
+           <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded-md shadow">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">
+                  {t('current_subscription_not_allow_job_creation', { status: t(status) })}
+                  {t('review_plan_or_contact_support_link')} <a href="/#pricing" className="underline hover:text-red-600">{t('review_plan_link')}</a> {t('or_contact_support')}.
+                </p>
+              </div>
+            </div>
+          </div>
+         )}
 
 
       {/* Formulario de Puesto de Trabajo */}
@@ -273,42 +275,42 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
 
         {/* Sección de Creación Manual */}
         <div className="space-y-4 border-t pt-6 mt-6"> {/* Separador visual */}
-          <h3 className="text-xl font-semibold text-slate-800">Detalles del Puesto (Manual o Editar IA)</h3>
+          <h3 className="text-xl font-semibold text-slate-800">{t('job_details_title')}</h3>
 
           {/* Campo Título */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">Título del Puesto</label>
+            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-1">{t('job_title_label')}</label>
             <Input
               type="text"
               id="title"
               name="title"
               value={jobDetails.title}
               onChange={handleInputChange}
-              placeholder="Ej: Desarrollador Frontend Senior"
+              placeholder={t('job_title_placeholder_example')}
               disabled={formDisabledOverall}
             />
           </div>
 
           {/* Campo Descripción */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">Descripción del Puesto</label>
+            <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">{t('job_description_label')}</label>
             <Textarea
               id="description"
               name="description"
               value={jobDetails.description}
               onChange={handleInputChange}
-              placeholder="Describe detalladamente el puesto, responsabilidades, requisitos, etc."
+              placeholder={t('job_description_placeholder_example')}
               rows="6"
               disabled={formDisabledOverall}
             />
             <p className="mt-1 text-sm text-slate-500">
-              Puedes editar la descripción generada por IA o escribir una manualmente.
+              {t('edit_ai_description_or_write_manually')}
             </p>
           </div>
 
           {/* Campo Requisitos (Interfaz mejorada) */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Requisitos</label>
+            <label className="block text-sm font-medium text-slate-700 mb-2">{t('requirements_label')}</label>
             <div className="space-y-3">
               {jobDetails.requirements && Object.entries(jobDetails.requirements).map(([category, items]) => (
                 Array.isArray(items) && items.map((item, index) => (
@@ -318,7 +320,7 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
                       type="text"
                       value={category}
                       onChange={(e) => handleRequirementChange(category, index, e.target.value, item)}
-                      placeholder="Categoría (Ej: Educación)"
+                      placeholder={t('category_placeholder')}
                       className="w-1/3"
                       disabled={formDisabledOverall}
                     />
@@ -326,7 +328,7 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
                       type="text"
                       value={item}
                       onChange={(e) => handleRequirementChange(category, index, category, e.target.value)}
-                      placeholder="Cualidad (Ej: Secundaria Completa)"
+                      placeholder={t('quality_placeholder')}
                       className="w-2/3"
                       disabled={formDisabledOverall}
                     />
@@ -347,15 +349,15 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
                 onClick={handleAddNewRequirement}
                 disabled={formDisabledOverall}
               >
-                + Añadir Requisito
+                + {t('add_requirement_button')}
               </Button>
             </div>
-            <p className="mt-1 text-sm text-slate-500">Añade o edita los requisitos del puesto.</p>
+            <p className="mt-1 text-sm text-slate-500">{t('add_edit_requirements_message')}</p>
           </div>
 
           {/* Campo Palabras Clave */}
           <div>
-            <label htmlFor="keywords" className="block text-sm font-medium text-slate-700 mb-1">Palabras Clave (Separadas por coma)</label>
+            <label htmlFor="keywords" className="block text-sm font-medium text-slate-700 mb-1">{t('keywords_label')}</label>
             <Input
               id="keywords"
               name="keywords"
@@ -367,10 +369,10 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
                   keywords: keywordsArray,
                 }));
               }}
-              placeholder="Ej: React, TypeScript, UI/UX, Fintech"
+              placeholder={t('keywords_placeholder_example')}
               disabled={formDisabledOverall}
             />
-            <p className="mt-1 text-sm text-slate-500">Ingresa las palabras clave separadas por comas.</p>
+            <p className="mt-1 text-sm text-slate-500">{t('enter_keywords_message')}</p>
           </div>
 
         </div> {/* Fin Sección Creación Manual */}
@@ -382,7 +384,7 @@ function CreateNewJobTab({ currentJobsCount, onJobPublishedOrUpdated, editingJob
           disabled={formDisabledOverall}
           className="w-full"
         >
-          {isProcessingJob ? (isEditing ? 'Actualizando...' : 'Creando...') : (isEditing ? 'Actualizar Puesto' : 'Publicar Puesto')}
+          {isProcessingJob ? (isEditing ? t('updating_text') : t('creating_text')) : (isEditing ? t('update_job_button') : t('publish_job_button'))}
         </Button>
       </div>
     </motion.div>
