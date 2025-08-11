@@ -13,26 +13,31 @@ var _micro = require("micro");
 
 // Importar createClient
 // Inicializar Supabase para el entorno de backend
-var supabaseUrl = process.env.VITE_SUPABASE_URL;
-var supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE_KEY si necesitas privilegios elevados
+var supabaseUrl = process.env.SUPABASE_URL;
+var supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Usar SUPABASE_SERVICE_ROLE_KEY para privilegios elevados en el backend
 
-var supabase = (0, _supabaseJs.createClient)(supabaseUrl, supabaseKey);
+var supabase = (0, _supabaseJs.createClient)(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false // No persistir la sesión en el servidor
+
+  }
+});
 var _process$env = process.env,
-    VITE_GOOGLE_CLIENT_ID = _process$env.VITE_GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_ID = _process$env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET,
-    VITE_GOOGLE_REDIRECT_URI = _process$env.VITE_GOOGLE_REDIRECT_URI;
-var oauth2Client = new _googleapis.google.auth.OAuth2(VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI.replace(/\/$/, '') // Eliminar barra final si existe
+    GOOGLE_REDIRECT_URI = _process$env.GOOGLE_REDIRECT_URI;
+var oauth2Client = new _googleapis.google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI.replace(/\/$/, '') // Eliminar barra final si existe
 );
 
 var _callee = function _callee(req, res) {
-  var _req$body, code, userId, _ref, tokens, _ref2, data, error, scopes, authorizationUrl;
+  var _req$body, code, userId, _ref, tokens, upsertData, _ref2, data, error, scopes, authorizationUrl;
 
   return regeneratorRuntime.async(function _callee$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
         case 0:
           if (!(req.method === 'POST')) {
-            _context.next = 30;
+            _context.next = 33;
             break;
           }
 
@@ -42,9 +47,9 @@ var _callee = function _callee(req, res) {
             code: code ? 'present' : 'missing',
             userId: userId
           });
-          console.log('Google Client ID:', VITE_GOOGLE_CLIENT_ID ? 'present' : 'missing');
+          console.log('Google Client ID:', GOOGLE_CLIENT_ID ? 'present' : 'missing');
           console.log('Google Client Secret:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing');
-          console.log('Google Redirect URI:', VITE_GOOGLE_REDIRECT_URI ? 'present' : 'missing');
+          console.log('Google Redirect URI:', GOOGLE_REDIRECT_URI ? 'present' : 'missing');
 
           if (!(!code || !userId)) {
             _context.next = 9;
@@ -62,27 +67,35 @@ var _callee = function _callee(req, res) {
         case 11:
           _ref = _context.sent;
           tokens = _ref.tokens;
-          _context.next = 15;
-          return regeneratorRuntime.awrap(supabase.from('user_google_tokens') // Tabla para almacenar tokens de Google por usuario
-          .upsert({
+          console.log('Google Tokens received:', tokens); // Log para ver todos los tokens, incluido refresh_token
+          // Preparar datos para upsert, incluyendo refresh_token solo si está presente
+
+          upsertData = {
             user_id: userId,
             access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
-            // Solo se devuelve la primera vez
             expiry_date: tokens.expiry_date,
             token_type: tokens.token_type,
             scope: tokens.scope
-          }, {
+          }; // Solo añadir refresh_token si existe (se devuelve solo en la primera autorización)
+
+          if (tokens.refresh_token) {
+            upsertData.refresh_token = tokens.refresh_token;
+          } // Almacenar tokens de refresco de forma segura en Supabase
+
+
+          _context.next = 18;
+          return regeneratorRuntime.awrap(supabase.from('user_google_tokens') // Tabla para almacenar tokens de Google por usuario
+          .upsert(upsertData, {
             onConflict: 'user_id'
           }));
 
-        case 15:
+        case 18:
           _ref2 = _context.sent;
           data = _ref2.data;
           error = _ref2.error;
 
           if (!error) {
-            _context.next = 21;
+            _context.next = 24;
             break;
           }
 
@@ -91,30 +104,31 @@ var _callee = function _callee(req, res) {
             error: 'Failed to store tokens.'
           }));
 
-        case 21:
+        case 24:
           // Devolver el access_token y el userId al frontend
           (0, _micro.send)(res, 200, {
             access_token: tokens.access_token,
             expiry_date: tokens.expiry_date,
             userId: userId
           });
-          _context.next = 28;
+          _context.next = 31;
           break;
 
-        case 24:
-          _context.prev = 24;
+        case 27:
+          _context.prev = 27;
           _context.t0 = _context["catch"](1);
-          console.error('Error during token exchange:', _context.t0);
+          console.error('Error during token exchange (full error object):', _context.t0); // Log detallado del error
+
           (0, _micro.send)(res, 500, {
             error: 'Failed to exchange code for tokens.',
             details: _context.t0.message
           });
 
-        case 28:
-          _context.next = 31;
+        case 31:
+          _context.next = 34;
           break;
 
-        case 30:
+        case 33:
           if (req.method === 'GET') {
             // Iniciar el flujo de autenticación de Google
             scopes = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive.file', // O 'https://www.googleapis.com/auth/drive' para acceso completo
@@ -137,12 +151,12 @@ var _callee = function _callee(req, res) {
             });
           }
 
-        case 31:
+        case 34:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[1, 24]]);
+  }, null, null, [[1, 27]]);
 };
 
 exports["default"] = _callee;

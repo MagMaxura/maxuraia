@@ -3,16 +3,20 @@ import { createClient } from '@supabase/supabase-js'; // Importar createClient
 import { send } from 'micro';
 
 // Inicializar Supabase para el entorno de backend
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE_KEY si necesitas privilegios elevados
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Usar SUPABASE_SERVICE_ROLE_KEY para privilegios elevados en el backend
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false, // No persistir la sesión en el servidor
+  },
+});
 
-const { VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI } = process.env;
+const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } = process.env;
 
 const oauth2Client = new google.auth.OAuth2(
-  VITE_GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
-  VITE_GOOGLE_REDIRECT_URI.replace(/\/$/, '') // Eliminar barra final si existe
+  GOOGLE_REDIRECT_URI.replace(/\/$/, '') // Eliminar barra final si existe
 );
 
 export default async (req, res) => {
@@ -22,9 +26,9 @@ export default async (req, res) => {
       const { code, userId } = req.body;
 
       console.log('Auth Request Body:', { code: code ? 'present' : 'missing', userId });
-      console.log('Google Client ID:', VITE_GOOGLE_CLIENT_ID ? 'present' : 'missing');
+      console.log('Google Client ID:', GOOGLE_CLIENT_ID ? 'present' : 'missing');
       console.log('Google Client Secret:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing');
-      console.log('Google Redirect URI:', VITE_GOOGLE_REDIRECT_URI ? 'present' : 'missing');
+      console.log('Google Redirect URI:', GOOGLE_REDIRECT_URI ? 'present' : 'missing');
 
 
       if (!code || !userId) {
@@ -32,18 +36,26 @@ export default async (req, res) => {
       }
 
       const { tokens } = await oauth2Client.getToken(code);
+      console.log('Google Tokens received:', tokens); // Log para ver todos los tokens, incluido refresh_token
+
+      // Preparar datos para upsert, incluyendo refresh_token solo si está presente
+      const upsertData = {
+        user_id: userId,
+        access_token: tokens.access_token,
+        expiry_date: tokens.expiry_date,
+        token_type: tokens.token_type,
+        scope: tokens.scope,
+      };
+
+      // Solo añadir refresh_token si existe (se devuelve solo en la primera autorización)
+      if (tokens.refresh_token) {
+        upsertData.refresh_token = tokens.refresh_token;
+      }
 
       // Almacenar tokens de refresco de forma segura en Supabase
       const { data, error } = await supabase
         .from('user_google_tokens') // Tabla para almacenar tokens de Google por usuario
-        .upsert({
-          user_id: userId,
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token, // Solo se devuelve la primera vez
-          expiry_date: tokens.expiry_date,
-          token_type: tokens.token_type,
-          scope: tokens.scope,
-        }, { onConflict: 'user_id' });
+        .upsert(upsertData, { onConflict: 'user_id' });
 
       if (error) {
         console.error('Error storing tokens:', error);
@@ -54,7 +66,7 @@ export default async (req, res) => {
       send(res, 200, { access_token: tokens.access_token, expiry_date: tokens.expiry_date, userId: userId });
 
     } catch (error) {
-      console.error('Error during token exchange:', error);
+      console.error('Error during token exchange (full error object):', error); // Log detallado del error
       send(res, 500, { error: 'Failed to exchange code for tokens.', details: error.message });
     }
   } else if (req.method === 'GET') {
