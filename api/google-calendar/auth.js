@@ -29,6 +29,7 @@ export default async (req, res) => {
       const { code, userId } = req.body;
 
       console.log('Auth Request Body:', { code: code ? 'present' : 'missing', userId });
+      console.log('Received code:', code); // Añadir log para el código recibido
       console.log('Google Client ID:', GOOGLE_CLIENT_ID ? 'present' : 'missing');
       console.log('Google Client Secret:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing');
       console.log('Google Redirect URI:', GOOGLE_REDIRECT_URI ? 'present' : 'missing');
