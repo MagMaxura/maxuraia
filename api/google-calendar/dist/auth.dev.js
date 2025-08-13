@@ -24,10 +24,11 @@ var supabase = (0, _supabaseJs.createClient)(supabaseUrl, supabaseKey, {
 });
 var _process$env = process.env,
     GOOGLE_CLIENT_ID = _process$env.GOOGLE_CLIENT_ID,
-    GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET,
-    GOOGLE_REDIRECT_URI = _process$env.GOOGLE_REDIRECT_URI;
-var redirectUriCleaned = GOOGLE_REDIRECT_URI.replace(/\/$/, '');
-console.log('Backend Google Redirect URI (cleaned):', redirectUriCleaned); // Log para verificar la URI final
+    GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET;
+var HARDCODED_REDIRECT_URI = 'https://www.employsmartia.com/api/google-calendar/auth'; // URL hardcodeada para prueba
+
+var redirectUriCleaned = HARDCODED_REDIRECT_URI.replace(/\/$/, '');
+console.log('Backend Google Redirect URI (cleaned - hardcoded):', redirectUriCleaned); // Log para verificar la URI final
 
 var oauth2Client = new _googleapis.google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, encodeURIComponent(redirectUriCleaned) // Codificar la URI para asegurar compatibilidad
 );
