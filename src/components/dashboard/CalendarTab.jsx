@@ -4,31 +4,36 @@ import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { Button } from '../ui/button';
-import { useAuth } from '@/contexts/AuthContext'; // Importar useAuth
-import { exchangeCodeForTokens, getCalendarEvents } from '../../lib/googleCalendar'; // Importar funciones del servicio
+import { useAuth } from '@/contexts/AuthContext';
+import { exchangeCodeForTokens, getCalendarEvents } from '../../lib/googleCalendar';
 
 const localizer = momentLocalizer(moment);
 
 const CalendarTab = () => {
-    const { user } = useAuth(); // Obtener el usuario del contexto de autenticación
+    const { user } = useAuth();
     const [events, setEvents] = useState([]);
     const [accessToken, setAccessToken] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Configuración de Google Login
     const login = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
+            console.log("Frontend - Google Login onSuccess:", tokenResponse); // NEW LOG
             try {
-                // Intercambiar el código por tokens en el backend
+                console.log("Frontend - Exchanging code for tokens with backend..."); // NEW LOG
                 const fetchedAccessToken = await exchangeCodeForTokens(tokenResponse.code, user.id);
+                console.log("Frontend - Successfully received access token from backend."); // NEW LOG
                 setAccessToken(fetchedAccessToken);
             } catch (err) {
+                console.error("Frontend - Error during token exchange with backend:", err); // NEW LOG
                 setError("Error al autenticar con Google: " + err.message);
             }
         },
-        onError: (errorResponse) => setError(errorResponse),
-        flow: 'auth-code', // Importante para el flujo de código de autorización
+        onError: (errorResponse) => {
+            console.error("Frontend - Google Login onError:", errorResponse); // NEW LOG
+            setError(errorResponse);
+        },
+        flow: 'auth-code',
         scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
     });
 
@@ -38,9 +43,12 @@ const CalendarTab = () => {
                 setLoading(true);
                 setError(null);
                 try {
+                    console.log("Frontend - Fetching calendar events with access token..."); // NEW LOG
                     const calendarEvents = await getCalendarEvents(accessToken);
                     setEvents(calendarEvents);
+                    console.log("Frontend - Successfully fetched calendar events."); // NEW LOG
                 } catch (err) {
+                    console.error("Frontend - Error fetching calendar events:", err); // NEW LOG
                     setError("Error al cargar eventos: " + err.message);
                 } finally {
                     setLoading(false);
@@ -80,7 +88,6 @@ const CalendarTab = () => {
     );
 };
 
-// El componente principal que se exportará, envuelto en GoogleOAuthProvider
 const WrappedCalendarTab = () => (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         <CalendarTab />
