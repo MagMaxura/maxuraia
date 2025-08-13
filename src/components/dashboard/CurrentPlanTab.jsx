@@ -6,8 +6,10 @@ import { APP_PLANS, PLAN_HIERARCHY } from '@/config/plans'; // Añadir PLAN_HIER
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { usePayment } from '@/hooks/usePayment';
 import { useDashboardData } from '@/hooks/useDashboardData'; // Importar useDashboardData
+import { useTranslation } from 'react-i18next'; // Importar useTranslation
 
 function CurrentPlanTab() {
+  const { t } = useTranslation(); // Inicializar t
   const { user, loading: loadingUser } = useAuth(); // Obtener loading del hook useAuth
   const { userSubscription, effectiveLimits, isBonusPlanActive, bonusCvUsed, bonusJobUsed, bonusMatchUsed, bonusCvTotal, bonusJobTotal, bonusMatchTotal } = useDashboardData(); // Obtener userSubscription y effectiveLimits
   const { loadingCheckout, handleCheckout } = usePayment();
@@ -42,7 +44,7 @@ function CurrentPlanTab() {
       transition={{ duration: 0.3 }}
       className="bg-white p-6 md:p-8 rounded-xl shadow-xl"
     >
-      <h2 className="text-2xl font-semibold text-slate-800 mb-6">Detalles de tu Plan</h2>
+      <h2 className="text-2xl font-semibold text-slate-800 mb-6">{t('your_current_plan')}</h2>
       {Object.values(APP_PLANS).length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-20">
         {Object.values(APP_PLANS)
@@ -54,7 +56,7 @@ function CurrentPlanTab() {
           let borderColorClass = 'border-slate-200'; // Default border
           let textColorClass = 'text-slate-800'; // Default text color
           let buttonBgClass = 'bg-blue-500 hover:bg-blue-600'; // Default button color
-          let buttonText = 'Elegir Plan';
+          let buttonText = t('choose_plan');
           let buttonAction = () => handleCheckout(plan, user);
           let showButton = true;
 
@@ -62,21 +64,21 @@ function CurrentPlanTab() {
             borderColorClass = isExpired ? 'border-red-500 ring-2 ring-red-400' : (isBasePlanActive ? 'border-green-500 ring-2 ring-green-400' : 'border-yellow-400 ring-2 ring-yellow-300');
             textColorClass = isExpired ? 'text-red-700' : 'text-yellow-700';
             buttonBgClass = isExpired ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-500 hover:bg-gray-600';
-            buttonText = isExpired ? 'Renovar en forma manual' : 'Plan Actual';
+            buttonText = isExpired ? t('renew_subscription_recommendation') : t('your_current_plan');
             showButton = isExpired; // Solo mostrar botón si está vencido para renovación
           } else if (plan.id === 'busqueda_puntual') {
             buttonBgClass = 'bg-purple-600 hover:bg-purple-700';
-            buttonText = 'Comprar Ahora';
+            buttonText = t('buy_now');
           } else if (plan.id === nextPlanToShow?.id) {
             buttonBgClass = 'bg-green-600 hover:bg-green-700';
-            buttonText = 'Mejorar Plan';
+            buttonText = t('upgrade_plan');
           } else if (plan.type === 'enterprise') {
             buttonBgClass = 'bg-gray-500 hover:bg-gray-600';
-            buttonText = 'Contactar Ventas';
+            buttonText = t('contact_sales');
             buttonAction = () => window.location.href = '#contact'; // O una ruta de contacto
           } else if (plan.id === 'trial') {
             buttonBgClass = 'bg-purple-600 hover:bg-purple-700';
-            buttonText = 'Empezar Prueba';
+            buttonText = t('get_started');
             buttonAction = () => window.location.href = '/register';
           }
 
@@ -90,55 +92,55 @@ function CurrentPlanTab() {
             >
               {isCurrentPlan && (
                 <div className={`absolute top-0 right-0 text-xs font-bold px-4 py-1 rounded-bl-lg ${isExpired ? 'bg-red-500 text-white' : 'bg-yellow-400 text-black'}`}>
-                  {isExpired ? 'Vencido' : 'Plan Actual'}
+                  {isExpired ? t('expired') : t('your_current_plan')}
                 </div>
               )}
-              <h3 className={`text-2xl font-semibold mb-2 text-center ${textColorClass}`}>{plan.name}</h3>
-              <p className="text-slate-600 text-sm mb-4 text-center h-16 overflow-hidden">{plan.description}</p>
+              <h3 className={`text-2xl font-semibold mb-2 text-center ${textColorClass}`}>{t(plan.name)}</h3>
+              <p className="text-slate-600 text-sm mb-4 text-center h-16 overflow-hidden">{t(plan.description)}</p>
               <div className="mb-6 text-center">
                 <span className="text-3xl font-bold text-slate-800">{plan.priceDisplay}</span>
               </div>
 
               {isCurrentPlan && baseSubscription && (
                 <div className="mb-4 text-sm text-slate-600 text-center">
-                  <p>Adquirido: {new Date(baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p>{t('acquired')}: {new Date(baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   {baseSubscription.current_period_end && (
-                    <p>Vencimiento: {new Date(baseSubscription.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p>{t('expiration')}: {new Date(baseSubscription.current_period_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   )}
                 </div>
               )}
 
               {isCurrentPlan && effectiveLimits && (
                 <div className="mb-4 text-sm text-slate-600 text-center">
-                  <p className="mt-2 font-semibold">Límites de tu Plan:</p>
+                  <p className="mt-2 font-semibold">{t('plan_limits')}:</p>
                   {effectiveLimits.cvs !== undefined && (
-                    <p>CVs: {effectiveLimits.cvs_used} / {effectiveLimits.cvs === -1 ? 'Ilimitados' : effectiveLimits.cvs}</p>
+                    <p>{t('cvs')}: {effectiveLimits.cvs_used} / {effectiveLimits.cvs === -1 ? t('unlimited') : effectiveLimits.cvs}</p>
                   )}
                   {effectiveLimits.jobs !== undefined && (
-                    <p>Ofertas: {effectiveLimits.jobs_used} / {effectiveLimits.jobs === -1 ? 'Ilimitadas' : effectiveLimits.jobs}</p>
+                    <p>{t('offers')}: {effectiveLimits.jobs_used} / {effectiveLimits.jobs === -1 ? t('unlimited') : effectiveLimits.jobs}</p>
                   )}
                   {effectiveLimits.matches !== undefined && (
-                    <p>Matches: {effectiveLimits.matches_used} / {effectiveLimits.matches === -1 ? 'Ilimitados' : effectiveLimits.matches}</p>
+                    <p>{t('matches')}: {effectiveLimits.matches_used} / {effectiveLimits.matches === -1 ? t('unlimited') : effectiveLimits.matches}</p>
                   )}
                 </div>
               )}
 
               {isBonusPlanActive && plan.id === 'busqueda_puntual' && baseSubscription && (
                 <div className="mb-4 text-sm text-slate-600 text-center">
-                  <h3 className="text-xl font-semibold mb-2 text-center text-green-700">Bonos Puntuales Activos</h3>
-                  <p>Adquirido: {new Date(baseSubscription.bonus_periodo_start || baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <h3 className="text-xl font-semibold mb-2 text-center text-green-700">{t('active_bonus_plans')}</h3>
+                  <p>{t('acquired')}: {new Date(baseSubscription.bonus_periodo_start || baseSubscription.created_at).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   {baseSubscription.bonus_periodo_end && (
-                    <p>Vencimiento: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <p>{t('expiration')}: {new Date(baseSubscription.bonus_periodo_end).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   )}
-                  <p className="mt-2 font-semibold">Límites y Uso:</p>
+                  <p className="mt-2 font-semibold">{t('limits_and_usage')}:</p>
                   {bonusCvTotal > 0 && (
-                    <p>CVs: {bonusCvUsed} / {bonusCvTotal}</p>
+                    <p>{t('cvs')}: {bonusCvUsed} / {bonusCvTotal}</p>
                   )}
                   {bonusJobTotal > 0 && (
-                    <p>Ofertas: {bonusJobUsed} / {bonusJobTotal}</p>
+                    <p>{t('offers')}: {bonusJobUsed} / {bonusJobTotal}</p>
                   )}
                   {bonusMatchTotal > 0 && (
-                    <p>Matches: {bonusMatchUsed} / {bonusMatchTotal}</p>
+                    <p>{t('matches')}: {bonusMatchUsed} / {bonusMatchTotal}</p>
                   )}
                 </div>
               )}
@@ -153,7 +155,7 @@ function CurrentPlanTab() {
                     ) : (
                       <CheckCircle2 className="h-4 w-4 text-blue-500 mr-2 mt-1 flex-shrink-0" /> // Default check for other features
                     )}
-                    <span>{feature.replace('✅', '').replace('❌', '').trim()}</span>
+                    <span>{t(feature.replace('✅', '').replace('❌', '').trim())}</span>
                   </li>
                 ))}
               </ul>
@@ -174,7 +176,7 @@ function CurrentPlanTab() {
         })}
       </div>
       ) : (
-        <p className="text-slate-500">Cargando información del plan o no hay plan disponible. Si el problema persiste, contacta a soporte.</p>
+        <p className="text-slate-500">{t('loading_plan_info_or_no_plan')}</p>
       )}
     </motion.div>
   );

@@ -77,7 +77,7 @@ export const APP_PLANS = {
     // paddlePriceId: 'pri_01jvsmm8vm50zz6q025w5sxkns', // Comentado para Stripe
     stripeProductId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'prod_SUd4buH7r8OzBI' : 'prod_SOuKUAX4QG2rY5', // Product ID de Stripe para Plan Empresa
     stripePriceId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'price_1RZdoQA5iob5uvoTH6v1iswz' : 'price_1RU6WHA5iob5uvoTNoQ7eIbl', // Price ID de Stripe para Plan Empresa
-    priceDisplay: 'ARS 69,000.00/month',
+    priceDisplay: 'ARS 69,000.00/mes', // Corregido a "/mes"
     priceNumeric: 6900000,
     type: 'monthly',
     isRecommended: true,
