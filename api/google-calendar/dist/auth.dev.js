@@ -22,7 +22,8 @@ var supabase = (0, _supabaseJs.createClient)(supabaseUrl, supabaseKey, {
 var _process$env = process.env,
     GOOGLE_CLIENT_ID = _process$env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET,
-    GOOGLE_REDIRECT_URI = _process$env.GOOGLE_REDIRECT_URI;
+    GOOGLE_REDIRECT_URI = _process$env.GOOGLE_REDIRECT_URI; // Quitar la barra al final de la URI si existe
+
 var redirectUriCleaned = GOOGLE_REDIRECT_URI.replace(/\/$/, '');
 console.log('Backend Google Redirect URI (cleaned):', redirectUriCleaned); // CORRECCIÓN: Se eliminó encodeURIComponent
 
@@ -67,18 +68,20 @@ var _callee = function _callee(req, res) {
         case 12:
           _ref = _context.sent;
           tokens = _ref.tokens;
-          console.log('Google Tokens received:', tokens);
+          console.log('Google Tokens received:', tokens); // Preparar datos para upsert, incluyendo refresh_token solo si está presente
+
           upsertData = {
             user_id: userId,
             access_token: tokens.access_token,
             expiry_date: tokens.expiry_date,
             token_type: tokens.token_type,
             scope: tokens.scope
-          };
+          }; // Solo añadir refresh_token si existe (se devuelve solo en la primera autorización)
 
           if (tokens.refresh_token) {
             upsertData.refresh_token = tokens.refresh_token;
-          }
+          } // Almacenar tokens de refresco de forma segura en Supabase
+
 
           _context.next = 19;
           return regeneratorRuntime.awrap(supabase.from('user_google_tokens').upsert(upsertData, {
@@ -101,6 +104,7 @@ var _callee = function _callee(req, res) {
           }));
 
         case 25:
+          // Devolver el access_token y el userId al frontend
           (0, _micro.send)(res, 200, {
             access_token: tokens.access_token,
             expiry_date: tokens.expiry_date,
@@ -128,12 +132,14 @@ var _callee = function _callee(req, res) {
             scopes = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'];
             authorizationUrl = oauth2Client.generateAuthUrl({
               access_type: 'offline',
+              // Esto asegura que obtengamos un refresh_token
               scope: scopes.join(' '),
-              prompt: 'consent'
+              prompt: 'consent' // Solicita el consentimiento cada vez para asegurar el refresh_token
+
             });
             (0, _micro.send)(res, 302, null, {
               Location: authorizationUrl
-            });
+            }); // Redirigir al usuario a la URL de autorización
           } else {
             (0, _micro.send)(res, 405, {
               error: 'Method Not Allowed'
