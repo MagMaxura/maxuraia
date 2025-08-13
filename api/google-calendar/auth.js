@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { send } from 'micro';
 
 // Inicializar Supabase para el entorno de backend
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseUrl = process.env.SUPABASE_URL; // Usar variable de backend
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Usar la Service Role Key para el backend
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     persistSession: false,
@@ -13,34 +13,27 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 
 const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } = process.env;
 
-const redirectUriCleaned = GOOGLE_REDIRECT_URI.replace(/\/$/, '');
-console.log('Backend Google Redirect URI (cleaned):', redirectUriCleaned);
-console.log('Backend Google Client ID:', GOOGLE_CLIENT_ID); // Nuevo log
-console.log('Backend Google Client Secret:', GOOGLE_CLIENT_SECRET ? 'present' : 'missing'); // Nuevo log
-
+// El cliente OAuth de Google ya no necesita la URI codificada ni limpiada manualmente
 const oauth2Client = new google.auth.OAuth2(
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
-  redirectUriCleaned
+  GOOGLE_REDIRECT_URI
 );
 
 export default async (req, res) => {
   if (req.method === 'POST') {
+    // Manejar el intercambio de código por tokens
     try {
       const { code, userId } = req.body;
+
       if (!code || !userId) {
         return send(res, 400, { error: 'Code and userId are required.' });
       }
 
-      console.log('Auth Request Body:', { code: code ? 'present' : 'missing', userId });
-      
-      // Log de la URL de intercambio de tokens que se está construyendo
-      console.log('Token exchange URL being built...');
-      // Note: La biblioteca de Google construye la URL final internamente. Este log es para verificar los componentes clave.
-      
+      // Este es el paso clave donde ocurre el intercambio de token
       const { tokens } = await oauth2Client.getToken(code);
-      console.log('Google Tokens received:', tokens);
 
+      // Preparar datos para upsert, incluyendo refresh_token solo si está presente
       const upsertData = {
         user_id: userId,
         access_token: tokens.access_token,
@@ -49,10 +42,12 @@ export default async (req, res) => {
         scope: tokens.scope,
       };
 
+      // Solo añadir refresh_token si existe (se devuelve solo en la primera autorización)
       if (tokens.refresh_token) {
         upsertData.refresh_token = tokens.refresh_token;
       }
 
+      // Almacenar tokens de forma segura en Supabase
       const { data, error } = await supabase
         .from('user_google_tokens')
         .upsert(upsertData, { onConflict: 'user_id' });
@@ -62,13 +57,15 @@ export default async (req, res) => {
         return send(res, 500, { error: 'Failed to store tokens.' });
       }
 
+      // Devolver el access_token y el userId al frontend
       send(res, 200, { access_token: tokens.access_token, expiry_date: tokens.expiry_date, userId: userId });
 
     } catch (error) {
-      console.error('Error during token exchange (full error object):', error);
+      console.error('Error during token exchange:', error);
       send(res, 500, { error: 'Failed to exchange code for tokens.', details: error.message });
     }
   } else if (req.method === 'GET') {
+    // Iniciar el flujo de autenticación de Google
     const scopes = [
       'https://www.googleapis.com/auth/calendar',
       'https://www.googleapis.com/auth/userinfo.email',
@@ -80,9 +77,6 @@ export default async (req, res) => {
       scope: scopes.join(' '),
       prompt: 'consent',
     });
-    
-    // Log de la URL de autorización que se genera para el frontend
-    console.log('Authorization URL sent to frontend:', authorizationUrl);
 
     send(res, 302, null, { Location: authorizationUrl });
   } else {
