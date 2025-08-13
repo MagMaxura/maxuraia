@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { processJobMatches } from '../../services/matchingService';
+import { cvService } from '../../services/cvService'; // Importar cvService
 import EditableCV from '../EditableCV'; // Importar EditableCV
 import CandidateNotes from '../CandidateNotes'; // Importar CandidateNotes
 import { Button } from '../ui/button';
