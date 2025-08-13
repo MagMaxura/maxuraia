@@ -25,19 +25,29 @@ export default async (req, res) => {
     // Manejar el intercambio de código por tokens
     try {
       const { code, userId } = req.body;
+      console.log('Received code and userId:', { code, userId });
 
       if (!code || !userId) {
+        console.error('Missing code or userId in request body.');
         return send(res, 400, { error: 'Code and userId are required.' });
       }
 
       // Este es el paso clave donde ocurre el intercambio de token
-      const { tokens } = await oauth2Client.getToken(code);
+      let tokens;
+      try {
+        const response = await oauth2Client.getToken(code);
+        tokens = response.tokens;
+        console.log('Tokens received from Google:', tokens);
+      } catch (tokenError) {
+        console.error('Error getting tokens from Google:', tokenError.message);
+        return send(res, 500, { error: 'Failed to get tokens from Google.', details: tokenError.message });
+      }
 
       // Preparar datos para upsert, incluyendo refresh_token solo si está presente
       const upsertData = {
         user_id: userId,
         access_token: tokens.access_token,
-        expiry_date: tokens.expiry_date,
+        expiry_date: new Date(tokens.expiry_date).toISOString(), // Asegurar formato ISO
         token_type: tokens.token_type,
         scope: tokens.scope,
       };
@@ -47,16 +57,19 @@ export default async (req, res) => {
         upsertData.refresh_token = tokens.refresh_token;
       }
 
+      console.log('Attempting to upsert data to Supabase:', upsertData);
       // Almacenar tokens de forma segura en Supabase
       const { data, error } = await supabase
         .from('user_google_tokens')
         .upsert(upsertData, { onConflict: 'user_id' });
 
       if (error) {
-        console.error('Error storing tokens:', error);
-        return send(res, 500, { error: 'Failed to store tokens.' });
+        console.error('Error storing tokens in Supabase:', error);
+        return send(res, 500, { error: 'Failed to store tokens.', details: error.message });
       }
+      console.log('Tokens successfully stored in Supabase:', data);
 
+      console.log('Google Calendar connection successful for userId:', userId);
       // Devolver el access_token y el userId al frontend
       send(res, 200, { access_token: tokens.access_token, expiry_date: tokens.expiry_date, userId: userId });
 
