@@ -35,7 +35,7 @@ const CalendarTab = () => {
         },
         flow: 'auth-code',
         scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-        // --- LÍNEA CLAVE AÑADIDA ---
+        // --- LÍNEA CLAVE AÑADIDA: Asegura que el frontend use el mismo URL que el backend ---
         redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
     });
 
