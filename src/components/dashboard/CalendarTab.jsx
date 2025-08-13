@@ -16,32 +16,38 @@ const CalendarTab = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // --- INICIO DE LA MODIFICACIÓN ---
-    const redirectUriForLogin = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
-    console.log(`[FRONTEND-DEBUG] URI de redirección usada por el frontend: "${redirectUriForLogin}"`);
-    // --- FIN DE LA MODIFICACIÓN ---
-
     const login = useGoogleLogin({
-        onSuccess: async (tokenResponse) => {
-            console.log("Frontend - Google Login onSuccess:", tokenResponse);
-            try {
-                console.log("Frontend - Exchanging code for tokens with backend...");
-                const fetchedAccessToken = await exchangeCodeForTokens(tokenResponse.code, user.id);
-                console.log("Frontend - Successfully received access token from backend.");
-                setAccessToken(fetchedAccessToken);
-            } catch (err) {
-                console.error("Frontend - Error during token exchange with backend:", err);
-                setError("Error al autenticar con Google: " + err.message);
-            }
-        },
-        onError: (errorResponse) => {
-            console.error("Frontend - Google Login onError:", errorResponse);
-            setError(errorResponse);
-        },
+        // onSuccess ya no se usará, la lógica se mueve al useEffect
         flow: 'auth-code',
         scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-        redirect_uri: redirectUriForLogin, // Usamos la variable que acabamos de imprimir
+        redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
     });
+
+    // --- LÓGICA CLAVE AÑADIDA ---
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+
+        if (code && user && !accessToken) {
+            setLoading(true);
+            console.log("Frontend - Código de autorización detectado en la URL. Intercambiando por tokens...");
+            
+            exchangeCodeForTokens(code, user.id)
+                .then(fetchedAccessToken => {
+                    console.log("Frontend - Tokens recibidos del backend.");
+                    setAccessToken(fetchedAccessToken);
+                    // Limpia la URL para no volver a usar el mismo código
+                    window.history.pushState({}, document.title, window.location.pathname);
+                })
+                .catch(err => {
+                    console.error("Frontend - Error durante el intercambio de tokens con el backend:", err);
+                    setError("Error al autenticar con Google: " + err.message);
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        }
+    }, [user, accessToken]); // Se ejecuta cuando el usuario está disponible
 
     useEffect(() => {
         if (accessToken) {
@@ -49,12 +55,11 @@ const CalendarTab = () => {
                 setLoading(true);
                 setError(null);
                 try {
-                    console.log("Frontend - Fetching calendar events with access token...");
+                    console.log("Frontend - Obteniendo eventos del calendario...");
                     const calendarEvents = await getCalendarEvents(accessToken);
                     setEvents(calendarEvents);
-                    console.log("Frontend - Successfully fetched calendar events.");
                 } catch (err) {
-                    console.error("Frontend - Error fetching calendar events:", err);
+                    console.error("Frontend - Error al obtener eventos:", err);
                     setError("Error al cargar eventos: " + err.message);
                 } finally {
                     setLoading(false);
@@ -71,9 +76,11 @@ const CalendarTab = () => {
                 <div className="flex flex-col items-center justify-center h-64 border rounded-md p-4">
                     <p className="mb-4">Conecta tu Google Calendar para ver tus eventos.</p>
                     <Button onClick={() => login()}>Conectar Google Calendar</Button>
-                    {error && <p className="text-red-500 mt-2">Error: {error.error || JSON.stringify(error)}</p>}
+                    {loading && <p className="mt-4">Autenticando...</p>}
+                    {error && <p className="text-red-500 mt-2">Error: {error}</p>}
                 </div>
             ) : (
+                // ... (El resto del componente para mostrar el calendario no cambia)
                 <div>
                     {loading && <p>Cargando eventos...</p>}
                     {error && <p className="text-red-500">Error: {error}</p>}
@@ -94,6 +101,7 @@ const CalendarTab = () => {
     );
 };
 
+// El componente Wrapped no necesita cambios
 const WrappedCalendarTab = () => (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         <CalendarTab />
