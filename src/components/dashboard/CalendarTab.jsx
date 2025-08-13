@@ -18,23 +18,25 @@ const CalendarTab = () => {
 
     const login = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
-            console.log("Frontend - Google Login onSuccess:", tokenResponse); // NEW LOG
+            console.log("Frontend - Google Login onSuccess:", tokenResponse);
             try {
-                console.log("Frontend - Exchanging code for tokens with backend..."); // NEW LOG
+                console.log("Frontend - Exchanging code for tokens with backend...");
                 const fetchedAccessToken = await exchangeCodeForTokens(tokenResponse.code, user.id);
-                console.log("Frontend - Successfully received access token from backend."); // NEW LOG
+                console.log("Frontend - Successfully received access token from backend.");
                 setAccessToken(fetchedAccessToken);
             } catch (err) {
-                console.error("Frontend - Error during token exchange with backend:", err); // NEW LOG
+                console.error("Frontend - Error during token exchange with backend:", err);
                 setError("Error al autenticar con Google: " + err.message);
             }
         },
         onError: (errorResponse) => {
-            console.error("Frontend - Google Login onError:", errorResponse); // NEW LOG
+            console.error("Frontend - Google Login onError:", errorResponse);
             setError(errorResponse);
         },
         flow: 'auth-code',
         scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+        // --- LÍNEA AGREGADA ---
+        redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
     });
 
     useEffect(() => {
@@ -43,12 +45,12 @@ const CalendarTab = () => {
                 setLoading(true);
                 setError(null);
                 try {
-                    console.log("Frontend - Fetching calendar events with access token..."); // NEW LOG
+                    console.log("Frontend - Fetching calendar events with access token...");
                     const calendarEvents = await getCalendarEvents(accessToken);
                     setEvents(calendarEvents);
-                    console.log("Frontend - Successfully fetched calendar events."); // NEW LOG
+                    console.log("Frontend - Successfully fetched calendar events.");
                 } catch (err) {
-                    console.error("Frontend - Error fetching calendar events:", err); // NEW LOG
+                    console.error("Frontend - Error fetching calendar events:", err);
                     setError("Error al cargar eventos: " + err.message);
                 } finally {
                     setLoading(false);
