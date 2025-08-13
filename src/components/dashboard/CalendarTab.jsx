@@ -29,7 +29,7 @@ const CalendarTab = () => {
         },
         onError: (errorResponse) => setError(errorResponse),
         flow: 'auth-code', // Importante para el flujo de código de autorización
-        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/drive.readonly', // Unificar ámbitos para Calendar y Drive
+        scope: 'https://www.googleapis.com/auth/calendar', // Solo ámbito de Calendar https://www.googleapis.com/auth/drive.readonly
     });
 
     useEffect(() => {

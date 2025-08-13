@@ -136,7 +136,7 @@ var _callee = function _callee(req, res) {
         case 34:
           if (req.method === 'GET') {
             // Iniciar el flujo de autenticación de Google
-            scopes = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/drive.file', // O 'https://www.googleapis.com/auth/drive' para acceso completo
+            scopes = ['https://www.googleapis.com/auth/calendar', // 'https://www.googleapis.com/auth/drive.file', // Eliminado: O 'https://www.googleapis.com/auth/drive' para acceso completo
             'https://www.googleapis.com/auth/userinfo.email', // Para obtener el email del usuario
             'https://www.googleapis.com/auth/userinfo.profile' // Para obtener el perfil del usuario
             ];

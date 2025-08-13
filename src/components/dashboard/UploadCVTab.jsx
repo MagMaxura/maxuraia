@@ -43,22 +43,22 @@ function UploadCVTab({
   const { isBasePlanActive, basePlan } = useDashboardData(); // Obtener directamente del hook
   const { t } = useTranslation(); // Obtener la función de traducción
 
-  const [showGoogleDriveDialog, setShowGoogleDriveDialog] = useState(false);
-  const [googleDriveFiles, setGoogleDriveFiles] = useState([]);
-  const [googleDriveAccessToken, setGoogleDriveAccessToken] = useState(null);
-  const [isListingGoogleDriveFiles, setIsListingGoogleDriveFiles] = useState(false);
-  const [googleDriveSearchTerm, setGoogleDriveSearchTerm] = useState("");
+  // const [showGoogleDriveDialog, setShowGoogleDriveDialog] = useState(false);
+  // const [googleDriveFiles, setGoogleDriveFiles] = useState([]);
+  // const [googleDriveAccessToken, setGoogleDriveAccessToken] = useState(null);
+  // const [isListingGoogleDriveFiles, setIsListingGoogleDriveFiles] = useState(false);
+  // const [googleDriveSearchTerm, setGoogleDriveSearchTerm] = useState("");
 
-  // Usar las props directamente, con fallbacks seguros
+  // // Usar las props directamente, con fallbacks seguros
   const planId = effectiveLimits?.effectiveCurrentPlan?.id || userSubscription?.plan_id || 'basico';
   const displayAnalysisLimit = analysisLimit === Infinity ? 'Ilimitados' : analysisLimit;
-  // Usar el contador optimista si está disponible, de lo contrario, el de la base de datos
+  // // Usar el contador optimista si está disponible, de lo contrario, el de la base de datos
   const displayCurrentAnalysisCount = optimisticCurrentAnalysisCount !== undefined ? optimisticCurrentAnalysisCount : (currentAnalysisCount || 0);
 
-  // Determinar si el usuario puede analizar más CVs
+  // // Determinar si el usuario puede analizar más CVs
   const canAnalyzeMore = effectiveLimits.isSubscriptionActive && displayCurrentAnalysisCount < analysisLimit;
 
-  // Determinar si se ha alcanzado el límite
+  // // Determinar si se ha alcanzado el límite
   const limitReached = effectiveLimits.isSubscriptionActive && displayCurrentAnalysisCount >= analysisLimit;
 
   const handleZoneClick = () => {
@@ -70,98 +70,98 @@ function UploadCVTab({
 
   const nextPlanDetails = PLAN_HIERARCHY[planId];
 
-  const handleGoogleAuth = () => {
-    // Redirect to Google OAuth consent screen
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
-    const scope = 'https://www.googleapis.com/auth/drive.readonly';
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
-    window.location.href = authUrl;
-  };
+  // const handleGoogleAuth = () => {
+  //   // Redirect to Google OAuth consent screen
+  //   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  //   const redirectUri = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+  //   const scope = 'https://www.googleapis.com/auth/drive.readonly';
+  //   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+  //   window.location.href = authUrl;
+  // };
 
-  // This effect will run when the component mounts to check for access token in URL
-  useEffect(() => {
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.substring(1)); // Remove '#'
-    const token = params.get('access_token');
+  // // This effect will run when the component mounts to check for access token in URL
+  // useEffect(() => {
+  //   const hash = window.location.hash;
+  //   const params = new URLSearchParams(hash.substring(1)); // Remove '#'
+  //   const token = params.get('access_token');
 
-    if (token) {
-      setGoogleDriveAccessToken(token);
-      setShowGoogleDriveDialog(true); // Open dialog to show files
-      window.history.pushState("", document.title, window.location.pathname + window.location.search); // Clean URL
-    }
-  }, []);
+  //   if (token) {
+  //     setGoogleDriveAccessToken(token);
+  //     setShowGoogleDriveDialog(true); // Open dialog to show files
+  //     window.history.pushState("", document.title, window.location.pathname + window.location.search); // Clean URL
+  //   }
+  // }, []);
 
-  const listGoogleDriveFiles = async (accessToken) => {
-    setIsListingGoogleDriveFiles(true);
-    try {
-      const response = await fetch(`/api/google-drive/list-files?accessToken=${accessToken}`);
-      if (!response.ok) {
-        throw new Error('Failed to list Google Drive files.');
-      }
-      const data = await response.json();
-      setGoogleDriveFiles(data.files || []);
-      toast({
-        title: t('google_drive_files_loaded_title'),
-        description: t('google_drive_files_loaded_message', { count: data.files.length }),
-      });
-    } catch (error) {
-      console.error('Error listing Google Drive files:', error);
-      toast({
-        title: t('error_loading_google_drive_files_title'),
-        description: error.message || t('could_not_list_files'),
-        variant: "destructive",
-      });
-    } finally {
-      setIsListingGoogleDriveFiles(false);
-    }
-  };
+  // const listGoogleDriveFiles = async (accessToken) => {
+  //   setIsListingGoogleDriveFiles(true);
+  //   try {
+  //     const response = await fetch(`/api/google-drive/list-files?accessToken=${accessToken}`);
+  //     if (!response.ok) {
+  //       throw new Error('Failed to list Google Drive files.');
+  //     }
+  //     const data = await response.json();
+  //     setGoogleDriveFiles(data.files || []);
+  //     toast({
+  //       title: t('google_drive_files_loaded_title'),
+  //       description: t('google_drive_files_loaded_message', { count: data.files.length }),
+  //     });
+  //   } catch (error) {
+  //     console.error('Error listing Google Drive files:', error);
+  //     toast({
+  //       title: t('error_loading_google_drive_files_title'),
+  //       description: error.message || t('could_not_list_files'),
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsListingGoogleDriveFiles(false);
+  //   }
+  // };
 
-  useEffect(() => {
-    if (googleDriveAccessToken && showGoogleDriveDialog) {
-      listGoogleDriveFiles(googleDriveAccessToken);
-    }
-  }, [googleDriveAccessToken, showGoogleDriveDialog]);
+  // useEffect(() => {
+  //   if (googleDriveAccessToken && showGoogleDriveDialog) {
+  //     listGoogleDriveFiles(googleDriveAccessToken);
+  //   }
+  // }, [googleDriveAccessToken, showGoogleDriveDialog]);
 
-  const handleGoogleDriveFileSelect = async (fileId, fileName, mimeType) => {
-    // This will trigger the parent's isProcessing state
-    // setIsProcessing(true);
-    setShowGoogleDriveDialog(false); // Close the dialog
-    try {
-      const response = await fetch(`/api/google-drive/download-file?fileId=${fileId}&accessToken=${googleDriveAccessToken}`);
-      if (!response.ok) {
-        throw new Error('Failed to download file from Google Drive.');
-      }
+  // const handleGoogleDriveFileSelect = async (fileId, fileName, mimeType) => {
+  //   // This will trigger the parent's isProcessing state
+  //   // setIsProcessing(true);
+  //   setShowGoogleDriveDialog(false); // Close the dialog
+  //   try {
+  //     const response = await fetch(`/api/google-drive/download-file?fileId=${fileId}&accessToken=${googleDriveAccessToken}`);
+  //     if (!response.ok) {
+  //       throw new Error('Failed to download file from Google Drive.');
+  //     }
 
-      // Get the file as a Blob
-      const blob = await response.blob();
-      // Create a File object from the Blob
-      const file = new File([blob], fileName, { type: mimeType });
+  //     // Get the file as a Blob
+  //     const blob = await response.blob();
+  //     // Create a File object from the Blob
+  //     const file = new File([blob], fileName, { type: mimeType });
 
-      // Call the parent's handleFileUpload function with the new File object
-      // This will trigger the processing and analysis pipeline
-      await handleFileUpload({ target: { files: [file] } });
+  //     // Call the parent's handleFileUpload function with the new File object
+  //     // This will trigger the processing and analysis pipeline
+  //     await handleFileUpload({ target: { files: [file] } });
 
-      toast({
-        title: t('google_drive_cv_processed_title'),
-        description: t('google_drive_cv_processed_message'),
-      });
+  //     toast({
+  //       title: t('google_drive_cv_processed_title'),
+  //       description: t('google_drive_cv_processed_message'),
+  //     });
 
-    } catch (error) {
-      console.error('Error al procesar el CV de Google Drive:', error);
-      toast({
-        title: t('error_processing_google_drive_cv_title'),
-        description: t('error_processing_google_drive_cv_message'),
-        variant: "destructive",
-      });
-    } finally {
-      // setIsProcessing(false); // Parent component will manage this
-    }
-  };
+  //   } catch (error) {
+  //     console.error('Error al procesar el CV de Google Drive:', error);
+  //     toast({
+  //       title: t('error_processing_google_drive_cv_title'),
+  //       description: t('error_processing_google_drive_cv_message'),
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     // setIsProcessing(false); // Parent component will manage this
+  //   }
+  // };
 
-  const filteredGoogleDriveFiles = googleDriveFiles.filter(file =>
-    file.name.toLowerCase().includes(googleDriveSearchTerm.toLowerCase())
-  );
+  // const filteredGoogleDriveFiles = googleDriveFiles.filter(file =>
+  //   file.name.toLowerCase().includes(googleDriveSearchTerm.toLowerCase())
+  // );
   
   // Mostrar un estado de carga si la suscripción aún no está disponible
   if (!userSubscription) {
@@ -301,7 +301,7 @@ function UploadCVTab({
           {isProcessing && !isBulkProcessing && <p className="mt-4 text-blue-600">{t('processing_individual_cv')}</p>}
         </div>
 
-        <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg w-full md:w-1/2 text-center">
+        {/* <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg w-full md:w-1/2 text-center">
           <p className="text-gray-500 mb-4">{t('or_upload_from_google_drive')}</p>
           <Button
             onClick={() => {
@@ -315,7 +315,7 @@ function UploadCVTab({
           >
             {isProcessing ? t('loading_text') : t('upload_from_google_drive')}
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {isBulkProcessing && (
@@ -334,7 +334,7 @@ function UploadCVTab({
         </div>
       )}
 
-      <Dialog open={showGoogleDriveDialog} onOpenChange={setShowGoogleDriveDialog}>
+      {/* <Dialog open={showGoogleDriveDialog} onOpenChange={setShowGoogleDriveDialog}>
         <DialogContent className="sm:max-w-[600px] h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{t('select_cv_from_google_drive')}</DialogTitle>
@@ -376,7 +376,7 @@ function UploadCVTab({
             <Button onClick={() => setShowGoogleDriveDialog(false)}>{t('close')}</Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </motion.div>
   );
 }
