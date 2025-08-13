@@ -16,6 +16,11 @@ const CalendarTab = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    // --- INICIO DE LA MODIFICACIÓN ---
+    const redirectUriForLogin = import.meta.env.VITE_GOOGLE_REDIRECT_URI;
+    console.log(`[FRONTEND-DEBUG] URI de redirección usada por el frontend: "${redirectUriForLogin}"`);
+    // --- FIN DE LA MODIFICACIÓN ---
+
     const login = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
             console.log("Frontend - Google Login onSuccess:", tokenResponse);
@@ -35,8 +40,7 @@ const CalendarTab = () => {
         },
         flow: 'auth-code',
         scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-        // --- LÍNEA CLAVE AÑADIDA: Asegura que el frontend use el mismo URL que el backend ---
-        redirect_uri: import.meta.env.VITE_GOOGLE_REDIRECT_URI,
+        redirect_uri: redirectUriForLogin, // Usamos la variable que acabamos de imprimir
     });
 
     useEffect(() => {
@@ -67,7 +71,7 @@ const CalendarTab = () => {
                 <div className="flex flex-col items-center justify-center h-64 border rounded-md p-4">
                     <p className="mb-4">Conecta tu Google Calendar para ver tus eventos.</p>
                     <Button onClick={() => login()}>Conectar Google Calendar</Button>
-                    {error && <p className="text-red-500 mt-2">Error: {error.error}</p>}
+                    {error && <p className="text-red-500 mt-2">Error: {error.error || JSON.stringify(error)}</p>}
                 </div>
             ) : (
                 <div>
