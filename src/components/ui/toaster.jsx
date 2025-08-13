@@ -13,7 +13,7 @@ export function Toaster() {
 	const { toasts } = useToast();
 
 	return (
-		<ToastProvider duration={5000}>
+		<ToastProvider duration={7000}>
 			{toasts.map(({ id, title, description, action, variant, ...props }) => {
 				return (
 					<Toast key={id} variant={variant} {...props} className="min-w-[300px]">

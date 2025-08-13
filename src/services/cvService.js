@@ -61,6 +61,7 @@ export const cvService = {
       title: analysisData.nivel_escolarizacion || analysisData.tituloActual || analysisData.title || (analysisData.summary ? analysisData.summary.split('.')[0].trim() : null),
       summary: analysisData.resumen || analysisData.summary,
       experience: analysisData.experiencia || analysisData.experience,
+      notas: analysisData.notas || "", // Asegurar que las notas se inicialicen al crear un candidato
     };
 
     let skillsArray = [];
@@ -295,6 +296,7 @@ export const cvService = {
         console.error("Error actualizando notas del candidato en Supabase:", JSON.stringify(error, null, 2));
         throw error;
       }
+      console.log("Notas del candidato actualizadas exitosamente:", data); // Log de éxito
       return data;
     } catch (error) {
       console.error("Excepción en cvService.updateCandidateNotes:", error);
