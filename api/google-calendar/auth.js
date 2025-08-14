@@ -25,8 +25,22 @@ export default async (req, res) => {
 
     if (error) {
       console.error('Google OAuth error:', error);
-      // Redirigir al frontend con un mensaje de error
-      return send(res, 302, null, { Location: `/dashboard/calendario?googleAuth=error&message=${encodeURIComponent(error)}` });
+      // Redirigir al frontend con un mensaje de error usando JavaScript
+      const redirectUrl = `/dashboard/calendario?googleAuth=error&message=${encodeURIComponent(error)}`;
+      return send(res, 200, `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Error de Redirección</title>
+          <script>
+            window.location.href = "${redirectUrl}";
+          </script>
+        </head>
+        <body>
+          <p>Ocurrió un error. Redirigiendo...</p>
+        </body>
+        </html>
+      `);
     }
 
     if (code) {
@@ -57,19 +71,61 @@ export default async (req, res) => {
 
           if (supabaseError) {
             console.error('Error storing tokens in Supabase:', supabaseError);
-            return send(res, 302, null, { Location: `/dashboard/calendario?googleAuth=error&message=${encodeURIComponent(supabaseError.message)}` });
+            const redirectUrl = `/dashboard/calendario?googleAuth=error&message=${encodeURIComponent(supabaseError.message)}`;
+            return send(res, 200, `
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <title>Error de Redirección</title>
+                <script>
+                  window.location.href = "${redirectUrl}";
+                </script>
+              </head>
+              <body>
+                <p>Ocurrió un error. Redirigiendo...</p>
+              </body>
+              </html>
+            `);
           }
           console.log('Tokens successfully stored in Supabase:', data);
         } else {
           console.warn('No userId found in state. Tokens not stored in Supabase.');
         }
 
-        // Redirigir al frontend después de la autenticación exitosa
-        return send(res, 302, null, { Location: '/dashboard/calendario?googleAuth=success' });
+        // Redirigir al frontend después de la autenticación exitosa usando JavaScript
+        const redirectUrl = `/dashboard/calendario?googleAuth=success`;
+        return send(res, 200, `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Redirigiendo...</title>
+            <script>
+              window.location.href = "${redirectUrl}";
+            </script>
+          </head>
+          <body>
+            <p>Redirigiendo a tu calendario...</p>
+          </body>
+          </html>
+        `);
 
       } catch (tokenExchangeError) {
         console.error('Error during token exchange or Supabase storage:', tokenExchangeError);
-        return send(res, 302, null, { Location: `/dashboard/calendario?googleAuth=error&message=${encodeURIComponent(tokenExchangeError.message)}` });
+        const redirectUrl = `/dashboard/calendario?googleAuth=error&message=${encodeURIComponent(tokenExchangeError.message)}`;
+        return send(res, 200, `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Error de Redirección</title>
+            <script>
+              window.location.href = "${redirectUrl}";
+            </script>
+          </head>
+          <body>
+            <p>Ocurrió un error. Redirigiendo...</p>
+          </body>
+          </html>
+        `);
       }
     } else {
       // Si no hay código, es la solicitud inicial para iniciar el flujo de autenticación
