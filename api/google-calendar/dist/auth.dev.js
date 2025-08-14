@@ -34,7 +34,7 @@ var _callee = function _callee(req, res) {
       switch (_context.prev = _context.next) {
         case 0:
           if (!(req.method === 'GET')) {
-            _context.next = 43;
+            _context.next = 45;
             break;
           }
 
@@ -135,7 +135,7 @@ var _callee = function _callee(req, res) {
           }));
 
         case 36:
-          _context.next = 41;
+          _context.next = 43;
           break;
 
         case 38:
@@ -144,28 +144,31 @@ var _callee = function _callee(req, res) {
           // Por ejemplo: const state = JSON.stringify({ userId: 'current_user_id' });
           // Asegúrate de que el frontend pase este 'state' al iniciar la autenticación.
 
+          console.log('Generating Google authorization URL...');
           authorizationUrl = oauth2Client.generateAuthUrl({
             access_type: 'offline',
             scope: scopes.join(' '),
-            prompt: 'consent' // state: 'your_user_id_here' // Esto debe ser dinámico desde el frontend
+            prompt: 'consent',
+            state: state // Asegurarse de que el estado se pase a Google
 
-          }); // Redirigir al usuario a la URL de autorización de Google
+          });
+          console.log('Generated authorizationUrl:', authorizationUrl); // Redirigir al usuario a la URL de autorización de Google
 
           return _context.abrupt("return", (0, _micro.send)(res, 302, null, {
             Location: authorizationUrl
           }));
 
-        case 41:
-          _context.next = 44;
+        case 43:
+          _context.next = 46;
           break;
 
-        case 43:
+        case 45:
           // Métodos no permitidos
           (0, _micro.send)(res, 405, {
             error: 'Method Not Allowed'
           });
 
-        case 44:
+        case 46:
         case "end":
           return _context.stop();
       }

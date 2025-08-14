@@ -91,13 +91,15 @@ export default async (req, res) => {
       // El 'state' puede usarse para pasar información como el userId de forma segura
       // Por ejemplo: const state = JSON.stringify({ userId: 'current_user_id' });
       // Asegúrate de que el frontend pase este 'state' al iniciar la autenticación.
+      console.log('Generating Google authorization URL...');
       const authorizationUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
         scope: scopes.join(' '),
         prompt: 'consent',
-        // state: 'your_user_id_here' // Esto debe ser dinámico desde el frontend
+        state: state, // Asegurarse de que el estado se pase a Google
       });
-
+      console.log('Generated authorizationUrl:', authorizationUrl);
+  
       // Redirigir al usuario a la URL de autorización de Google
       return send(res, 302, null, { Location: authorizationUrl });
     }
