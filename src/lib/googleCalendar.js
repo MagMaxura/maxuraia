@@ -106,3 +106,85 @@ export const getGoogleAccessTokenFromSupabase = async (userId) => {
     return null;
   }
 };
+
+/**
+ * Crea un nuevo evento en Google Calendar.
+ * @param {string} userId - El ID del usuario.
+ * @param {object} eventData - Los datos del evento a crear (title, description, start, end, timeZone).
+ * @returns {Promise<object>} Una promesa que resuelve con el evento creado.
+ */
+export const createCalendarEvent = async (userId, eventData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/google-calendar/create-event`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, eventData }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to create calendar event.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating calendar event:', error);
+    throw error;
+  }
+};
+
+/**
+ * Actualiza un evento existente en Google Calendar.
+ * @param {string} userId - El ID del usuario.
+ * @param {string} eventId - El ID del evento a actualizar.
+ * @param {object} updatedEventData - Los datos actualizados del evento (title, description, start, end, timeZone).
+ * @returns {Promise<object>} Una promesa que resuelve con el evento actualizado.
+ */
+export const updateCalendarEvent = async (userId, eventId, updatedEventData) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/google-calendar/update-event`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, eventId, updatedEventData }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update calendar event.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating calendar event:', error);
+    throw error;
+  }
+};
+
+/**
+ * Elimina un evento de Google Calendar.
+ * @param {string} userId - El ID del usuario.
+ * @param {string} eventId - El ID del evento a eliminar.
+ * @returns {Promise<object>} Una promesa que resuelve con un mensaje de éxito.
+ */
+export const deleteCalendarEvent = async (userId, eventId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/google-calendar/delete-event`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId, eventId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete calendar event.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting calendar event:', error);
+    throw error;
+  }
+};
