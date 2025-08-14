@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { send } from 'micro';
-import { getAndRefreshGoogleAccessToken } from '../_lib/googleAuthUtils';
+import { getAndRefreshGoogleAccessToken } from '../_lib/googleAuthUtils.js';
 
 export default async (req, res) => {
   if (req.method === 'GET') {
