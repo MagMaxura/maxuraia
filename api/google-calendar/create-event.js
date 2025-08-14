@@ -32,6 +32,7 @@ export default async (req, res) => {
         // Puedes añadir más propiedades del evento aquí, como attendees, location, etc.
       };
 
+      console.log('Event object being sent to Google Calendar API:', event); // Añadir para depuración
       const response = await calendar.events.insert({
         calendarId: 'primary',
         resource: event,

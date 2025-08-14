@@ -19,7 +19,7 @@ var _callee = function _callee(req, res) {
       switch (_context.prev = _context.next) {
         case 0:
           if (!(req.method === 'POST')) {
-            _context.next = 24;
+            _context.next = 25;
             break;
           }
 
@@ -62,22 +62,24 @@ var _callee = function _callee(req, res) {
             } // Puedes añadir más propiedades del evento aquí, como attendees, location, etc.
 
           };
-          _context.next = 14;
+          console.log('Event object being sent to Google Calendar API:', event); // Añadir para depuración
+
+          _context.next = 15;
           return regeneratorRuntime.awrap(calendar.events.insert({
             calendarId: 'primary',
             resource: event
           }));
 
-        case 14:
+        case 15:
           response = _context.sent;
           (0, _micro.send)(res, 200, {
             event: response.data
           });
-          _context.next = 22;
+          _context.next = 23;
           break;
 
-        case 18:
-          _context.prev = 18;
+        case 19:
+          _context.prev = 19;
           _context.t0 = _context["catch"](1);
           console.error('Error creating calendar event:', _context.t0);
           (0, _micro.send)(res, 500, {
@@ -85,21 +87,21 @@ var _callee = function _callee(req, res) {
             details: _context.t0.message
           });
 
-        case 22:
-          _context.next = 25;
+        case 23:
+          _context.next = 26;
           break;
 
-        case 24:
+        case 25:
           (0, _micro.send)(res, 405, {
             error: 'Method Not Allowed'
           });
 
-        case 25:
+        case 26:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[1, 18]]);
+  }, null, null, [[1, 19]]);
 };
 
 exports["default"] = _callee;
