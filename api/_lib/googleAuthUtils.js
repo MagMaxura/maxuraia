@@ -2,11 +2,11 @@ import { google } from 'googleapis';
 import { createClient } from '@supabase/supabase-js'; // Importar createClient
 
 // Inicializar Supabase para el entorno de backend
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE_KEY
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const { VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI } = process.env;
+const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } = process.env;
 
 const oauth2Client = new google.auth.OAuth2(
   VITE_GOOGLE_CLIENT_ID,

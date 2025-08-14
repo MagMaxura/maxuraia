@@ -11,14 +11,13 @@ var _supabaseJs = require("@supabase/supabase-js");
 
 // Importar createClient
 // Inicializar Supabase para el entorno de backend
-var supabaseUrl = process.env.VITE_SUPABASE_URL;
-var supabaseKey = process.env.VITE_SUPABASE_ANON_KEY; // O SUPABASE_SERVICE_ROLE_KEY
-
+var supabaseUrl = process.env.SUPABASE_URL;
+var supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 var supabase = (0, _supabaseJs.createClient)(supabaseUrl, supabaseKey);
 var _process$env = process.env,
-    VITE_GOOGLE_CLIENT_ID = _process$env.VITE_GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_ID = _process$env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET,
-    VITE_GOOGLE_REDIRECT_URI = _process$env.VITE_GOOGLE_REDIRECT_URI;
+    GOOGLE_REDIRECT_URI = _process$env.GOOGLE_REDIRECT_URI;
 var oauth2Client = new _googleapis.google.auth.OAuth2(VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI);
 
 function getAndRefreshGoogleAccessToken(userId) {

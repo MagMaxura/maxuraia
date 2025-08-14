@@ -1,30 +1,23 @@
 import { supabase } from './supabase'; // Asumiendo que supabase está configurado aquí
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'; // Ajusta esto si tu API tiene una URL base diferente
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
-export const exchangeCodeForTokens = async (code, userId) => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/google-calendar/auth`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ code, userId }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to exchange code for tokens');
-    }
-
-    const data = await response.json();
-    return data.access_token; // Devolvemos solo el access_token al frontend
-  } catch (error) {
-    console.error('Error exchanging code for tokens:', error);
-    throw error;
-  }
+/**
+ * Inicia el flujo de autenticación de Google Calendar.
+ * Redirige al usuario a la Vercel Function que a su vez redirige a Google.
+ * @param {string} userId - El ID del usuario actual para pasarlo en el estado de OAuth.
+ */
+export const initiateGoogleAuth = (userId) => {
+  // Codificar el userId en el parámetro 'state' para seguridad y para recuperarlo en el callback
+  const state = encodeURIComponent(userId);
+  window.location.href = `${API_BASE_URL}/google-calendar/auth?state=${state}`;
 };
 
+/**
+ * Obtiene los eventos del calendario de Google para el usuario autenticado.
+ * @param {string} accessToken - El token de acceso de Google.
+ * @returns {Promise<Array>} Una promesa que resuelve con una lista de eventos formateados.
+ */
 export const getCalendarEvents = async (accessToken) => {
   try {
     const response = await fetch(
@@ -67,12 +60,15 @@ export const getCalendarEvents = async (accessToken) => {
   }
 };
 
-export const refreshGoogleAccessToken = async (userId) => {
+/**
+ * Obtiene el token de acceso de Google del usuario desde Supabase.
+ * Esto es para que el frontend pueda usar el token para llamadas directas a la API de Google.
+ * En un escenario real, el refresco de tokens debería ser manejado por el backend.
+ * @param {string} userId - El ID del usuario.
+ * @returns {Promise<string|null>} El token de acceso o null si no se encuentra.
+ */
+export const getGoogleAccessTokenFromSupabase = async (userId) => {
   try {
-    // En un escenario real, este endpoint de backend usaría el refresh_token
-    // almacenado en Supabase para obtener un nuevo access_token de Google.
-    // Por simplicidad, aquí se asume que el backend maneja la lógica de refresco
-    // y devuelve un nuevo access_token si es necesario.
     const { data, error } = await supabase
       .from('user_google_tokens')
       .select('access_token, expiry_date')
@@ -80,27 +76,22 @@ export const refreshGoogleAccessToken = async (userId) => {
       .single();
 
     if (error || !data) {
-      throw new Error('No tokens found for user or error fetching tokens.');
+      console.warn('No Google tokens found for user:', userId, error);
+      return null;
     }
 
-    // Aquí deberías tener una lógica en el backend para usar el refresh_token
-    // y obtener un nuevo access_token si el actual ha expirado.
-    // Por ahora, solo devolvemos el access_token existente.
-    // En un entorno de producción, el backend debería hacer la llamada a Google.
+    // Opcional: Aquí podrías añadir una lógica para llamar a un endpoint de backend
+    // que refresque el token si está expirado, antes de devolverlo.
+    // Por ahora, solo devolvemos el token existente.
     if (new Date(data.expiry_date) < new Date()) {
-        // Lógica para refrescar el token en el backend
-        // Por ejemplo, llamar a otro endpoint de tu API que maneje el refresco
-        // const refreshResponse = await fetch(`${API_BASE_URL}/google-calendar/refresh-token`, { method: 'POST', body: JSON.stringify({ userId }) });
-        // const refreshedData = await refreshResponse.json();
-        // return refreshedData.access_token;
-        console.warn("Access token expired, but refresh logic is not fully implemented on backend for this frontend call.");
-        throw new Error("Access token expired, please re-authenticate.");
+      console.warn("Access token expired. Frontend should prompt re-authentication or backend should handle refresh.");
+      // Podrías lanzar un error o devolver null para indicar que se necesita re-autenticar
+      return null;
     }
 
     return data.access_token;
-
   } catch (error) {
-    console.error('Error refreshing Google access token:', error);
-    throw error;
+    console.error('Error getting Google access token from Supabase:', error);
+    return null;
   }
 };

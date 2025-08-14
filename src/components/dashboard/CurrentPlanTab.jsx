@@ -95,7 +95,7 @@ function CurrentPlanTab() {
                   {isExpired ? t('expired') : t('your_current_plan')}
                 </div>
               )}
-              <h3 className={`text-2xl font-semibold mb-2 text-center ${textColorClass}`}>{t(plan.nameKey)}</h3>
+              <h3 className={`text-2xl font-semibold mb-2 text-center ${textColorClass}`}>{t(plan.name)}</h3>
               <p className="text-slate-600 text-sm mb-4 text-center h-16 overflow-hidden">{t(plan.description)}</p>
               <div className="mb-6 text-center">
                 <span className="text-3xl font-bold text-slate-800">{plan.priceDisplay}</span>

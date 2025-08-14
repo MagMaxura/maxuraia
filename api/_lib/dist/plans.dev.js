@@ -60,7 +60,7 @@ var APP_PLANS = {
     // Price ID de Stripe para Plan Profesional
     priceDisplay: 'ARS 18,500.00/month',
     // Mantener display si es el mismo precio de prueba
-    priceNumeric: 1250000,
+    priceNumeric: 1850000,
     // Mantener numeric si es el mismo precio de prueba
     type: 'monthly',
     ctaLabel: 'Comenzar ahora',
