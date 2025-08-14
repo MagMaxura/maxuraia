@@ -21,14 +21,8 @@ export default async (req, res) => {
       const event = {
         summary: eventData.title,
         description: eventData.description,
-        start: {
-          dateTime: eventData.start,
-          timeZone: eventData.timeZone || 'America/Buenos_Aires', // Ajusta la zona horaria por defecto
-        },
-        end: {
-          dateTime: eventData.end,
-          timeZone: eventData.timeZone || 'America/Buenos_Aires',
-        },
+        start: eventData.start,
+        end: eventData.end,
         // Puedes añadir más propiedades del evento aquí, como attendees, location, etc.
       };
 
