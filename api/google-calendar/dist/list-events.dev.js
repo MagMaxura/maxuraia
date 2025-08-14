@@ -9,7 +9,7 @@ var _googleapis = require("googleapis");
 
 var _micro = require("micro");
 
-var _googleAuthUtils = require("@lib/googleAuthUtils.js");
+var _googleAuthUtils = require("../_lib/googleAuthUtils.js");
 
 var _callee = function _callee(req, res) {
   var userId, accessToken, oauth2Client, calendar, now, oneMonthLater, response, events;

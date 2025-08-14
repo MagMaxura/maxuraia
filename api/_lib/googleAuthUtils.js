@@ -9,9 +9,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI } = process.env;
 
 const oauth2Client = new google.auth.OAuth2(
-  VITE_GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
-  VITE_GOOGLE_REDIRECT_URI
+  GOOGLE_REDIRECT_URI
 );
 
 export async function getAndRefreshGoogleAccessToken(userId) {

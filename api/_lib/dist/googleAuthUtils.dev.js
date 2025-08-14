@@ -18,7 +18,7 @@ var _process$env = process.env,
     GOOGLE_CLIENT_ID = _process$env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET = _process$env.GOOGLE_CLIENT_SECRET,
     GOOGLE_REDIRECT_URI = _process$env.GOOGLE_REDIRECT_URI;
-var oauth2Client = new _googleapis.google.auth.OAuth2(VITE_GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VITE_GOOGLE_REDIRECT_URI);
+var oauth2Client = new _googleapis.google.auth.OAuth2(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI);
 
 function getAndRefreshGoogleAccessToken(userId) {
   var _ref, data, error, access_token, refresh_token, expiry_date, _ref2, tokens, _ref3, updateError;
