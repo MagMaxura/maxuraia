@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from "@/lib/utils";
 
 // Placeholder components for Dialog
 const Dialog = ({ children, open, onOpenChange }) => {
