@@ -4,13 +4,24 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 /**
  * Inicia el flujo de autenticación de Google Calendar.
- * Redirige al usuario a la Vercel Function que a su vez redirige a Google.
+ * Hace una llamada a la Vercel Function para obtener la URL de autorización de Google,
+ * y luego redirige al usuario a esa URL.
  * @param {string} userId - El ID del usuario actual para pasarlo en el estado de OAuth.
  */
-export const initiateGoogleAuth = (userId) => {
-  // Codificar el userId en el parámetro 'state' para seguridad y para recuperarlo en el callback
-  const state = encodeURIComponent(userId);
-  window.location.href = `${API_BASE_URL}/google-calendar/auth?state=${state}`;
+export const initiateGoogleAuth = async (userId) => {
+  try {
+    const state = encodeURIComponent(userId);
+    const response = await fetch(`${API_BASE_URL}/google-calendar/auth?state=${state}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get Google authorization URL.');
+    }
+    const { authorizationUrl } = await response.json();
+    window.location.href = authorizationUrl; // Redirigir al usuario a Google
+  } catch (error) {
+    console.error('Error initiating Google authentication:', error);
+    throw error;
+  }
 };
 
 /**

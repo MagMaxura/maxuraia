@@ -26,7 +26,7 @@ export default async (req, res) => {
     if (error) {
       console.error('Google OAuth error:', error);
       // Redirigir al frontend con un mensaje de error
-      return send(res, 302, null, { Location: `/dashboard/calendar?googleAuth=error&message=${encodeURIComponent(error)}` });
+      return send(res, 302, null, { Location: `/dashboard/calendario?googleAuth=error&message=${encodeURIComponent(error)}` });
     }
 
     if (code) {
@@ -35,16 +35,7 @@ export default async (req, res) => {
         const { tokens } = await oauth2Client.getToken(code);
         console.log('Tokens received from Google:', tokens);
 
-        // Aquí, 'state' debería contener el userId para asociar los tokens
-        // Si 'state' no se usó, necesitaríamos otra forma de obtener el userId,
-        // o el frontend tendría que iniciar este flujo con el userId ya conocido.
-        // Por ahora, asumiré que el userId se pasa en el 'state' o se obtiene de alguna otra manera.
-        // Para simplificar, si el userId no está en el state, no lo guardaremos en Supabase por ahora.
-        // En un escenario real, el 'state' debería ser un JWT o un ID de sesión para seguridad y para pasar el userId.
-
-        // Asumiendo que el userId se puede obtener del 'state' o de alguna otra forma segura.
-        // Por ahora, lo dejaré como un placeholder.
-        const userId = state; // Esto es un placeholder, debería ser un valor real y seguro.
+        const userId = state; // Asumiendo que el userId se pasa en el 'state'
 
         if (userId) {
           const upsertData = {
@@ -66,7 +57,7 @@ export default async (req, res) => {
 
           if (supabaseError) {
             console.error('Error storing tokens in Supabase:', supabaseError);
-            return send(res, 302, null, { Location: `/dashboard/calendar?googleAuth=error&message=${encodeURIComponent(supabaseError.message)}` });
+            return send(res, 302, null, { Location: `/dashboard/calendario?googleAuth=error&message=${encodeURIComponent(supabaseError.message)}` });
           }
           console.log('Tokens successfully stored in Supabase:', data);
         } else {
@@ -74,11 +65,11 @@ export default async (req, res) => {
         }
 
         // Redirigir al frontend después de la autenticación exitosa
-        return send(res, 302, null, { Location: '/dashboard/calendar?googleAuth=success' });
+        return send(res, 302, null, { Location: '/dashboard/calendario?googleAuth=success' });
 
       } catch (tokenExchangeError) {
         console.error('Error during token exchange or Supabase storage:', tokenExchangeError);
-        return send(res, 302, null, { Location: `/dashboard/calendar?googleAuth=error&message=${encodeURIComponent(tokenExchangeError.message)}` });
+        return send(res, 302, null, { Location: `/dashboard/calendario?googleAuth=error&message=${encodeURIComponent(tokenExchangeError.message)}` });
       }
     } else {
       // Si no hay código, es la solicitud inicial para iniciar el flujo de autenticación
@@ -88,9 +79,6 @@ export default async (req, res) => {
         'https://www.googleapis.com/auth/userinfo.profile'
       ];
 
-      // El 'state' puede usarse para pasar información como el userId de forma segura
-      // Por ejemplo: const state = JSON.stringify({ userId: 'current_user_id' });
-      // Asegúrate de que el frontend pase este 'state' al iniciar la autenticación.
       console.log('Generating Google authorization URL...');
       const authorizationUrl = oauth2Client.generateAuthUrl({
         access_type: 'offline',
@@ -99,9 +87,9 @@ export default async (req, res) => {
         state: state, // Asegurarse de que el estado se pase a Google
       });
       console.log('Generated authorizationUrl:', authorizationUrl);
-  
-      // Redirigir al usuario a la URL de autorización de Google
-      return send(res, 302, null, { Location: authorizationUrl });
+
+      // Devolver la URL de autorización al frontend
+      return send(res, 200, { authorizationUrl });
     }
   } else {
     // Métodos no permitidos

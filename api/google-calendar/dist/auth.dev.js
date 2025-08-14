@@ -48,7 +48,7 @@ var _callee = function _callee(req, res) {
           console.error('Google OAuth error:', error); // Redirigir al frontend con un mensaje de error
 
           return _context.abrupt("return", (0, _micro.send)(res, 302, null, {
-            Location: "/dashboard/calendar?googleAuth=error&message=".concat(encodeURIComponent(error))
+            Location: "/dashboard/calendario?googleAuth=error&message=".concat(encodeURIComponent(error))
           }));
 
         case 5:
@@ -64,16 +64,8 @@ var _callee = function _callee(req, res) {
         case 9:
           _ref = _context.sent;
           tokens = _ref.tokens;
-          console.log('Tokens received from Google:', tokens); // Aquí, 'state' debería contener el userId para asociar los tokens
-          // Si 'state' no se usó, necesitaríamos otra forma de obtener el userId,
-          // o el frontend tendría que iniciar este flujo con el userId ya conocido.
-          // Por ahora, asumiré que el userId se pasa en el 'state' o se obtiene de alguna otra manera.
-          // Para simplificar, si el userId no está en el state, no lo guardaremos en Supabase por ahora.
-          // En un escenario real, el 'state' debería ser un JWT o un ID de sesión para seguridad y para pasar el userId.
-          // Asumiendo que el userId se puede obtener del 'state' o de alguna otra forma segura.
-          // Por ahora, lo dejaré como un placeholder.
-
-          userId = state; // Esto es un placeholder, debería ser un valor real y seguro.
+          console.log('Tokens received from Google:', tokens);
+          userId = state; // Asumiendo que el userId se pasa en el 'state'
 
           if (!userId) {
             _context.next = 28;
@@ -110,7 +102,7 @@ var _callee = function _callee(req, res) {
 
           console.error('Error storing tokens in Supabase:', supabaseError);
           return _context.abrupt("return", (0, _micro.send)(res, 302, null, {
-            Location: "/dashboard/calendar?googleAuth=error&message=".concat(encodeURIComponent(supabaseError.message))
+            Location: "/dashboard/calendario?googleAuth=error&message=".concat(encodeURIComponent(supabaseError.message))
           }));
 
         case 25:
@@ -123,7 +115,7 @@ var _callee = function _callee(req, res) {
 
         case 29:
           return _context.abrupt("return", (0, _micro.send)(res, 302, null, {
-            Location: '/dashboard/calendar?googleAuth=success'
+            Location: '/dashboard/calendario?googleAuth=success'
           }));
 
         case 32:
@@ -131,7 +123,7 @@ var _callee = function _callee(req, res) {
           _context.t0 = _context["catch"](6);
           console.error('Error during token exchange or Supabase storage:', _context.t0);
           return _context.abrupt("return", (0, _micro.send)(res, 302, null, {
-            Location: "/dashboard/calendar?googleAuth=error&message=".concat(encodeURIComponent(_context.t0.message))
+            Location: "/dashboard/calendario?googleAuth=error&message=".concat(encodeURIComponent(_context.t0.message))
           }));
 
         case 36:
@@ -140,10 +132,7 @@ var _callee = function _callee(req, res) {
 
         case 38:
           // Si no hay código, es la solicitud inicial para iniciar el flujo de autenticación
-          scopes = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile']; // El 'state' puede usarse para pasar información como el userId de forma segura
-          // Por ejemplo: const state = JSON.stringify({ userId: 'current_user_id' });
-          // Asegúrate de que el frontend pase este 'state' al iniciar la autenticación.
-
+          scopes = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile'];
           console.log('Generating Google authorization URL...');
           authorizationUrl = oauth2Client.generateAuthUrl({
             access_type: 'offline',
@@ -152,10 +141,10 @@ var _callee = function _callee(req, res) {
             state: state // Asegurarse de que el estado se pase a Google
 
           });
-          console.log('Generated authorizationUrl:', authorizationUrl); // Redirigir al usuario a la URL de autorización de Google
+          console.log('Generated authorizationUrl:', authorizationUrl); // Devolver la URL de autorización al frontend
 
-          return _context.abrupt("return", (0, _micro.send)(res, 302, null, {
-            Location: authorizationUrl
+          return _context.abrupt("return", (0, _micro.send)(res, 200, {
+            authorizationUrl: authorizationUrl
           }));
 
         case 43:
