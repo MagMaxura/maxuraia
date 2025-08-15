@@ -22,11 +22,11 @@ export default async (req, res) => {
         summary: eventData.title,
         description: eventData.description,
         start: {
-          dateTime: eventData.start.endsWith(':00') ? eventData.start : `${eventData.start}:00`,
+          dateTime: eventData.start,
           timeZone: eventData.timeZone || 'America/Buenos_Aires',
         },
         end: {
-          dateTime: eventData.end.endsWith(':00') ? eventData.end : `${eventData.end}:00`,
+          dateTime: eventData.end,
           timeZone: eventData.timeZone || 'America/Buenos_Aires',
         },
         // Puedes añadir más propiedades del evento aquí, como attendees, location, etc.
