@@ -53,11 +53,11 @@ var _callee = function _callee(req, res) {
             summary: eventData.title,
             description: eventData.description,
             start: {
-              dateTime: eventData.start,
+              dateTime: eventData.start.endsWith(':00') ? eventData.start : "".concat(eventData.start, ":00"),
               timeZone: eventData.timeZone || 'America/Buenos_Aires'
             },
             end: {
-              dateTime: eventData.end,
+              dateTime: eventData.end.endsWith(':00') ? eventData.end : "".concat(eventData.end, ":00"),
               timeZone: eventData.timeZone || 'America/Buenos_Aires'
             } // Puedes añadir más propiedades del evento aquí, como attendees, location, etc.
 
