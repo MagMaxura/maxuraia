@@ -139,36 +139,54 @@ export function useCvUploader({
         // Llamar a cvService.uploadCV con user.suscripcion
         const result = await cvService.uploadCV(file, user.id, resolvedAnalysis, user.suscripcion); // Pasar user.suscripcion
         
-        // Si el CV se guardó exitosamente y el contador se incrementó en el backend,
-        // forzar una recarga del usuario para actualizar los límites en el frontend.
-        if (result && !result.error && refreshUser) {
-          console.debug("useCvUploader: CV guardado y contador incrementado. Refrescando usuario...");
-          await refreshUser(); // Forzar recarga del usuario para actualizar suscripción
+        if (result?.isDuplicate) {
+          toast({
+            title: "CV Duplicado",
+            description: `El CV "${file.name}" ya existe en tu base de datos. No se guardó una nueva entrada.`,
+            variant: "default", // O "warning" si existe
+            duration: 5000,
+          });
+          // No incrementar contadores ni añadir a newlyProcessedCvFiles si es duplicado
+        } else if (result && !result.error) {
+          // Si el CV se guardó exitosamente y el contador se incrementó en el backend,
+          // forzar una recarga del usuario para actualizar los límites en el frontend.
+          if (refreshUser) {
+            console.debug("useCvUploader: CV guardado y contador incrementado. Refrescando usuario...");
+            await refreshUser(); // Forzar recarga del usuario para actualizar suscripción
+          }
+
+          const newCvFile = {
+            name: resolvedAnalysis.nombre || file.name,
+            originalFile: file, // Mantener el objeto File original por si se necesita
+            analysis: resolvedAnalysis,
+            uploadedDate: new Date(),
+            cv_database_id: result?.cv?.id || null, // Usar el ID real del CV guardado
+            candidate_database_id: result?.candidate?.id || null, // Usar el ID real del candidato guardado
+          };
+          newlyProcessedCvFiles.push(newCvFile);
+          CvsProcessedInThisBatch++;
+          setOptimisticCvCount(prevCount => prevCount + 1); // Incrementar el contador optimista
+
+          toast({
+            title: "CV Procesado",
+            description: `${file.name} ha sido analizado. (${i + 1}/${selectedFiles.length})`,
+          });
+        } else {
+          // Manejar errores de guardado que no son duplicados
+          anyErrorOccurred = true;
+          console.error(`Error procesando CV ${file.name}:`, result?.message || "Error desconocido al guardar CV.");
+          toast({
+            title: `Error al procesar ${file.name}`,
+            description: result?.message || `No se pudo procesar el archivo.`,
+            variant: "destructive",
+          });
         }
-
-        const newCvFile = {
-          name: resolvedAnalysis.nombre || file.name,
-          originalFile: file, // Mantener el objeto File original por si se necesita
-          analysis: resolvedAnalysis,
-          uploadedDate: new Date(),
-          cv_database_id: result?.cv?.id || null, // Usar el ID real del CV guardado
-          candidate_database_id: result?.candidate?.id || null, // Usar el ID real del candidato guardado
-        };
-        newlyProcessedCvFiles.push(newCvFile);
-        CvsProcessedInThisBatch++;
-        setOptimisticCvCount(prevCount => prevCount + 1); // Incrementar el contador optimista
-
-        toast({
-          title: "CV Procesado",
-          description: `${file.name} ha sido analizado. (${i + 1}/${selectedFiles.length})`,
-        });
-
       } catch (error) {
         anyErrorOccurred = true;
-        console.error(`Error procesando CV ${file.name}:`, error);
+        console.error(`Excepción al procesar CV ${file.name}:`, error);
         toast({
           title: `Error al procesar ${file.name}`,
-          description: error.message || `No se pudo procesar el archivo.`,
+          description: error.message || `Ocurrió un error inesperado.`,
           variant: "destructive",
         });
       }
