@@ -177,7 +177,7 @@ export const cvService = {
       // 1. Check for existing CV with the same content hash for this recruiter
       const { data: existingCvs, error: cvFetchError } = await supabase
         .from('cvs')
-        .select('id, candidate_id')
+        .select('id')
         .eq('recruiter_id', recruiterId)
         .eq('content_hash', cvContentHash);
 
@@ -193,7 +193,7 @@ export const cvService = {
         const { data: existingCandidate, error: candidateFetchError } = await supabase
           .from('candidatos')
           .select('*')
-          .eq('id', existingCvs[0].candidate_id)
+          .eq('cv_id', existingCvs[0].id) // Usar cv_id para buscar el candidato asociado
           .single();
 
         if (candidateFetchError) {
