@@ -77,7 +77,7 @@ export const APP_PLANS = {
     // paddlePriceId: 'pri_01jvsmm8vm50zz6q025w5sxkns', // Comentado para Stripe
     stripeProductId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'prod_SUd4buH7r8OzBI' : 'prod_SOuKUAX4QG2rY5', // Product ID de Stripe para Plan Empresa
     stripePriceId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'price_1RZdoQA5iob5uvoTH6v1iswz' : 'price_1RU6WHA5iob5uvoTNoQ7eIbl', // Price ID de Stripe para Plan Empresa
-    priceDisplay: 'ARS 69,000.00/mes', // Corregido a "/mes"
+    priceDisplay: 'ARS 69,000.00/month',
     priceNumeric: 6900000,
     type: 'monthly',
     isRecommended: true,
@@ -104,8 +104,8 @@ export const APP_PLANS = {
     // paddlePriceId: 'pri_01jvsnnm2gtv294yv4wz7ns21y', // Comentado para Stripe
     stripeProductId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'prod_SUdC0wywP6bPA2' : 'prod_SOuKnG1aCIacRl', // Product ID de Stripe para Plan Enterprise
     stripePriceId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'price_1RZdvgA5iob5uvoTxTOhJ0ln' : 'price_1RU6VeA5iob5uvoTV3yXvMVt', // Price ID de Stripe para Plan Enterprise
-    priceDisplay: 'ARS 300,000.00/month',
-    priceNumeric: 30000000,
+    priceDisplay: 'Contactar',
+    priceNumeric: 0, // Establecer a 0 o null si no hay precio numérico
     type: 'enterprise',
     ctaLabelKey: 'request_demo', // Clave de traducción
     descriptionKey: 'enterprise_plan_description', // Clave de traducción
@@ -328,3 +328,4 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
 
   return result;
 };
+

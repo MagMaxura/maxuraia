@@ -30,8 +30,8 @@ export const APP_PLANS = {
     name: 'Employ Smart IA - Búsqueda Puntual',
     stripeProductId: process.env.VITE_STRIPE_MODE === 'test' ? 'prod_SP3ceC9zv6TSJO' : 'prod_SOuIhd2wtVyKlt', // Product ID de Stripe para Búsqueda Puntual
     stripePriceId: process.env.VITE_STRIPE_MODE === 'test' ? 'price_1RUFVEA5iob5uvoTOCXpgQtD' : 'price_1RU6U4A5iob5uvoTs9J8cvob', // Price ID de Stripe para Búsqueda Puntual
-    priceDisplay: 'ARS 18,000.00', // Mantener display si es el mismo precio de prueba
-    priceNumeric: 1800000, // Mantener numeric si es el mismo precio de prueba
+    priceDisplay: 'ARS 25,000.00', // Mantener display si es el mismo precio de prueba
+    priceNumeric: 2500000, // Mantener numeric si es el mismo precio de prueba
     type: 'one-time',
     periodicity: 'único por puesto',
     ctaLabel: 'Empezar ahora',
@@ -52,8 +52,8 @@ export const APP_PLANS = {
     name: 'Employ Smart IA - Plan Profesional',
     stripeProductId: process.env.VITE_STRIPE_MODE === 'test' ? 'prod_SP3bTBrf7tFsyt' : 'prod_SOuQ5ACG8YX7vu', // Product ID de Stripe para Plan Profesional
     stripePriceId: process.env.VITE_STRIPE_MODE === 'test' ? 'price_1RUFUfA5iob5uvoTwfgZtdfi' : 'price_1RU6bpA5iob5uvoT2c5VkaIf', // Price ID de Stripe para Plan Profesional
-    priceDisplay: 'ARS 12,500.00/month', // Mantener display si es el mismo precio de prueba
-    priceNumeric: 1250000, // Mantener numeric si es el mismo precio de prueba
+    priceDisplay: 'ARS 18,500.00/month', // Mantener display si es el mismo precio de prueba
+    priceNumeric: 1850000, // Mantener numeric si es el mismo precio de prueba
     type: 'monthly',
     ctaLabel: 'Comenzar ahora',
     description: 'Cuota mensual para usar la mejor herramienta de reclutamiento.',
