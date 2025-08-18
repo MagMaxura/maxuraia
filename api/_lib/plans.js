@@ -30,8 +30,8 @@ export const APP_PLANS = {
     name: 'Employ Smart IA - Búsqueda Puntual',
     stripeProductId: process.env.VITE_STRIPE_MODE === 'test' ? 'prod_SP3ceC9zv6TSJO' : 'prod_SOuIhd2wtVyKlt', // Product ID de Stripe para Búsqueda Puntual
     stripePriceId: process.env.VITE_STRIPE_MODE === 'test' ? 'price_1RUFVEA5iob5uvoTOCXpgQtD' : 'price_1RU6U4A5iob5uvoTs9J8cvob', // Price ID de Stripe para Búsqueda Puntual
-    priceDisplay: 'ARS 25,000.00', // Mantener display si es el mismo precio de prueba
-    priceNumeric: 2500000, // Mantener numeric si es el mismo precio de prueba
+    priceDisplay: 'US$ 25.00',
+    priceNumeric: 2500,
     type: 'one-time',
     periodicity: 'único por puesto',
     ctaLabel: 'Empezar ahora',
@@ -52,8 +52,8 @@ export const APP_PLANS = {
     name: 'Employ Smart IA - Plan Profesional',
     stripeProductId: process.env.VITE_STRIPE_MODE === 'test' ? 'prod_SP3bTBrf7tFsyt' : 'prod_SOuQ5ACG8YX7vu', // Product ID de Stripe para Plan Profesional
     stripePriceId: process.env.VITE_STRIPE_MODE === 'test' ? 'price_1RUFUfA5iob5uvoTwfgZtdfi' : 'price_1RU6bpA5iob5uvoT2c5VkaIf', // Price ID de Stripe para Plan Profesional
-    priceDisplay: 'ARS 18,500.00/month', // Mantener display si es el mismo precio de prueba
-    priceNumeric: 1850000, // Mantener numeric si es el mismo precio de prueba
+    priceDisplay: 'US$ 18.00/mes',
+    priceNumeric: 1800,
     type: 'monthly',
     ctaLabel: 'Comenzar ahora',
     description: 'Cuota mensual para usar la mejor herramienta de reclutamiento.',
@@ -73,8 +73,8 @@ export const APP_PLANS = {
     name: 'Employ Smart IA - Plan Business',
     stripeProductId: process.env.VITE_STRIPE_MODE === 'test' ? 'prod_SUd4buH7r8OzBI' : 'prod_SOuKUAX4QG2rY5', // Product ID de Stripe para Plan Empresa
     stripePriceId: process.env.VITE_STRIPE_MODE === 'test' ? 'price_1RZdoQA5iob5uvoTH6v1iswz' : 'price_1RU6WHA5iob5uvoTNoQ7eIbl', // Price ID de Stripe para Plan Empresa
-    priceDisplay: 'ARS 69,000.00/month',
-    priceNumeric: 6900000,
+    priceDisplay: 'US$ 69.00/mes',
+    priceNumeric: 6900,
     type: 'monthly',
     isRecommended: true,
     ctaLabel: 'Elegir Business',
@@ -97,8 +97,8 @@ export const APP_PLANS = {
     name: 'Employ Smart IA - Plan Enterprise',
     stripeProductId: process.env.VITE_STRIPE_MODE === 'test' ? 'prod_SUdC0wywP6bPA2' : 'prod_SOuKnG1aCIacRl', // Product ID de Stripe para Plan Enterprise
     stripePriceId: process.env.VITE_STRIPE_MODE === 'test' ? 'price_1RZdvgA5iob5uvoTxTOhJ0ln' : 'price_1RU6VeA5iob5uvoTV3yXvMVt', // Price ID de Stripe para Plan Enterprise
-    priceDisplay: 'ARS 300,000.00/month',
-    priceNumeric: 30000000,
+    priceDisplay: 'US$ 1,000.00/mes',
+    priceNumeric: 100000,
     type: 'enterprise',
     ctaLabel: 'Solicitar demo',
     description: 'Solución integral y personalizada para grandes empresas con necesidades avanzadas de reclutamiento.',

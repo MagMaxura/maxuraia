@@ -28,8 +28,8 @@ export const APP_PLANS = {
     nameKey: 'busqueda_puntual_plan_title', // Clave de traducción
     stripeProductId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'prod_SP3ceC9zv6TSJO' : 'prod_SOuIhd2wtVyKlt', // Product ID de Stripe para Búsqueda Puntual
     stripePriceId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'price_1RUFVEA5iob5uvoTOCXpgQtD' : 'price_1RU6U4A5iob5uvoTs9J8cvob', // Price ID de Stripe para Búsqueda Puntual
-    priceDisplay: 'ARS 25,000.00', // Mantener display si es el mismo precio de prueba
-    priceNumeric: 2500000, // Mantener numeric si es el mismo precio de prueba
+    priceDisplay: 'US$ 25.00',
+    priceNumeric: 2500,
     type: 'one-time',
     periodicity: 'único por puesto',
     ctaLabelKey: 'get_started', // Clave de traducción
@@ -53,8 +53,8 @@ export const APP_PLANS = {
     // paddlePriceId: 'pri_01jvsn7rjbv61144k9ztfrscjr', // Comentado para Stripe
     stripeProductId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'prod_SP3bTBrf7tFsyt' : 'prod_SOuQ5ACG8YX7vu', // Product ID de Stripe para Plan Profesional
     stripePriceId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'price_1RUFUfA5iob5uvoTwfgZtdfi' : 'price_1RU6bpA5iob5uvoT2c5VkaIf', // Price ID de Stripe para Plan Profesional
-    priceDisplay: 'ARS 18,500.00/mes', // Cambiado a "/mes"
-    priceNumeric: 1850000, // Mantener numeric si es el mismo precio de prueba
+    priceDisplay: 'US$ 18.00/mes',
+    priceNumeric: 1800,
     type: 'monthly',
     ctaLabelKey: 'get_started', // Clave de traducción
     descriptionKey: 'pro_plan_description', // Clave de traducción
@@ -77,8 +77,8 @@ export const APP_PLANS = {
     // paddlePriceId: 'pri_01jvsmm8vm50zz6q025w5sxkns', // Comentado para Stripe
     stripeProductId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'prod_SUd4buH7r8OzBI' : 'prod_SOuKUAX4QG2rY5', // Product ID de Stripe para Plan Empresa
     stripePriceId: import.meta.env.VITE_STRIPE_MODE === 'test' ? 'price_1RZdoQA5iob5uvoTH6v1iswz' : 'price_1RU6WHA5iob5uvoTNoQ7eIbl', // Price ID de Stripe para Plan Empresa
-    priceDisplay: 'ARS 69,000.00/month',
-    priceNumeric: 6900000,
+    priceDisplay: 'US$ 69.00/mes',
+    priceNumeric: 6900,
     type: 'monthly',
     isRecommended: true,
     ctaLabelKey: 'choose_business', // Clave de traducción
