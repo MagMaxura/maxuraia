@@ -228,14 +228,36 @@ export function useCvUploader({
       fileInputRef.current.value = "";
     }
 
-    if (!anyErrorOccurred && CvsProcessedInThisBatch > 0) {
-      console.log("useCvUploader: All successful, setting activeTab to 'cvsProcesados'");
-      setActiveTab("cvsProcesados");
-    } else if (CvsProcessedInThisBatch > 0) {
-      console.log("useCvUploader: Some processed with errors/limit, setting activeTab to 'cvsProcesados'");
-      setActiveTab("cvsProcesados");
+    if (CvsProcessedInThisBatch > 0) {
+      if (!anyErrorOccurred) {
+        toast({
+          title: "Carga de CVs Exitosa",
+          description: `${CvsProcessedInThisBatch} CV(s) procesado(s) y guardado(s) correctamente.`,
+          variant: "success",
+          duration: 5000,
+        });
+        console.log("useCvUploader: All successful, setting activeTab to 'cvsProcesados'");
+        setActiveTab("cvsProcesados");
+      } else {
+        toast({
+          title: "Carga de CVs Completada con Advertencias",
+          description: `Se procesaron ${CvsProcessedInThisBatch} CV(s), pero algunos tuvieron errores o eran duplicados.`,
+          variant: "warning",
+          duration: 7000,
+        });
+        console.log("useCvUploader: Some processed with errors/limit, setting activeTab to 'cvsProcesados'");
+        setActiveTab("cvsProcesados");
+      }
     } else {
       console.log("useCvUploader: No CVs processed in this batch.");
+      if (anyErrorOccurred) {
+        toast({
+          title: "Error en la Carga de CVs",
+          description: "No se pudo procesar ningún CV debido a errores o límites alcanzados.",
+          variant: "destructive",
+          duration: 7000,
+        });
+      }
     }
   }, [
     user,
