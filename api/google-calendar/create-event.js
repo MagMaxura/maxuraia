@@ -22,15 +22,23 @@ export default async (req, res) => {
 
       const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
+      const ensureSeconds = (timeString) => {
+        const parts = timeString.split(':');
+        if (parts.length === 2) { // HH:MM
+          return `${timeString}:00`;
+        }
+        return timeString; // HH:MM:SS o HH:MM:SS.sss
+      };
+
       const event = {
         summary: eventData.title,
         description: eventData.description,
         start: {
-          dateTime: eventData.start.endsWith(':00') ? eventData.start : `${eventData.start}:00`,
+          dateTime: ensureSeconds(eventData.start),
           timeZone: eventData.timeZone || 'America/Buenos_Aires',
         },
         end: {
-          dateTime: eventData.end.endsWith(':00') ? eventData.end : `${eventData.end}:00`,
+          dateTime: ensureSeconds(eventData.end),
           timeZone: eventData.timeZone || 'America/Buenos_Aires',
         },
         // Puedes añadir más propiedades del evento aquí, como attendees, location, etc.
