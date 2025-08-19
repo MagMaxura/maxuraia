@@ -41,8 +41,8 @@ export default async (req, res) => {
       send(res, 200, { event: response.data });
 
     } catch (error) {
-      console.error('Error creating calendar event:', error);
-      send(res, 500, { error: 'Failed to create calendar event.', details: error.message });
+      console.error('Error creating calendar event:', error.response?.data?.error || error);
+      send(res, 500, { error: 'Failed to create calendar event.', details: error.response?.data?.error?.message || error.message });
     }
   } else {
     send(res, 405, { error: 'Method Not Allowed' });
