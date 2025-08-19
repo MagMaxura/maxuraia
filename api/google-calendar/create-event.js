@@ -11,6 +11,10 @@ export default async (req, res) => {
         return send(res, 400, { error: 'User ID and event data are required.' });
       }
 
+      if (!eventData.start || !eventData.end || !eventData.title) {
+        return send(res, 400, { error: 'Event title, start, and end times are required.' });
+      }
+
       const accessToken = await getAndRefreshGoogleAccessToken(userId);
 
       const oauth2Client = new google.auth.OAuth2();
