@@ -51,43 +51,52 @@ function getAndRefreshGoogleAccessToken(userId) {
           throw new Error('No Google tokens found for this user.');
 
         case 9:
-          access_token = data.access_token, refresh_token = data.refresh_token, expiry_date = data.expiry_date; // 2. Verificar si el access_token ha expirado
+          access_token = data.access_token, refresh_token = data.refresh_token, expiry_date = data.expiry_date;
+          console.log('Existing tokens:', {
+            access_token: access_token ? 'present' : 'missing',
+            refresh_token: refresh_token ? 'present' : 'missing',
+            expiry_date: expiry_date
+          }); // 2. Verificar si el access_token ha expirado
 
           if (!(new Date(expiry_date) < new Date())) {
-            _context.next = 32;
+            _context.next = 36;
             break;
           }
+
+          console.log('Access token expired. Attempting to refresh...'); // 3. Si ha expirado, usar el refresh_token para obtener uno nuevo
 
           if (refresh_token) {
-            _context.next = 13;
+            _context.next = 16;
             break;
           }
 
+          console.error('Refresh token missing. User needs to re-authenticate.');
           throw new Error('Refresh token not found. User needs to re-authenticate with Google.');
 
-        case 13:
+        case 16:
           oauth2Client.setCredentials({
             refresh_token: refresh_token
           });
-          _context.prev = 14;
-          _context.next = 17;
+          _context.prev = 17;
+          _context.next = 20;
           return regeneratorRuntime.awrap(oauth2Client.refreshAccessToken());
 
-        case 17:
+        case 20:
           _ref2 = _context.sent;
           tokens = _ref2.tokens;
           access_token = tokens.access_token;
           expiry_date = tokens.expiry_date; // Actualizar la fecha de expiración
-          // 4. Actualizar el nuevo access_token y expiry_date en Supabase
 
-          _context.next = 23;
+          console.log('Token refreshed successfully. New expiry_date:', expiry_date); // 4. Actualizar el nuevo access_token y expiry_date en Supabase
+
+          _context.next = 27;
           return regeneratorRuntime.awrap(supabase.from('user_google_tokens').update({
             access_token: access_token,
             expiry_date: expiry_date // No actualizamos refresh_token aquí, ya que Google solo lo devuelve la primera vez
 
           }).eq('user_id', userId));
 
-        case 23:
+        case 27:
           _ref3 = _context.sent;
           updateError = _ref3.error;
 
@@ -95,22 +104,22 @@ function getAndRefreshGoogleAccessToken(userId) {
             console.error('Error updating Google tokens in Supabase:', updateError); // No lanzamos un error fatal aquí, ya que el access_token es válido
           }
 
-          _context.next = 32;
+          _context.next = 36;
           break;
 
-        case 28:
-          _context.prev = 28;
-          _context.t0 = _context["catch"](14);
+        case 32:
+          _context.prev = 32;
+          _context.t0 = _context["catch"](17);
           console.error('Error refreshing Google access token:', _context.t0);
           throw new Error('Failed to refresh Google access token. User may need to re-authenticate.');
 
-        case 32:
+        case 36:
           return _context.abrupt("return", access_token);
 
-        case 33:
+        case 37:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[14, 28]]);
+  }, null, null, [[17, 32]]);
 }

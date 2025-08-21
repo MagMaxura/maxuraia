@@ -32,10 +32,14 @@ export async function getAndRefreshGoogleAccessToken(userId) {
 
   let { access_token, refresh_token, expiry_date } = data;
 
+  console.log('Existing tokens:', { access_token: access_token ? 'present' : 'missing', refresh_token: refresh_token ? 'present' : 'missing', expiry_date });
+
   // 2. Verificar si el access_token ha expirado
   if (new Date(expiry_date) < new Date()) {
+    console.log('Access token expired. Attempting to refresh...');
     // 3. Si ha expirado, usar el refresh_token para obtener uno nuevo
     if (!refresh_token) {
+      console.error('Refresh token missing. User needs to re-authenticate.');
       throw new Error('Refresh token not found. User needs to re-authenticate with Google.');
     }
 
@@ -45,6 +49,7 @@ export async function getAndRefreshGoogleAccessToken(userId) {
       const { tokens } = await oauth2Client.refreshAccessToken();
       access_token = tokens.access_token;
       expiry_date = tokens.expiry_date; // Actualizar la fecha de expiración
+      console.log('Token refreshed successfully. New expiry_date:', expiry_date);
 
       // 4. Actualizar el nuevo access_token y expiry_date en Supabase
       const { error: updateError } = await supabase
