@@ -106,24 +106,8 @@ const CalendarTab = () => {
                 });
                 setLoading(false);
             } else {
-                const loadExistingTokens = async () => {
-                    try {
-                        const accessToken = await getGoogleAccessTokenFromSupabase(user.id);
-                        if (accessToken) {
-                            setIsAuthenticated(true);
-                            fetchAndSetEvents(); // Ya no pasamos el token, la Vercel Function lo obtiene
-                        } else {
-                            setIsAuthenticated(false);
-                            setLoading(false);
-                        }
-                    } catch (err) {
-                        console.error("Error al obtener token existente de Supabase:", err);
-                        setError("Error al verificar la conexión de Google Calendar.");
-                        setIsAuthenticated(false);
-                        setLoading(false);
-                    }
-                };
-                loadExistingTokens();
+                // Intentar cargar eventos directamente. El backend se encargará de refrescar el token.
+                fetchAndSetEvents();
             }
         } else {
             setLoading(false);
