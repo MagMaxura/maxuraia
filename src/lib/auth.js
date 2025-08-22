@@ -51,10 +51,11 @@ export const auth = {
       console.debug("auth.js: Profile exists:", profileExists, "Is complete:", profileIsComplete);
       console.debug("auth.js: Checking conditions for profile creation: email_confirmed_at:", authUser.email_confirmed_at, "!profileExists:", !profileExists);
 
-      // Si el perfil existe pero no tiene una suscripción activa o puntual, intentar crear una de prueba
-      // O si tiene una suscripción pero no es de tipo mensual ni puntual (ej. solo trial expirado)
-      if (profileExists && (!profile.suscripcion || (!profile.suscripcion.current_plan && !profile.suscripcion.one_time_plan))) {
-        console.debug("auth.js: Profile exists but no active monthly/one-time subscription found. Attempting to create/update trial subscription.");
+      // Si el perfil existe y no tiene una suscripción activa o puntual, pero NO tiene una suscripción de pago (activa o expirada),
+      // entonces intentar crear una de prueba.
+      const userHasPaidSubscription = await auth.hasPaidSubscription(authUser.id);
+      if (profileExists && (!profile.suscripcion || (!profile.suscripcion.current_plan && !profile.suscripcion.one_time_plan)) && !userHasPaidSubscription) {
+        console.debug("auth.js: Profile exists, no active monthly/one-time subscription, AND no paid subscription found. Attempting to create/update trial subscription.");
         try {
           const defaultPlanId = 'trial';
           const trialDays = 7;
@@ -265,59 +266,66 @@ export const auth = {
 
     console.debug("auth.js: [LOG] saveRecruiterProfile - INSERT successful. Result:", insertedRecruiter);
 
-    // Después de crear el perfil del reclutador, crear o actualizar una suscripción de prueba por defecto
+    // Después de crear el perfil del reclutador, verificar si ya tiene una suscripción de pago.
+    // Si no la tiene, crear o actualizar una suscripción de prueba por defecto.
     if (insertedRecruiter) {
-      const defaultPlanId = 'trial';
-      const trialDays = 7;
-      const trialEnds = new Date();
-      trialEnds.setDate(trialEnds.getDate() + trialDays);
+      const userHasPaidSubscription = await auth.hasPaidSubscription(insertedRecruiter.id);
 
-      // Obtener los límites del plan trial desde APP_PLANS
-      const trialPlanDetails = APP_PLANS[defaultPlanId];
-      const trialCvLimit = trialPlanDetails?.cvLimit || 0;
-      const trialJobLimit = trialPlanDetails?.jobLimit || 0;
+      if (!userHasPaidSubscription) {
+        const defaultPlanId = 'trial';
+        const trialDays = 7;
+        const trialEnds = new Date();
+        trialEnds.setDate(trialEnds.getDate() + trialDays);
 
-      const defaultSubscription = {
-        recruiter_id: insertedRecruiter.id,
-        plan_id: defaultPlanId,
-        status: 'trialing', // O 'active' si 'basico' no tiene trial
-        trial_ends_at: trialEnds.toISOString(),
-        // current_period_start y current_period_end pueden ser null o definirse si es necesario
-        // created_at y updated_at se manejarán por defecto en la BD si están configurados
-      };
+        // Obtener los límites del plan trial desde APP_PLANS
+        const trialPlanDetails = APP_PLANS[defaultPlanId];
+        const trialCvLimit = trialPlanDetails?.cvLimit || 0;
+        const trialJobLimit = trialPlanDetails?.jobLimit || 0;
 
-      console.debug("auth.js: Attempting to create/update default subscription for recruiter_id:", insertedRecruiter.id);
-      const { data: newSubscription, error: subError } = await supabase
-        .from('suscripciones')
-        .upsert({
+        const defaultSubscription = {
           recruiter_id: insertedRecruiter.id,
           plan_id: defaultPlanId,
-          status: 'trialing',
+          status: 'trialing', // O 'active' si 'basico' no tiene trial
           trial_ends_at: trialEnds.toISOString(),
-          current_period_start: new Date().toISOString(),
-          current_period_end: trialEnds.toISOString(), // Para que el trial tenga un período definido
-          cvs_analizados_este_periodo: 0,
-          jobs_creados_este_periodo: 0,
-          CV_Max_plan: trialCvLimit, // Establecer límites del trial
-          Jobs_Max_plan: trialJobLimit, // Establecer límites del trial
-          one_time_cv_bonus: 0, // Asegurar que los bonos puntuales sean 0 para un trial
-          one_time_job_bonus: 0, // Asegurar que los bonos puntuales sean 0 para un trial
-        }, { onConflict: 'recruiter_id' }) // Usar upsert para evitar duplicados
-        .select()
-        .single();
+          // current_period_start y current_period_end pueden ser null o definirse si es necesario
+          // created_at y updated_at se manejarán por defecto en la BD si están configurados
+        };
 
-      if (subError) {
-        console.error("auth.js: Error creating default subscription:", subError);
-        // No lanzar error aquí para no interrumpir el flujo de creación de perfil,
-        // pero sí loguearlo. El usuario tendrá perfil pero no suscripción.
-        // Se podría reintentar o manejar administrativamente.
-      } else if (!newSubscription) {
-        console.warn("auth.js: Default subscription INSERT returned no data, but no error. Check RLS or table configuration.");
-      }
-      else {
-        console.debug("auth.js: Default subscription created successfully:", newSubscription);
-        // Opcional: añadir la suscripción al objeto insertedRecruiter antes de devolverlo
-        // insertedRecruiter.suscripcion = newSubscription;
+        console.debug("auth.js: Attempting to create/update default subscription for recruiter_id:", insertedRecruiter.id);
+        const { data: newSubscription, error: subError } = await supabase
+          .from('suscripciones')
+          .upsert({
+            recruiter_id: insertedRecruiter.id,
+            plan_id: defaultPlanId,
+            status: 'trialing',
+            trial_ends_at: trialEnds.toISOString(),
+            current_period_start: new Date().toISOString(),
+            current_period_end: trialEnds.toISOString(), // Para que el trial tenga un período definido
+            cvs_analizados_este_periodo: 0,
+            jobs_creados_este_periodo: 0,
+            CV_Max_plan: trialCvLimit, // Establecer límites del trial
+            Jobs_Max_plan: trialJobLimit, // Establecer límites del trial
+            one_time_cv_bonus: 0, // Asegurar que los bonos puntuales sean 0 para un trial
+            one_time_job_bonus: 0, // Asegurar que los bonos puntuales sean 0 para un trial
+          }, { onConflict: 'recruiter_id' }) // Usar upsert para evitar duplicados
+          .select()
+          .single();
+
+        if (subError) {
+          console.error("auth.js: Error creating default subscription:", subError);
+          // No lanzar error aquí para no interrumpir el flujo de creación de perfil,
+          // pero sí loguearlo. El usuario tendrá perfil pero no suscripción.
+          // Se podría reintentar o manejar administrativamente.
+        } else if (!newSubscription) {
+          console.warn("auth.js: Default subscription INSERT returned no data, but no error. Check RLS or table configuration.");
+        }
+        else {
+          console.debug("auth.js: Default subscription created successfully:", newSubscription);
+          // Opcional: añadir la suscripción al objeto insertedRecruiter antes de devolverlo
+          // insertedRecruiter.suscripcion = newSubscription;
+        }
+      } else {
+        console.debug("auth.js: User already has a paid subscription. Skipping trial subscription creation.");
       }
     }
     return insertedRecruiter; // Devolver el perfil del reclutador
@@ -528,6 +536,34 @@ export const auth = {
       console.error('auth.js: Error fetching recruiter profile or subscriptions:', error);
       throw error;
     }
+  },
+
+  async hasPaidSubscription(userId) {
+    console.debug("[DEBUG] Checking for paid subscription for userId:", userId);
+    const { data: subscriptions, error } = await supabase
+      .from('suscripciones')
+      .select('plan_id')
+      .eq('recruiter_id', userId);
+
+    if (error) {
+      console.error("Error checking for paid subscription:", error);
+      return false;
+    }
+
+    if (!subscriptions || subscriptions.length === 0) {
+      return false;
+    }
+
+    // Verificar si alguna de las suscripciones es un plan de pago
+    for (const sub of subscriptions) {
+      const planDetails = APP_PLANS[sub.plan_id];
+      if (planDetails && planDetails.type !== 'trial') {
+        console.debug("[DEBUG] Paid subscription found for userId:", userId, "Plan ID:", sub.plan_id);
+        return true;
+      }
+    }
+    console.debug("[DEBUG] No paid subscription found for userId:", userId);
+    return false;
   },
 
   getRecruiterByEmail: getRecruiterByEmail
