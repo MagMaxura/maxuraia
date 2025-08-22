@@ -59,7 +59,7 @@ function getAndRefreshGoogleAccessToken(userId) {
           }); // 2. Verificar si el access_token ha expirado
 
           if (!(new Date(expiry_date) < new Date())) {
-            _context.next = 36;
+            _context.next = 37;
             break;
           }
 
@@ -84,19 +84,20 @@ function getAndRefreshGoogleAccessToken(userId) {
         case 20:
           _ref2 = _context.sent;
           tokens = _ref2.tokens;
+          console.log('Tokens received from refresh:', tokens);
           access_token = tokens.access_token;
           expiry_date = tokens.expiry_date; // Actualizar la fecha de expiración
 
           console.log('Token refreshed successfully. New expiry_date:', expiry_date); // 4. Actualizar el nuevo access_token y expiry_date en Supabase
 
-          _context.next = 27;
+          _context.next = 28;
           return regeneratorRuntime.awrap(supabase.from('user_google_tokens').update({
             access_token: access_token,
             expiry_date: expiry_date // No actualizamos refresh_token aquí, ya que Google solo lo devuelve la primera vez
 
           }).eq('user_id', userId));
 
-        case 27:
+        case 28:
           _ref3 = _context.sent;
           updateError = _ref3.error;
 
@@ -104,22 +105,22 @@ function getAndRefreshGoogleAccessToken(userId) {
             console.error('Error updating Google tokens in Supabase:', updateError); // No lanzamos un error fatal aquí, ya que el access_token es válido
           }
 
-          _context.next = 36;
+          _context.next = 37;
           break;
 
-        case 32:
-          _context.prev = 32;
+        case 33:
+          _context.prev = 33;
           _context.t0 = _context["catch"](17);
           console.error('Error refreshing Google access token:', _context.t0);
           throw new Error('Failed to refresh Google access token. User may need to re-authenticate.');
 
-        case 36:
+        case 37:
           return _context.abrupt("return", access_token);
 
-        case 37:
+        case 38:
         case "end":
           return _context.stop();
       }
     }
-  }, null, null, [[17, 32]]);
+  }, null, null, [[17, 33]]);
 }

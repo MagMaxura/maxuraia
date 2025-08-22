@@ -47,6 +47,7 @@ export async function getAndRefreshGoogleAccessToken(userId) {
 
     try {
       const { tokens } = await oauth2Client.refreshAccessToken();
+      console.log('Tokens received from refresh:', tokens);
       access_token = tokens.access_token;
       expiry_date = tokens.expiry_date; // Actualizar la fecha de expiración
       console.log('Token refreshed successfully. New expiry_date:', expiry_date);
