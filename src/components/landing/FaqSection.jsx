@@ -13,11 +13,11 @@ const fadeInWhileInView = {
 const faqs = [
   {
     question: "¿Cómo funciona el análisis de CVs con IA?",
-    answer: "Nuestra IA utiliza procesamiento de lenguaje natural (NLP) para extraer información clave de los CVs, como experiencia, habilidades y educación, comparándolos con los requisitos del puesto para generar un ranking de compatibilidad."
+    answer: "Nuestra IA utiliza algoritmos avanzados para analizar el contenido de los CVs de los candidatos y compararlo con los requisitos de las ofertas de trabajo publicadas, destacando las coincidencias clave y generando un ranking de compatibilidad."
   },
   {
     question: "¿Es seguro subir los CVs de los candidatos?",
-    answer: "Sí, la seguridad y privacidad son nuestra máxima prioridad. Utilizamos encriptación avanzada y cumplimos con las normativas de protección de datos vigentes para garantizar la confidencialidad de la información."
+    answer: "Sí, la seguridad de los datos de los candidatos y de tu empresa es nuestra prioridad. Utilizamos cifrado de extremo a extremo y cumplimos con las normativas de privacidad y protección de datos vigentes."
   },
   {
     question: "¿Puedo personalizar los criterios de preselección?",
