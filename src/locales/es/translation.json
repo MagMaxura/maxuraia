@@ -261,5 +261,15 @@
   "active_bonus_plans": "Bonos Puntuales Activos",
   "limits_and_usage": "Límites y Uso",
   "loading_plan_info_or_no_plan": "Cargando información del plan o no hay plan disponible. Si el problema persiste, contacta a soporte.",
-  "buy_now": "Comprar Ahora"
+  "buy_now": "Comprar Ahora",
+  "cv_processing_status": "Estado del Procesamiento de CVs",
+  "pending": "Pendiente",
+  "extracting": "Extrayendo texto",
+  "analyzing": "Analizando CV",
+  "saving": "Guardando CV",
+  "completed": "Completado",
+  "error": "Error",
+  "duplicate": "Duplicado",
+  "cancelled": "Cancelado",
+  "cv_already_exists": "Este CV ya existe en tu base de datos."
 }

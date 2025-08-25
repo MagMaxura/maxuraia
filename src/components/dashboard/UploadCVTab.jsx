@@ -36,6 +36,7 @@ function UploadCVTab({
   bonusMatchUsed,
   bonusMatchTotal,
   onCvUploadSuccess, // Nueva prop: callback para éxito de subida de CV
+  processingFiles, // Nueva prop: lista de archivos en procesamiento
   // isLoadingSubscription, // Si useDashboardData devolviera un estado de carga específico para la suscripción
 }) {
   const { toast } = useToast();
@@ -300,6 +301,41 @@ function UploadCVTab({
           </p>
           {isProcessing && !isBulkProcessing && <p className="mt-4 text-blue-600">{t('processing_individual_cv')}</p>}
         </div>
+
+        {/* Sección para mostrar el progreso individual de los CVs */}
+        {processingFiles && processingFiles.length > 0 && (
+          <div className="w-full md:w-1/2 p-4 border rounded-lg shadow-sm bg-gray-50">
+            <h3 className="text-lg font-semibold mb-4">{t('cv_processing_status')}</h3>
+            <ScrollArea className="h-64 pr-4">
+              {processingFiles.map((file) => (
+                <div key={file.id} className="mb-4 p-3 border rounded-md bg-white shadow-sm">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium text-slate-700 truncate max-w-[70%]">{file.name}</span>
+                    <span className={`text-sm font-semibold ${
+                      file.status === 'completed' ? 'text-green-600' :
+                      file.status === 'error' || file.status === 'duplicate' || file.status === 'cancelled' ? 'text-red-600' :
+                      'text-blue-600'
+                    }`}>
+                      {t(file.status)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div
+                      className="bg-blue-500 h-2.5 rounded-full transition-all duration-300 ease-in-out"
+                      style={{ width: `${file.progress}%` }}
+                    ></div>
+                  </div>
+                  {file.status === 'error' && file.analysisResult?.message && (
+                    <p className="text-xs text-red-500 mt-1">{file.analysisResult.message}</p>
+                  )}
+                  {file.status === 'duplicate' && (
+                    <p className="text-xs text-orange-500 mt-1">{t('cv_already_exists')}</p>
+                  )}
+                </div>
+              ))}
+            </ScrollArea>
+          </div>
+        )}
 
         {/* <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg w-full md:w-1/2 text-center">
           <p className="text-gray-500 mb-4">{t('or_upload_from_google_drive')}</p>

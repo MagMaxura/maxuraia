@@ -157,6 +157,7 @@ function Dashboard() {
     handleDragOver,
     handleDrop,
     optimisticCvCount,
+    processingFiles, // Añadir processingFiles
   } = useCvUploader({
     fileInputRef,
     setCvFiles,
@@ -416,6 +417,7 @@ function Dashboard() {
                 isBasePlanActive={isBasePlanActive}
                 basePlan={basePlan}
                 onCvUploadSuccess={refreshUser}
+                processingFiles={processingFiles} // Pasar processingFiles
               />
             } />
             <Route path="cvs-procesados" element={

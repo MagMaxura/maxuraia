@@ -249,5 +249,15 @@
   "error_deleting_job_message": "Could not delete job: {{message}}",
   "ai_analysis_tab": "AI Analysis",
   "calendar_tab": "Calendar",
-  "current_plan_tab": "Current Plan"
+  "current_plan_tab": "Current Plan",
+  "cv_processing_status": "CV Processing Status",
+  "pending": "Pending",
+  "extracting": "Extracting text",
+  "analyzing": "Analyzing CV",
+  "saving": "Saving CV",
+  "completed": "Completed",
+  "error": "Error",
+  "duplicate": "Duplicate",
+  "cancelled": "Cancelled",
+  "cv_already_exists": "This CV already exists in your database."
 }

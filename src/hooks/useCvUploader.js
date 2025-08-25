@@ -26,6 +26,7 @@ export function useCvUploader({
   const [filesUploadedCount, setFilesUploadedCount] = useState(0);
   const [currentFileProcessingName, setCurrentFileProcessingName] = useState("");
   const [optimisticCvCount, setOptimisticCvCount] = useState(currentCvCount); // Nuevo estado optimista
+  const [processingFiles, setProcessingFiles] = useState([]); // Nuevo estado para el progreso individual
 
   // Sincronizar optimisticCvCount con currentCvCount cuando este último cambie (después de refreshUser)
   useEffect(() => {
@@ -75,12 +76,29 @@ export function useCvUploader({
     let CvsProcessedInThisBatch = 0;
     const newlyProcessedCvFiles = [];
 
+    // Inicializar el estado de processingFiles
+    setProcessingFiles(selectedFiles.map(file => ({
+      id: file.name + Date.now() + Math.random(), // ID único temporal
+      name: file.name,
+      status: 'pending', // 'pending', 'extracting', 'analyzing', 'saving', 'completed', 'error', 'duplicate'
+      progress: 0, // 0-100
+      file: file, // Mantener referencia al objeto File original
+      analysisResult: null,
+      databaseId: null,
+    })));
+
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
-      console.log("useCvUploader: handleFileUpload - setCurrentFileProcessingName(file.name)", file.name);
+      const fileId = processingFiles[i]?.id; // Obtener el ID temporal del archivo actual
+
+      // Actualizar el nombre del archivo que se está procesando actualmente
       setCurrentFileProcessingName(file.name);
-      console.log("useCvUploader: handleFileUpload - setFilesUploadedCount(i)", i);
       setFilesUploadedCount(i);
+
+      // Actualizar el estado del archivo individual a 'extracting'
+      setProcessingFiles(prev => prev.map(f =>
+        f.id === fileId ? { ...f, status: 'extracting', progress: 25 } : f
+      ));
 
       const planDetails = APP_PLANS[planId];
       const isOneTimePlan = planDetails?.type === 'one-time';
@@ -115,8 +133,17 @@ export function useCvUploader({
       }
 
       try {
+        // Paso 1: Extracción de texto
         let text = await extractTextFromFile(file);
+        setProcessingFiles(prev => prev.map(f =>
+          f.id === fileId ? { ...f, status: 'analyzing', progress: 50 } : f
+        ));
+
+        // Paso 2: Análisis del CV
         let resolvedAnalysis = await analyzeCV(text);
+        setProcessingFiles(prev => prev.map(f =>
+          f.id === fileId ? { ...f, status: 'saving', progress: 75 } : f
+        ));
 
         // Si el análisis inicial es pobre y es un PDF, reintentar con OCR forzado
         if (resolvedAnalysis.isPoorAnalysis && file.type === 'application/pdf') {
@@ -136,23 +163,23 @@ export function useCvUploader({
           }
         }
 
-        // Llamar a cvService.uploadCV con user.suscripcion
-        const result = await cvService.uploadCV(file, user.id, resolvedAnalysis, user.suscripcion); // Pasar user.suscripcion
-        
+        // Paso 3: Guardar CV y Candidato
+        const result = await cvService.uploadCV(file, user.id, resolvedAnalysis, user.suscripcion);
+
         if (result?.isDuplicate) {
           toast({
             title: "CV Duplicado",
             description: `El CV "${file.name}" ya existe en tu base de datos. No se guardó una nueva entrada.`,
-            variant: "default", // O "warning" si existe
+            variant: "default",
             duration: 5000,
           });
-          // No incrementar contadores ni añadir a newlyProcessedCvFiles si es duplicado
+          setProcessingFiles(prev => prev.map(f =>
+            f.id === fileId ? { ...f, status: 'duplicate', progress: 100, analysisResult: resolvedAnalysis } : f
+          ));
         } else if (result && !result.error) {
-          // Si el CV se guardó exitosamente y el contador se incrementó en el backend,
-          // forzar una recarga del usuario para actualizar los límites en el frontend.
           if (refreshUser) {
             console.debug("useCvUploader: CV guardado y contador incrementado. Refrescando usuario...");
-            await refreshUser(); // Forzar recarga del usuario para actualizar suscripción
+            await refreshUser();
           }
 
           const newCvFile = {
@@ -160,12 +187,16 @@ export function useCvUploader({
             originalFile: file, // Mantener el objeto File original por si se necesita
             analysis: resolvedAnalysis,
             uploadedDate: new Date(),
-            cv_database_id: result?.cv?.id || null, // Usar el ID real del CV guardado
-            candidate_database_id: result?.candidate?.id || null, // Usar el ID real del candidato guardado
+            cv_database_id: result?.cv?.id || null,
+            candidate_database_id: result?.candidate?.id || null,
           };
           newlyProcessedCvFiles.push(newCvFile);
           CvsProcessedInThisBatch++;
-          setOptimisticCvCount(prevCount => prevCount + 1); // Incrementar el contador optimista
+          setOptimisticCvCount(prevCount => prevCount + 1);
+
+          setProcessingFiles(prev => prev.map(f =>
+            f.id === fileId ? { ...f, status: 'completed', progress: 100, analysisResult: resolvedAnalysis, databaseId: result?.cv?.id } : f
+          ));
 
           toast({
             title: "CV Procesado",
@@ -180,6 +211,9 @@ export function useCvUploader({
             description: result?.message || `No se pudo procesar el archivo.`,
             variant: "destructive",
           });
+          setProcessingFiles(prev => prev.map(f =>
+            f.id === fileId ? { ...f, status: 'error', progress: 100, analysisResult: resolvedAnalysis } : f
+          ));
         }
       } catch (error) {
         anyErrorOccurred = true;
@@ -189,8 +223,15 @@ export function useCvUploader({
           description: error.message || `Ocurrió un error inesperado.`,
           variant: "destructive",
         });
+        setProcessingFiles(prev => prev.map(f =>
+          f.id === fileId ? { ...f, status: 'error', progress: 100, analysisResult: { error: true, message: error.message } } : f
+        ));
       }
     }
+    // Asegurarse de que todos los archivos que no se procesaron (por límite, etc.) se marquen como error o cancelados
+    setProcessingFiles(prev => prev.map(f =>
+      f.status === 'pending' ? { ...f, status: 'cancelled', progress: 0 } : f
+    ));
 
     if (newlyProcessedCvFiles.length > 0) {
       console.log("useCvUploader: Calling setCvFiles with newlyProcessedCvFiles:", newlyProcessedCvFiles);
@@ -290,6 +331,7 @@ export function useCvUploader({
     handleFileUpload,
     handleDragOver,
     handleDrop,
-    optimisticCvCount, // Devolver el contador optimista
+    optimisticCvCount,
+    processingFiles, // Devolver el nuevo estado
   };
 }
