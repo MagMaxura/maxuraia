@@ -14,19 +14,17 @@ export function useDashboardData() {
   const [isLoadingJobs, setIsLoadingJobs] = useState(false);
   const initialLoadAttemptedForUserIdRef = useRef(null);
 
-  useEffect(() => {
-    const currentUserId = user?.id;
-
-    const loadUserCandidatosYCVs = async (userIdToLoad) => { // Renombrado
-      setIsLoadingCVs(true);
-      try {
-        const fetchedCandidatos = await cvService.getCandidatosConCVsByRecruiterId(userIdToLoad);
-        
-        const formattedData = fetchedCandidatos.map(candidato => {
-          // Cada 'candidato' puede tener un array 'cvs'. Tomamos el más reciente o el primero.
-          const cvPrincipal = candidato.cvs && candidato.cvs.length > 0
-            ? candidato.cvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
-            : null;
+  // Función para cargar CVs y candidatos
+  const loadUserCandidatosYCVs = async (userIdToLoad) => {
+    setIsLoadingCVs(true);
+    try {
+      const fetchedCandidatos = await cvService.getCandidatosConCVsByRecruiterId(userIdToLoad);
+      
+      const formattedData = fetchedCandidatos.map(candidato => {
+        // Cada 'candidato' puede tener un array 'cvs'. Tomamos el más reciente o el primero.
+        const cvPrincipal = candidato.cvs && candidato.cvs.length > 0
+          ? candidato.cvs.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+          : null;
 
           let analysisData = cvPrincipal?.analysis_result || {};
           
@@ -71,21 +69,34 @@ export function useDashboardData() {
       } finally {
         setIsLoadingCVs(false);
       }
-    };
+  };
 
-    const loadUserJobs = async (userIdToLoad) => {
-      setIsLoadingJobs(true);
-      try {
-        const fetchedJobs = await cvService.getJobsByRecruiterId(userIdToLoad);
-        setJobs(fetchedJobs || []);
-      } catch (error) {
-        console.error("useDashboardData: Error fetching user Jobs:", error);
-        toast({ title: "Error al cargar Puestos", description: "No se pudieron cargar tus puestos de trabajo guardados.", variant: "destructive" });
-        setJobs([]);
-      } finally {
-        setIsLoadingJobs(false);
-      }
-    };
+  // Función para cargar puestos de trabajo
+  const loadUserJobs = async (userIdToLoad) => {
+    setIsLoadingJobs(true);
+    try {
+      const fetchedJobs = await cvService.getJobsByRecruiterId(userIdToLoad);
+      setJobs(fetchedJobs || []);
+    } catch (error) {
+      console.error("useDashboardData: Error fetching user Jobs:", error);
+      toast({ title: "Error al cargar Puestos", description: "No se pudieron cargar tus puestos de trabajo guardados.", variant: "destructive" });
+      setJobs([]);
+    } finally {
+      setIsLoadingJobs(false);
+    }
+  };
+
+  // Función para refrescar todos los datos del dashboard
+  const refreshDashboardData = async () => {
+    const currentUserId = user?.id;
+    if (currentUserId) {
+      await loadUserCandidatosYCVs(currentUserId);
+      await loadUserJobs(currentUserId);
+    }
+  };
+
+  useEffect(() => {
+    const currentUserId = user?.id;
 
     if (!currentUserId) {
       setCvFiles([]);
@@ -96,10 +107,9 @@ export function useDashboardData() {
       return;
     }
  
-     if (initialLoadAttemptedForUserIdRef.current !== currentUserId) {
+    if (initialLoadAttemptedForUserIdRef.current !== currentUserId) {
       initialLoadAttemptedForUserIdRef.current = currentUserId;
-      loadUserCandidatosYCVs(currentUserId);
-      loadUserJobs(currentUserId);
+      refreshDashboardData(); // Usar la nueva función de refresco
     } else {
       // Si ya se intentó la carga y las listas están vacías, isLoading debería ser false.
       // Esto previene que se muestre "Cargando..." indefinidamente si no hay datos.
@@ -130,7 +140,7 @@ export function useDashboardData() {
       }
     }
 
-  }, [user?.id, toast, user?.suscripcion]);
+  }, [user?.id, toast, user?.suscripcion, refreshDashboardData]); // Añadir refreshDashboardData a las dependencias
 
   // Calcular los límites de bonos y su estado aquí para devolverlos
   const bonusPeriodStart = user?.suscripcion?.bonus_periodo_start ? new Date(user.suscripcion.bonus_periodo_start) : null;
@@ -177,5 +187,6 @@ export function useDashboardData() {
     currentJobCount: effectiveLimits.jobs_used,
     isSubscriptionActive: effectiveLimits.isSubscriptionActive,
     periodEndsAt: effectiveLimits.periodEndsAt,
+    refreshDashboardData, // Devolver la función de refresco
   };
 }

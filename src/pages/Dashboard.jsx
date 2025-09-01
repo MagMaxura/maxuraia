@@ -53,6 +53,7 @@ function Dashboard() {
     bonusMatchTotal,
     isBasePlanActive,
     basePlan,
+    refreshDashboardData, // Obtener la nueva función de refresco
   } = useDashboardData();
 
   const isTrialExpired = userSubscription?.plan_id === 'trial' &&
@@ -163,7 +164,9 @@ function Dashboard() {
     setCvFiles,
     setSelectedCV,
     setCvAnalysis,
+    setActiveTab, // Pasar setActiveTab
     currentCvCount: currentAnalysisCount,
+    refreshDashboardData, // Pasar refreshDashboardData
   });
 
   const handleCVClick = (index) => {

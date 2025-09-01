@@ -8,7 +8,7 @@ import { useToast } from '../ui/use-toast';
 import { supabase } from '../../lib/supabase';
 import { Input } from '../ui/input'; // Importar el componente Input
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
-import { X } from 'lucide-react'; // Importar el icono X
+import { X, Trash2 } from 'lucide-react'; // Importar los iconos X y Trash2
 
 // Componentes simples para la UI
 const Select = ({ value, onChange, options, placeholder, disabled }) => (
@@ -103,9 +103,11 @@ export function AIAnalysisTab({
 }) {
   const [selectedJobId, setSelectedJobId] = useState('');
   const [selectedCandidateIds, setSelectedCandidateIds] = useState(new Set());
+  const [removedCandidateIds, setRemovedCandidateIds] = useState(new Set()); // Nuevo estado para candidatos eliminados de la comparativa
   const [analysisResults, setAnalysisResults] = useState([]);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [error, setError] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'match_score', direction: 'descending' }); // Estado para ordenamiento
   const [titleFilter, setTitleFilter] = useState(''); // Nuevo estado para el filtro de título
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false); // Estado para controlar la visibilidad del modal
   const [selectedCandidateProfileId, setSelectedCandidateProfileId] = useState(null); // Estado para el ID del candidato en el modal
@@ -132,7 +134,7 @@ export function AIAnalysisTab({
 
     let filteredCandidates = Array.from(uniqueCandidates.values());
 
-    // Aplicar filtro por título
+    // Aplicar pre-filtrado por título/profesión (ya existente)
     if (titleFilter) {
       const lowerCaseFilter = titleFilter.toLowerCase();
       filteredCandidates = filteredCandidates.filter(candidate =>
@@ -140,8 +142,11 @@ export function AIAnalysisTab({
       );
     }
 
+    // Filtrar candidatos que han sido "eliminados" de la comparativa
+    filteredCandidates = filteredCandidates.filter(candidate => !removedCandidateIds.has(candidate.id));
+
     return filteredCandidates.sort((a, b) => a.name.localeCompare(b.name));
-  }, [cvFilesFromDashboard, titleFilter]); // Añadir titleFilter a las dependencias
+  }, [cvFilesFromDashboard, titleFilter, removedCandidateIds]); // Añadir removedCandidateIds a las dependencias
 
   const fetchExistingMatchesForJob = useCallback(async (jobId) => {
     if (!jobId) {
@@ -158,7 +163,7 @@ export function AIAnalysisTab({
           candidatos (id, name)
         `)
         .eq('job_id', jobId)
-        .order('match_score', { ascending: false });
+        .order('match_score', { ascending: false }); // Mantener el orden inicial por score
 
       if (fetchError) {
         console.error("[AIAnalysisTab] Error fetching existing matches:", fetchError);
@@ -291,6 +296,20 @@ export function AIAnalysisTab({
     });
   };
 
+  const handleRemoveCandidateFromComparison = (candidateId) => {
+    setRemovedCandidateIds(prev => {
+      const newSet = new Set(prev);
+      newSet.add(candidateId);
+      return newSet;
+    });
+    // También deseleccionar si estaba seleccionado
+    setSelectedCandidateIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(candidateId);
+      return newSet;
+    });
+  };
+
   const handleSelectAllCandidates = (isChecked) => {
     if (isChecked) {
       setSelectedCandidateIds(new Set(candidatesForSelection.map(c => c.id)));
@@ -305,8 +324,9 @@ export function AIAnalysisTab({
       return;
     }
     
-    const candidatesToActuallyProcess = Array.from(selectedCandidateIds).filter(candidateId => 
-      !analysisResults.some(match => match.candidato_id === candidateId)
+    const candidatesToActuallyProcess = Array.from(selectedCandidateIds).filter(candidateId =>
+      !analysisResults.some(match => match.candidato_id === candidateId) && // No analizados previamente
+      !removedCandidateIds.has(candidateId) // No eliminados de la comparativa
     );
 
     if (candidatesToActuallyProcess.length === 0 && selectedCandidateIds.size > 0) {
@@ -367,10 +387,61 @@ export function AIAnalysisTab({
   const jobOptions = jobs.map(job => ({ value: job.id, label: job.title }));
   const allCandidatesSelected = candidatesForSelection.length > 0 && selectedCandidateIds.size === candidatesForSelection.length;
   
-  const analyzedCandidateIds = useMemo(() => 
+  const analyzedCandidateIds = useMemo(() =>
     new Set(analysisResults.map(match => match.candidato_id)),
     [analysisResults]
   );
+
+  const sortedAnalysisResults = useMemo(() => {
+    let sortableItems = [...analysisResults];
+    if (sortConfig.key) {
+      sortableItems.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        // Manejo específico para 'match_score' que es numérico
+        if (sortConfig.key === 'match_score') {
+          aValue = parseFloat(aValue);
+          bValue = parseFloat(bValue);
+        } else if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [analysisResults, sortConfig]);
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIndicator = (key) => {
+    if (sortConfig.key === key) {
+      return sortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
+    }
+    return '';
+  };
+
+  // Candidatos seleccionados que aún no han sido analizados y no han sido eliminados
+  const candidatesReadyForAnalysis = useMemo(() => {
+    return Array.from(selectedCandidateIds).filter(candidateId =>
+      !analyzedCandidateIds.has(candidateId) &&
+      !removedCandidateIds.has(candidateId)
+    );
+  }, [selectedCandidateIds, analyzedCandidateIds, removedCandidateIds]);
 
   return (
     <div className="p-4 space-y-6">
@@ -411,7 +482,7 @@ export function AIAnalysisTab({
           </div>
           <Button
             onClick={handleRunAnalysis}
-            disabled={isLoadingAnalysis || !selectedJobId || selectedCandidateIds.size === 0 || Array.from(selectedCandidateIds).every(id => analyzedCandidateIds.has(id))}
+            disabled={isLoadingAnalysis || !selectedJobId || candidatesReadyForAnalysis.length === 0}
           >
             {isLoadingAnalysis ? 'Analizando...' : 'Analizar Candidatos Seleccionados'}
           </Button>
@@ -433,28 +504,63 @@ export function AIAnalysisTab({
             {isLoadingCandidates ? <p>Cargando candidatos...</p> : (
               <>
                 {candidatesForSelection.length > 0 ? (
-                  <div className="max-h-60 overflow-y-auto border rounded-md p-2 space-y-1">
-                     <Checkbox
-                        id="select-all-candidates"
-                        checked={allCandidatesSelected}
-                        onChange={handleSelectAllCandidates}
-                        label="Seleccionar Todos / Deseleccionar Todos"
-                      />
-                    {candidatesForSelection.map(candidate => {
-                      const isAnalyzed = analyzedCandidateIds.has(candidate.id);
-                      return (
-                        <Checkbox
-                          key={candidate.id}
-                          id={`candidate-${candidate.id}`}
-                          checked={selectedCandidateIds.has(candidate.id)}
-                          onChange={() => handleCandidateSelection(candidate.id)}
-                          label={`${candidate.name} - ${candidate.title}${isAnalyzed ? ' (Analizado)' : ''}`}
-                          disabled={isAnalyzed}
-                        />
-                      );
-                    })}
+                  <div className="max-h-96 overflow-y-auto border rounded-md">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <Checkbox
+                              id="select-all-candidates"
+                              checked={allCandidatesSelected}
+                              onChange={handleSelectAllCandidates}
+                              label=""
+                            />
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título/Profesión</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Cargado</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {candidatesForSelection.map(candidate => {
+                          const isAnalyzed = analyzedCandidateIds.has(candidate.id);
+                          return (
+                            <tr key={candidate.id}>
+                              <td className="px-4 py-2 whitespace-nowrap">
+                                <Checkbox
+                                  id={`candidate-${candidate.id}`}
+                                  checked={selectedCandidateIds.has(candidate.id)}
+                                  onChange={() => handleCandidateSelection(candidate.id)}
+                                  label=""
+                                  disabled={isAnalyzed}
+                                />
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {candidate.name} {isAnalyzed && <span className="text-xs text-gray-500">(Analizado)</span>}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{candidate.title}</td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                                {new Date(candidate.uploadedDate).toLocaleDateString()}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleRemoveCandidateFromComparison(candidate.id)}
+                                  className="text-red-600 hover:text-red-900"
+                                  title="Eliminar de la comparativa"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
-                ) : <p>No hay candidatos disponibles o CVs cargados que coincidan con el filtro.</p>}
+                ) : <p>No hay candidatos disponibles o CVs cargados que coincidan con el filtro o han sido eliminados de la comparativa.</p>}
               </>
             )}
           </div>
@@ -470,19 +576,25 @@ export function AIAnalysisTab({
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidato</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Decisión</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('candidato_name')}>
+                      Candidato {getSortIndicator('candidato_name')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('match_score')}>
+                      Score {getSortIndicator('match_score')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestSort('recommendation_decision_text')}>
+                      Decisión {getSortIndicator('recommendation_decision_text')}
+                    </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Razonamiento</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resumen General</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th> {/* Nueva columna */}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {analysisResults.map(match => (
+                  {sortedAnalysisResults.map(match => (
                     <tr key={match.id || `${match.job_id}-${match.candidato_id}`}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{match.candidato_name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{match.match_score}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{match.match_score}%</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {match.recommendation ? 'Sí' : 'No'}
                       </td>

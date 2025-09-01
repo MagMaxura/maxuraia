@@ -12,12 +12,13 @@ export function useCvUploader({
   setSelectedCV, // Para seleccionar el CV recién subido (si es uno solo)
   setCvAnalysis, // Para mostrar el análisis del CV recién subido
   setActiveTab, // Para cambiar a la pestaña de CVs procesados
+  refreshDashboardData, // Nueva prop: función para refrescar los datos del dashboard
   // cvFiles prop es necesario para calcular el índice del nuevo CV si se selecciona
   // y para evitar pasar el estado completo si solo se necesita la longitud.
   // Podríamos pasar cvFiles.length directamente si esa es la única necesidad.
   // Por ahora, pasaremos la función setCvFiles y el componente Dashboard manejará la lógica de añadir.
 }) {
-  const { user, refreshUser } = useAuth(); // Obtener refreshUser
+  const { user } = useAuth(); // Ya no necesitamos refreshUser directamente aquí
   const { toast } = useToast();
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -89,7 +90,9 @@ export function useCvUploader({
 
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i];
-      const fileId = processingFiles[i]?.id; // Obtener el ID temporal del archivo actual
+      // Obtener el ID temporal del archivo actual de la lista inicializada
+      // Asegurarse de que processingFiles[i] exista antes de acceder a .id
+      const fileId = processingFiles[i] ? processingFiles[i].id : null;
 
       // Actualizar el nombre del archivo que se está procesando actualmente
       setCurrentFileProcessingName(file.name);
@@ -177,9 +180,9 @@ export function useCvUploader({
             f.id === fileId ? { ...f, status: 'duplicate', progress: 100, analysisResult: resolvedAnalysis } : f
           ));
         } else if (result && !result.error) {
-          if (refreshUser) {
-            console.debug("useCvUploader: CV guardado y contador incrementado. Refrescando usuario...");
-            await refreshUser();
+          if (refreshDashboardData) { // Usar refreshDashboardData
+            console.debug("useCvUploader: CV guardado y contador incrementado. Refrescando datos del dashboard...");
+            await refreshDashboardData(); // Llamar a la función de refresco del dashboard
           }
 
           const newCvFile = {
@@ -251,7 +254,9 @@ export function useCvUploader({
         // setSelectedCV(newIndex); // Comentado, el Dashboard lo maneja
         
         console.log("useCvUploader: Calling setCvAnalysis with:", newlyProcessedCvFiles[0]?.analysis);
-        setCvAnalysis(newlyProcessedCvFiles[0]?.analysis);
+        if (setCvAnalysis && newlyProcessedCvFiles[0]?.analysis) { // Añadir verificación
+          setCvAnalysis(newlyProcessedCvFiles[0]?.analysis);
+        }
       }
     }
     
@@ -307,7 +312,7 @@ export function useCvUploader({
     setCvFiles,
     setCvAnalysis,
     setActiveTab,
-    refreshUser, // Añadir refreshUser a las dependencias
+    refreshDashboardData, // Añadir refreshDashboardData a las dependencias
   ]);
 
   const handleDragOver = useCallback((event) => {
