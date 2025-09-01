@@ -541,7 +541,9 @@ export function AIAnalysisTab({
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{candidate.title}</td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                                {new Date(candidate.uploadedDate).toLocaleDateString()}
+                                {candidate.uploadedDate instanceof Date && !isNaN(candidate.uploadedDate)
+                                  ? candidate.uploadedDate.toLocaleDateString()
+                                  : 'Fecha inválida'}
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                                 <Button
