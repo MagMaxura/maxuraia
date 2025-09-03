@@ -117,7 +117,14 @@ export function AIAnalysisTab({
 
   const { toast } = useToast();
 
+  console.log("[AIAnalysisTab] cvFilesFromDashboard:", cvFilesFromDashboard); // Log para depuración
+  console.log("[AIAnalysisTab] excludedCandidateIds (estado actual):", excludedCandidateIds); // Log para depuración
+
   const candidatesForSelection = useMemo(() => {
+    console.log("[candidatesForSelection] Recalculando...");
+    console.log("[candidatesForSelection] cvFilesFromDashboard:", cvFilesFromDashboard);
+    console.log("[candidatesForSelection] excludedCandidateIds:", excludedCandidateIds);
+
     if (!cvFilesFromDashboard) return [];
     const uniqueCandidates = new Map();
     cvFilesFromDashboard.forEach(cv => {
@@ -126,13 +133,15 @@ export function AIAnalysisTab({
           uniqueCandidates.set(cv.candidate_database_id, {
             id: cv.candidate_database_id,
             name: cv.name,
-            title: cv.analysis?.title || cv.analysis?.nivel_escolarizacion || "Sin título" // Añadir el título
+            title: cv.analysis?.title || cv.analysis?.nivel_escolarizacion || "Sin título",
+            uploadedDate: cv.uploadedDate
           });
         }
       }
     });
 
     let filteredCandidates = Array.from(uniqueCandidates.values());
+    console.log("[candidatesForSelection] Candidatos únicos iniciales:", filteredCandidates);
 
     // Aplicar pre-filtrado por título/profesión (ya existente)
     if (titleFilter) {
@@ -140,10 +149,12 @@ export function AIAnalysisTab({
       filteredCandidates = filteredCandidates.filter(candidate =>
         candidate.title.toLowerCase().includes(lowerCaseFilter)
       );
+      console.log("[candidatesForSelection] Candidatos después de filtro por título:", filteredCandidates);
     }
 
     // Filtrar candidatos que han sido "excluidos" de la comparativa (persistente)
     filteredCandidates = filteredCandidates.filter(candidate => !excludedCandidateIds.has(candidate.id));
+    console.log("[candidatesForSelection] Candidatos después de filtro por exclusión:", filteredCandidates);
 
     return filteredCandidates.sort((a, b) => a.name.localeCompare(b.name));
   }, [cvFilesFromDashboard, titleFilter, excludedCandidateIds]); // Añadir excludedCandidateIds a las dependencias

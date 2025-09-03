@@ -61,7 +61,8 @@ export function useDashboardData() {
             candidate_database_id: candidato.id,
           };
         });
-        setCvFiles(formattedData); // Sigue usando setCvFiles, podría renombrarse a setProcessedData o similar
+        console.log("[useDashboardData] CVs cargados y formateados:", formattedData); // Log para depuración
+        setCvFiles(formattedData);
       } catch (error) {
         console.error("useDashboardData: Error fetching user Candidatos/CVs:", error);
         toast({ title: "Error al cargar Candidatos", description: "No se pudieron cargar tus candidatos guardados.", variant: "destructive" });
