@@ -56,7 +56,7 @@ export function useDashboardData() {
             name: candidato.name || (cvPrincipal?.file_name ? `CV de ${candidato.name || 'Candidato'}` : `Candidato ${candidato.id}`),
             originalFile: null, // Esto podría necesitar ajuste si se sube un nuevo CV para un candidato existente
             analysis: analysisData,
-            uploadedDate: (cvPrincipal?.created_at || candidato.created_at) ? new Date(cvPrincipal.created_at || candidato.created_at) : null, // Fecha del CV o del candidato, asegurando que sea un objeto Date válido o null
+            uploadedDate: (cvPrincipal?.created_at || candidato?.created_at) ? new Date(cvPrincipal?.created_at || candidato?.created_at) : null, // Asegurar acceso seguro a created_at
             cv_database_id: cvPrincipal?.id || candidato.cv_id || null, // Usar candidato.cv_id como fallback
             candidate_database_id: candidato.id,
           };
