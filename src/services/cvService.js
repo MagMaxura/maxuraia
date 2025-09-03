@@ -548,11 +548,11 @@ export const cvService = {
     try {
       // Verificar si ya existe un registro de exclusión para evitar duplicados
       const { data: existingExclusion, error: fetchError } = await supabase
-        .from('matches')
+        .from('job_candidate_exclusions')
         .select('id')
         .eq('job_id', jobId)
-        .eq('candidato_id', candidateId)
-        .eq('match_score', 0) // Buscar específicamente las exclusiones
+        .eq('candidate_id', candidateId)
+        .eq('recruiter_id', recruiterId)
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 es "no rows found"
@@ -561,27 +561,25 @@ export const cvService = {
       }
 
       if (existingExclusion) {
-        console.log(`Candidato ${candidateId} ya está marcado como excluido para el puesto ${jobId}.`);
+        console.log(`Candidato ${candidateId} ya está marcado como excluido para el puesto ${jobId} por el reclutador ${recruiterId}.`);
         return { success: true, message: "Candidato ya excluido." };
       }
 
-      // Insertar el registro de exclusión
+      // Insertar el registro de exclusión en la nueva tabla
       const { data, error } = await supabase
-        .from('matches')
+        .from('job_candidate_exclusions')
         .insert([
           {
             job_id: jobId,
-            candidato_id: candidateId,
-            match_score: 0,
-            analysis: "Candidato excluido manualmente por el reclutador.",
-            recruiter_id: recruiterId, // Asumiendo que la tabla matches tiene recruiter_id
+            candidate_id: candidateId,
+            recruiter_id: recruiterId,
           }
         ])
         .select()
         .single();
 
       if (error) {
-        console.error("Error marcando candidato como excluido:", JSON.stringify(error, null, 2));
+        console.error("Error marcando candidato como excluido en job_candidate_exclusions:", JSON.stringify(error, null, 2));
         throw error;
       }
       return { success: true, data };
@@ -598,17 +596,16 @@ export const cvService = {
     }
     try {
       const { data, error } = await supabase
-        .from('matches')
-        .select('candidato_id')
+        .from('job_candidate_exclusions')
+        .select('candidate_id')
         .eq('job_id', jobId)
-        .eq('recruiter_id', recruiterId)
-        .eq('match_score', 0); // Filtrar por match_score 0 para exclusiones
+        .eq('recruiter_id', recruiterId);
 
       if (error) {
-        console.error("Error obteniendo candidatos excluidos:", JSON.stringify(error, null, 2));
+        console.error("Error obteniendo candidatos excluidos de job_candidate_exclusions:", JSON.stringify(error, null, 2));
         throw error;
       }
-      return data.map(item => item.candidato_id);
+      return data.map(item => item.candidate_id);
     } catch (error) {
       console.error("Excepción en cvService.getExcludedCandidatesForJob:", error);
       throw error;

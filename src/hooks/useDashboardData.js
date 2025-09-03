@@ -61,7 +61,6 @@ export function useDashboardData() {
             candidate_database_id: candidato.id,
           };
         });
-        console.log("[useDashboardData] CVs cargados y formateados:", formattedData); // Log para depuración
         setCvFiles(formattedData);
       } catch (error) {
         console.error("useDashboardData: Error fetching user Candidatos/CVs:", error);
