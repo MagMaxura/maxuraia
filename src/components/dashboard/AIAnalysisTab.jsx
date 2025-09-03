@@ -103,7 +103,7 @@ export function AIAnalysisTab({
 }) {
   const [selectedJobId, setSelectedJobId] = useState('');
   const [selectedCandidateIds, setSelectedCandidateIds] = useState(new Set());
-  const [removedCandidateIds, setRemovedCandidateIds] = useState(new Set()); // Nuevo estado para candidatos eliminados de la comparativa
+  const [excludedCandidateIds, setExcludedCandidateIds] = useState(new Set()); // Estado para candidatos excluidos persistentemente
   const [analysisResults, setAnalysisResults] = useState([]);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [error, setError] = useState('');
@@ -142,20 +142,26 @@ export function AIAnalysisTab({
       );
     }
 
-    // Filtrar candidatos que han sido "eliminados" de la comparativa
-    filteredCandidates = filteredCandidates.filter(candidate => !removedCandidateIds.has(candidate.id));
+    // Filtrar candidatos que han sido "excluidos" de la comparativa (persistente)
+    filteredCandidates = filteredCandidates.filter(candidate => !excludedCandidateIds.has(candidate.id));
 
     return filteredCandidates.sort((a, b) => a.name.localeCompare(b.name));
-  }, [cvFilesFromDashboard, titleFilter, removedCandidateIds]); // Añadir removedCandidateIds a las dependencias
+  }, [cvFilesFromDashboard, titleFilter, excludedCandidateIds]); // Añadir excludedCandidateIds a las dependencias
 
-  const fetchExistingMatchesForJob = useCallback(async (jobId) => {
-    if (!jobId) {
+  const fetchExistingMatchesForJob = useCallback(async (jobId, recruiterId) => { // Añadir recruiterId
+    if (!jobId || !recruiterId) {
       setAnalysisResults([]);
+      setExcludedCandidateIds(new Set()); // Limpiar exclusiones si no hay job/recruiter
       return;
     }
     setIsLoadingAnalysis(true);
     try {
       console.log(`[AIAnalysisTab] Fetching existing matches for job ID: ${jobId}`);
+      
+      // Cargar candidatos excluidos
+      const excluded = await cvService.getExcludedCandidatesForJob(jobId, recruiterId);
+      setExcludedCandidateIds(new Set(excluded));
+
       const { data, error: fetchError } = await supabase
         .from('matches')
         .select(`
@@ -163,6 +169,7 @@ export function AIAnalysisTab({
           candidatos (id, name)
         `)
         .eq('job_id', jobId)
+        .neq('match_score', 0) // Excluir los registros con match_score 0 (excluidos manualmente)
         .order('match_score', { ascending: false }); // Mantener el orden inicial por score
 
       if (fetchError) {
@@ -269,12 +276,13 @@ export function AIAnalysisTab({
   }, [recruiterId, toast]);
 
   useEffect(() => {
-    if (selectedJobId) {
-      fetchExistingMatchesForJob(selectedJobId);
+    if (selectedJobId && recruiterId) { // Asegurarse de tener recruiterId
+      fetchExistingMatchesForJob(selectedJobId, recruiterId);
     } else {
       setAnalysisResults([]);
+      setExcludedCandidateIds(new Set()); // Limpiar exclusiones si no hay puesto/recruiter
     }
-  }, [selectedJobId, fetchExistingMatchesForJob]);
+  }, [selectedJobId, recruiterId, fetchExistingMatchesForJob]); // Añadir recruiterId a las dependencias
 
   useEffect(() => {
     if (isProfileModalOpen && selectedCandidateProfileId) {
@@ -296,18 +304,24 @@ export function AIAnalysisTab({
     });
   };
 
-  const handleRemoveCandidateFromComparison = (candidateId) => {
-    setRemovedCandidateIds(prev => {
-      const newSet = new Set(prev);
-      newSet.add(candidateId);
-      return newSet;
-    });
-    // También deseleccionar si estaba seleccionado
-    setSelectedCandidateIds(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(candidateId);
-      return newSet;
-    });
+  const handleRemoveCandidateFromComparison = async (candidateId) => { // Hacerla async
+    if (!selectedJobId || !recruiterId) {
+      toast({ title: "Error", description: "No se pudo excluir el candidato: faltan datos del puesto o reclutador.", variant: "destructive" });
+      return;
+    }
+    try {
+      await cvService.markCandidateAsExcluded(selectedJobId, candidateId, recruiterId);
+      setExcludedCandidateIds(prev => new Set(prev).add(candidateId)); // Actualizar estado local
+      setSelectedCandidateIds(prev => { // Deseleccionar si estaba seleccionado
+        const newSet = new Set(prev);
+        newSet.delete(candidateId);
+        return newSet;
+      });
+      toast({ title: "Candidato Excluido", description: "El candidato ha sido excluido para este puesto." });
+    } catch (error) {
+      console.error("Error al excluir candidato:", error);
+      toast({ title: "Error", description: "No se pudo excluir el candidato.", variant: "destructive" });
+    }
   };
 
   const handleSelectAllCandidates = (isChecked) => {
@@ -326,7 +340,7 @@ export function AIAnalysisTab({
     
     const candidatesToActuallyProcess = Array.from(selectedCandidateIds).filter(candidateId =>
       !analysisResults.some(match => match.candidato_id === candidateId) && // No analizados previamente
-      !removedCandidateIds.has(candidateId) // No eliminados de la comparativa
+      !excludedCandidateIds.has(candidateId) // No excluidos de la comparativa
     );
 
     if (candidatesToActuallyProcess.length === 0 && selectedCandidateIds.size > 0) {
@@ -439,9 +453,9 @@ export function AIAnalysisTab({
   const candidatesReadyForAnalysis = useMemo(() => {
     return Array.from(selectedCandidateIds).filter(candidateId =>
       !analyzedCandidateIds.has(candidateId) &&
-      !removedCandidateIds.has(candidateId)
+      !excludedCandidateIds.has(candidateId)
     );
-  }, [selectedCandidateIds, analyzedCandidateIds, removedCandidateIds]);
+  }, [selectedCandidateIds, analyzedCandidateIds, excludedCandidateIds]);
 
   return (
     <div className="p-4 space-y-6">
