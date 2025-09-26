@@ -603,7 +603,11 @@ export function AIAnalysisTab({
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{candidate.title}</td>
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                                 {candidate.uploadedDate instanceof Date && !isNaN(candidate.uploadedDate)
-                                  ? candidate.uploadedDate.toLocaleDateString()
+                                  ? candidate.uploadedDate.toLocaleDateString('es-ES', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric',
+                                    })
                                   : 'N/A'}
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
@@ -697,20 +701,6 @@ export function AIAnalysisTab({
             </DialogDescription>
           </DialogHeader>
           <Button
-  const requestCandidateSort = (key) => {
-    let direction = 'ascending';
-    if (candidateSortConfig.key === key && candidateSortConfig.direction === 'ascending') {
-      direction = 'descending';
-    }
-    setCandidateSortConfig({ key, direction });
-  };
-
-  const getCandidateSortIndicator = (key) => {
-    if (candidateSortConfig.key === key) {
-      return candidateSortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
-    }
-    return '';
-  };
             onClick={() => setIsProfileModalOpen(false)}
             className="absolute top-4 right-8 p-2 rounded-full hover:bg-gray-100 z-10"
             variant="ghost"

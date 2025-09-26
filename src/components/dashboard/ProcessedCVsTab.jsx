@@ -240,7 +240,11 @@ function ProcessedCVsTab({
                 <div className="flex items-center flex-shrink-0">
                   {file.uploadedDate && (
                     <span className="text-xs text-slate-500 mr-3">
-                      {new Date(file.uploadedDate).toLocaleDateString()}
+                      {new Date(file.uploadedDate).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                      })}
                     </span>
                   )}
                   <Button
