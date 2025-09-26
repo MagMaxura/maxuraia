@@ -107,7 +107,8 @@ export function AIAnalysisTab({
   const [analysisResults, setAnalysisResults] = useState([]);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [error, setError] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'match_score', direction: 'descending' }); // Estado para ordenamiento
+  const [sortConfig, setSortConfig] = useState({ key: 'match_score', direction: 'descending' }); // Estado para ordenamiento de resultados de análisis
+  const [candidateSortConfig, setCandidateSortConfig] = useState({ key: 'uploadedDate', direction: 'descending' }); // Nuevo estado para ordenamiento de candidatos
   const [titleFilter, setTitleFilter] = useState(''); // Nuevo estado para el filtro de título
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false); // Estado para controlar la visibilidad del modal
   const [selectedCandidateProfileId, setSelectedCandidateProfileId] = useState(null); // Estado para el ID del candidato en el modal
@@ -146,8 +147,33 @@ export function AIAnalysisTab({
     // Filtrar candidatos que han sido "excluidos" de la comparativa (persistente)
     filteredCandidates = filteredCandidates.filter(candidate => !excludedCandidateIds.has(candidate.id));
 
-    return filteredCandidates.sort((a, b) => a.name.localeCompare(b.name));
-  }, [cvFilesFromDashboard, titleFilter, excludedCandidateIds]);
+    // Aplicar ordenamiento a los candidatos para selección
+    if (candidateSortConfig.key) {
+      filteredCandidates.sort((a, b) => {
+        let aValue = a[candidateSortConfig.key];
+        let bValue = b[candidateSortConfig.key];
+
+        if (candidateSortConfig.key === 'uploadedDate') {
+          // Asegurarse de que sean objetos Date válidos para la comparación
+          aValue = aValue instanceof Date ? aValue.getTime() : 0;
+          bValue = bValue instanceof Date ? bValue.getTime() : 0;
+        } else if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+
+        if (aValue < bValue) {
+          return candidateSortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return candidateSortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filteredCandidates;
+  }, [cvFilesFromDashboard, titleFilter, excludedCandidateIds, candidateSortConfig]);
 
   const fetchExistingMatchesForJob = useCallback(async (jobId, recruiterId) => { // Añadir recruiterId
     if (!jobId || !recruiterId) {
@@ -457,6 +483,21 @@ export function AIAnalysisTab({
     );
   }, [selectedCandidateIds, analyzedCandidateIds, excludedCandidateIds]);
 
+  const requestCandidateSort = (key) => {
+    let direction = 'ascending';
+    if (candidateSortConfig.key === key && candidateSortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setCandidateSortConfig({ key, direction });
+  };
+
+  const getCandidateSortIndicator = (key) => {
+    if (candidateSortConfig.key === key) {
+      return candidateSortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
+    }
+    return '';
+  };
+
   return (
     <div className="p-4 space-y-6">
       <h2 className="text-2xl font-semibold">Análisis IA de Candidatos por Puesto</h2>
@@ -530,9 +571,15 @@ export function AIAnalysisTab({
                               label=""
                             />
                           </th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título/Profesión</th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Cargado</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestCandidateSort('name')}>
+                            Nombre {getCandidateSortIndicator('name')}
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestCandidateSort('title')}>
+                            Título/Profesión {getCandidateSortIndicator('title')}
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => requestCandidateSort('uploadedDate')}>
+                            Fecha de Cargado {getCandidateSortIndicator('uploadedDate')}
+                          </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                         </tr>
                       </thead>
@@ -557,7 +604,7 @@ export function AIAnalysisTab({
                               <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
                                 {candidate.uploadedDate instanceof Date && !isNaN(candidate.uploadedDate)
                                   ? candidate.uploadedDate.toLocaleDateString()
-                                  : 'Fecha inválida'}
+                                  : 'N/A'}
                               </td>
                               <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                                 <Button
@@ -650,6 +697,20 @@ export function AIAnalysisTab({
             </DialogDescription>
           </DialogHeader>
           <Button
+  const requestCandidateSort = (key) => {
+    let direction = 'ascending';
+    if (candidateSortConfig.key === key && candidateSortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setCandidateSortConfig({ key, direction });
+  };
+
+  const getCandidateSortIndicator = (key) => {
+    if (candidateSortConfig.key === key) {
+      return candidateSortConfig.direction === 'ascending' ? ' ▲' : ' ▼';
+    }
+    return '';
+  };
             onClick={() => setIsProfileModalOpen(false)}
             className="absolute top-4 right-8 p-2 rounded-full hover:bg-gray-100 z-10"
             variant="ghost"

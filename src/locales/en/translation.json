@@ -259,5 +259,6 @@
   "error": "Error",
   "duplicate": "Duplicate",
   "cancelled": "Cancelled",
+  "skipped": "Skipped",
   "cv_already_exists": "This CV already exists in your database."
 }

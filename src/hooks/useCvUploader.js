@@ -232,9 +232,14 @@ export function useCvUploader({
       }
     }
     // Asegurarse de que todos los archivos que no se procesaron (por límite, etc.) se marquen como error o cancelados
-    setProcessingFiles(prev => prev.map(f =>
-      f.status === 'pending' ? { ...f, status: 'cancelled', progress: 0 } : f
-    ));
+    setProcessingFiles(prev => prev.map(f => {
+      // Si el archivo aún está en 'pending' y no tiene un resultado de análisis,
+      // significa que no se procesó en absoluto (ej. por límite de plan o interrupción temprana).
+      if (f.status === 'pending' && !f.analysisResult) {
+        return { ...f, status: 'skipped', progress: 0 }; // Nuevo estado 'skipped'
+      }
+      return f;
+    }));
 
     if (newlyProcessedCvFiles.length > 0) {
       console.log("useCvUploader: Calling setCvFiles with newlyProcessedCvFiles:", newlyProcessedCvFiles);

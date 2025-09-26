@@ -313,10 +313,11 @@ function UploadCVTab({
                     <span className="font-medium text-slate-700 truncate max-w-[70%]">{file.name}</span>
                     <span className={`text-sm font-semibold ${
                       file.status === 'completed' ? 'text-green-600' :
-                      file.status === 'error' || file.status === 'duplicate' || file.status === 'cancelled' ? 'text-red-600' :
+                      file.status === 'error' || file.status === 'duplicate' ? 'text-red-600' :
+                      file.status === 'skipped' ? 'text-orange-600' : // Nuevo color para 'skipped'
                       'text-blue-600'
                     }`}>
-                      {t(file.status)}
+                      {t(file.status)} {/* Esto usará la clave de traducción para 'skipped' */}
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2.5">
