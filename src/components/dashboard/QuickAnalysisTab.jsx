@@ -1,0 +1,336 @@
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useTranslation } from "react-i18next";
+import { FileUp, Upload, Loader2, CheckCircle2, XCircle, FileText, Search } from "lucide-react";
+import { cvService } from "@/services/cvService.js";
+import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
+import { matchingService } from "@/services/matchingService.js";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { supabase } from "@/lib/supabase";
+import { useCvUploader } from "@/hooks/useCvUploader.js";
+import { useNavigate } from "react-router-dom";
+
+const QuickAnalysisTab = ({
+  jobs,
+  recruiterId,
+  matchLimit,
+  currentMatchCount,
+  onCvUploadSuccess,
+  refreshDashboardData,
+  effectiveLimits,
+  isBonusPlanActive,
+  bonusCvUsed,
+  bonusCvTotal,
+  bonusMatchUsed,
+  bonusMatchTotal,
+  isBasePlanActive,
+  basePlan,
+  currentAnalysisCount,
+  analysisLimit,
+}) => {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const fileInputRef = useRef(null);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const {
+    isProcessing,
+    isBulkProcessing,
+    totalFilesToUpload,
+    filesUploadedCount,
+    currentFileProcessingName,
+    handleFileUpload,
+    handleDragOver,
+    handleDrop,
+    optimisticCvCount,
+    processingFiles,
+    resetUploaderState,
+  } = useCvUploader({
+    fileInputRef,
+    setCvFiles: () => {}, // No necesitamos actualizar cvFiles directamente aquí
+    setSelectedCV: () => {},
+    setCvAnalysis: () => {},
+    setActiveTab: () => {},
+    currentCvCount: currentAnalysisCount,
+    refreshDashboardData,
+    onUploadComplete: (uploadedCvFiles) => {
+      if (selectedJob) {
+        handleAnalyzeCVs(uploadedCvFiles, selectedJob);
+      } else {
+        toast({
+          title: t("error_title"),
+          description: "Por favor, selecciona un puesto de trabajo antes de analizar los CVs.",
+          variant: "destructive",
+        });
+        setIsAnalyzing(false);
+      }
+    },
+  });
+
+  const filteredJobs = jobs.filter(job =>
+    job.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelectJob = (job) => {
+    setSelectedJob(job);
+    setIsDialogOpen(false);
+  };
+
+  const handleAnalyzeCVs = async (uploadedCvFiles, job) => {
+    if (!job) {
+      toast({
+        title: t("error_title"),
+        description: "Por favor, selecciona un puesto de trabajo para realizar el análisis.",
+        variant: "destructive",
+      });
+      setIsAnalyzing(false);
+      return;
+    }
+
+    if (!uploadedCvFiles || uploadedCvFiles.length === 0) {
+      toast({
+        title: t("error_title"),
+        description: "No hay CVs para analizar.",
+        variant: "destructive",
+      });
+      setIsAnalyzing(false);
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalysisResults([]);
+
+    let successfulMatches = 0;
+    const newAnalysisResults = [];
+
+    for (const cvFile of uploadedCvFiles) {
+      try {
+        const analysis = typeof cvFile.analysis.then === 'function'
+          ? await cvFile.analysis
+          : cvFile.analysis;
+
+        // Save the CV to the database
+        const saveResult = await cvService.saveCV({
+          fileName: cvFile.name,
+          fileContent: cvFile.text,
+          analysis: analysis,
+          userId: user?.id,
+        });
+
+        if (!saveResult || !saveResult.data) {
+          throw new Error("No data returned from CV save operation.");
+        }
+
+        const { cvId, candidateId } = saveResult.data;
+
+        // Perform matching
+        const matchResult = await matchingService.compareCvToJob({
+          candidateId: candidateId,
+          jobId: job.id,
+          recruiterId: recruiterId,
+        });
+
+        if (matchResult && matchResult.data) {
+          newAnalysisResults.push({
+            cvFileName: cvFile.name,
+            jobTitle: job.title,
+            matchScore: matchResult.data.matchScore,
+            candidateId: candidateId,
+            jobId: job.id,
+            status: "completed",
+          });
+          successfulMatches++;
+        } else {
+          throw new Error("No data returned from CV comparison operation.");
+        }
+      } catch (error) {
+        console.error("QuickAnalysisTab: Error during quick analysis for CV:", cvFile.name, error);
+        newAnalysisResults.push({
+          cvFileName: cvFile.name,
+          jobTitle: job.title,
+          status: "error",
+          message: error.message,
+        });
+        toast({
+          title: t("error_title"),
+          description: `Error al analizar ${cvFile.name}: ${error.message}`,
+          variant: "destructive",
+        });
+      }
+    }
+
+    setAnalysisResults(newAnalysisResults);
+    setIsAnalyzing(false);
+    resetUploaderState();
+    refreshDashboardData(); // Refresh dashboard data to update counts
+
+    if (successfulMatches > 0) {
+      toast({
+        title: "Análisis Rápido Completado",
+        description: `Se analizaron ${successfulMatches} CVs contra el puesto "${job.title}".`,
+      });
+      navigate("/dashboard/analisis-ia"); // Navigate to AI Analysis tab to show results
+    } else {
+      toast({
+        title: t("warning_text"),
+        description: "No se pudo completar el análisis para ningún CV.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const renderProcessingStatus = () => {
+    if (isBulkProcessing || isProcessing || isAnalyzing) {
+      return (
+        <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md flex items-center space-x-3">
+          <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+          <div>
+            <p className="text-blue-800 font-medium">
+              {isAnalyzing ? "Realizando análisis rápido..." : t("processing_batch")}
+            </p>
+            {!isAnalyzing && (
+              <p className="text-sm text-blue-700">
+                {t("analyzing_file", { fileName: currentFileProcessingName })} ({filesUploadedCount}/{totalFilesToUpload})
+              </p>
+            )}
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  return (
+    <div className="space-y-6">
+      <h2 className="text-3xl font-bold text-slate-800">{t('quick_analysis_tab')}</h2>
+      <p className="text-slate-600">
+        Carga CVs y compáralos automáticamente con un puesto de trabajo publicado.
+      </p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Job Selection */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-xl font-semibold text-slate-700 mb-4">1. Selecciona un Puesto de Trabajo</h3>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="w-full justify-between">
+                {selectedJob ? selectedJob.title : "Seleccionar Puesto"}
+                <Search className="ml-2 h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] p-0">
+              <DialogHeader className="p-4 border-b">
+                <DialogTitle>Seleccionar Puesto de Trabajo</DialogTitle>
+              </DialogHeader>
+              <div className="p-4">
+                <Input
+                  placeholder="Buscar puestos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="mb-4"
+                />
+                <ScrollArea className="h-[300px]">
+                  {filteredJobs.length > 0 ? (
+                    <div className="space-y-2">
+                      {filteredJobs.map((job) => (
+                        <Button
+                          key={job.id}
+                          variant="ghost"
+                          className="w-full justify-start"
+                          onClick={() => handleSelectJob(job)}
+                        >
+                          {job.title}
+                        </Button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-center text-slate-500">No se encontraron puestos.</p>
+                  )}
+                </ScrollArea>
+              </div>
+            </DialogContent>
+          </Dialog>
+          {selectedJob && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm font-medium text-blue-800">Puesto Seleccionado:</p>
+              <p className="text-md text-blue-900 font-semibold">{selectedJob.title}</p>
+            </div>
+          )}
+        </div>
+
+        {/* CV Upload */}
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+          <h3 className="text-xl font-semibold text-slate-700 mb-4">2. Carga los CVs</h3>
+          <div
+            className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current.click()}
+          >
+            <Upload className="h-10 w-10 text-gray-400 mb-3" />
+            <p className="text-gray-600 text-center mb-1">{t('drag_drop_cvs_message')}</p>
+            <p className="text-sm text-gray-500 text-center">{t('accepted_formats_message')}</p>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+              accept=".pdf,.doc,.docx"
+              multiple
+            />
+          </div>
+          {renderProcessingStatus()}
+        </div>
+      </div>
+
+      {/* Analysis Results */}
+      {analysisResults.length > 0 && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6">
+          <h3 className="text-xl font-semibold text-slate-700 mb-4">Resultados del Análisis Rápido</h3>
+          <div className="space-y-3">
+            {analysisResults.map((result, index) => (
+              <div key={index} className="flex items-center justify-between p-3 border rounded-md bg-gray-50">
+                <div className="flex items-center space-x-3">
+                  {result.status === "completed" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
+                  {result.status === "error" && <XCircle className="h-5 w-5 text-red-500" />}
+                  <p className="font-medium text-slate-700">{result.cvFileName}</p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  {result.status === "completed" && (
+                    <>
+                      <p className="text-sm text-slate-600">Match con "{result.jobTitle}": <span className="font-semibold">{result.matchScore}%</span></p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/dashboard/analisis-ia?candidateId=${result.candidateId}&jobId=${result.jobId}`)}
+                      >
+                        Ver Detalles
+                      </Button>
+                    </>
+                  )}
+                  {result.status === "error" && (
+                    <p className="text-sm text-red-600">Error: {result.message}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default QuickAnalysisTab;

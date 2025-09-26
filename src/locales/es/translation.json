@@ -249,6 +249,7 @@
   "job_deleted_message": "El puesto de trabajo ha sido eliminado.",
   "error_deleting_job_message": "No se pudo eliminar el puesto: {{message}}",
   "ai_analysis_tab": "Análisis de IA",
+  "quick_analysis_tab": "Análisis Rápido CV y Puesto",
   "calendar_tab": "Calendario",
   "current_plan_tab": "Plan Actual",
   "expired": "Vencido",

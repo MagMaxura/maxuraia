@@ -248,6 +248,7 @@
   "job_deleted_message": "The job post has been deleted.",
   "error_deleting_job_message": "Could not delete job: {{message}}",
   "ai_analysis_tab": "AI Analysis",
+  "quick_analysis_tab": "Quick CV and Job Analysis",
   "calendar_tab": "Calendar",
   "current_plan_tab": "Current Plan",
   "cv_processing_status": "CV Processing Status",

@@ -16,6 +16,7 @@ import CurrentPlanTab from "@/components/dashboard/CurrentPlanTab.jsx";
 import CreateNewJobTab from "@/components/dashboard/CreateNewJobTab.jsx";
 import PublishedJobsTab from "@/components/dashboard/PublishedJobsTab.jsx";
 import { AIAnalysisTab } from "@/components/dashboard/AIAnalysisTab.jsx";
+import QuickAnalysisTab from "@/components/dashboard/QuickAnalysisTab.jsx";
 import CalendarTab from "@/components/dashboard/CalendarTab.jsx";
 import { useDashboardData } from "@/hooks/useDashboardData.js";
 import { useCvUploader } from "@/hooks/useCvUploader.js";
@@ -144,6 +145,7 @@ function Dashboard() {
     { id: "nuevoPuesto", label: t('create_new_job_tab'), icon: Briefcase, path: "/dashboard/nuevo-puesto" },
     { id: "puestosPublicados", label: t('published_jobs_tab'), icon: FileText, path: "/dashboard/puestos-publicados" },
     { id: "analisisIA", label: t('ai_analysis_tab'), icon: Brain, path: "/dashboard/analisis-ia" },
+    { id: "quickAnalysis", label: t('quick_analysis_tab'), icon: FileUp, path: "/dashboard/analisis-rapido" },
     { id: "calendario", label: t('calendar_tab'), icon: Calendar, path: "/dashboard/calendario" },
     { id: "planActual", label: t('current_plan_tab'), icon: CreditCard, path: "/dashboard/plan-actual" },
   ];
@@ -475,6 +477,26 @@ function Dashboard() {
                 cvFilesFromDashboard={cvFiles}
                 isLoadingCandidates={isLoadingCVs}
                 isLoadingJobs={isLoadingJobs}
+              />
+            } />
+            <Route path="analisis-rapido" element={
+              <QuickAnalysisTab
+                jobs={jobs}
+                recruiterId={user?.id}
+                matchLimit={matchLimit}
+                currentMatchCount={currentMatchCount}
+                onCvUploadSuccess={refreshUser}
+                refreshDashboardData={refreshDashboardData}
+                effectiveLimits={effectiveLimits}
+                isBonusPlanActive={isBonusPlanActive}
+                bonusCvUsed={bonusCvUsed}
+                bonusCvTotal={bonusCvTotal}
+                bonusMatchUsed={bonusMatchUsed}
+                bonusMatchTotal={bonusMatchTotal}
+                isBasePlanActive={isBasePlanActive}
+                basePlan={basePlan}
+                currentAnalysisCount={currentAnalysisCount}
+                analysisLimit={analysisLimit}
               />
             } />
             <Route path="calendario" element={<CalendarTab />} />
