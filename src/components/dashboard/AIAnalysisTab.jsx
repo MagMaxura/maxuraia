@@ -410,7 +410,7 @@ export function AIAnalysisTab({
         }
       });
       
-      await fetchExistingMatchesForJob(selectedJobId); 
+      await fetchExistingMatchesForJob(selectedJobId, recruiterId);
       
       const newAnalysesCount = results.filter(r => !r.alreadyExisted && !r.error).length;
       toast({ title: "Análisis Completado", description: `Se procesaron ${newAnalysesCount} nuevos análisis para el puesto "${jobTitle}".` });
