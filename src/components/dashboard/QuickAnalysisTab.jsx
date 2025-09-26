@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { FileUp, Upload, Loader2, CheckCircle2, XCircle, FileText, Search } from "lucide-react";
 import { cvService } from "@/services/cvService.js";
 import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
-import { matchingService } from "@/services/matchingService.js";
+import { processJobMatches } from "@/services/matchingService.js";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
@@ -140,13 +140,15 @@ const QuickAnalysisTab = ({
           candidateId: candidateId,
           jobId: job.id,
           recruiterId: recruiterId,
+          candidateIds: [candidateId], // Pass the single candidate ID in an array
         });
 
-        if (matchResult && matchResult.data) {
+        if (matchResult && matchResult.length > 0) {
+          const firstMatch = matchResult[0]; // Assuming processJobMatches returns an array of results
           newAnalysisResults.push({
             cvFileName: cvFile.name,
             jobTitle: job.title,
-            matchScore: matchResult.data.matchScore,
+            matchScore: firstMatch.match_score,
             candidateId: candidateId,
             jobId: job.id,
             status: "completed",
