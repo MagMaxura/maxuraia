@@ -1,12 +1,48 @@
 import React, { useState, useEffect, memo } from "react"; // Importar memo
 import { Link } from "react-router-dom"; // Importar Link
 import { motion } from "framer-motion";
-import { Briefcase, MapPin, Mail, Phone, User, Save, Award, Brain, Zap, Trash2, FileText } from "lucide-react"; // Añadido Trash2 y FileText
+import { Briefcase, MapPin, Mail, Phone, User, Save, Award, Brain, Zap, Trash2, FileText, MessageCircle } from "lucide-react"; // Añadido Trash2, FileText y MessageCircle
 import { Button } from "@/components/ui/button.jsx";
 import { Input } from "@/components/ui/input.jsx";
 import { Textarea } from "@/components/ui/textarea.jsx";
 import { useToast } from "@/components/ui/use-toast.js";
 import { cvService } from '@/services/cvService.js';
+// Función para formatear el número de teléfono para WhatsApp
+const formatPhoneNumberForWhatsApp = (phoneNumber) => {
+  if (!phoneNumber) return "";
+  // Eliminar caracteres no numéricos, excepto el '+' inicial si existe
+  let cleaned = phoneNumber.replace(/[^\d+]/g, '');
+  // Si empieza con 0, quitarlo (ej. 011 -> 11)
+  if (cleaned.startsWith('0')) {
+    cleaned = cleaned.substring(1);
+  }
+  // Si contiene (15), eliminarlo
+  cleaned = cleaned.replace('(15)', '');
+  // Asegurarse de que tenga el prefijo de país si no lo tiene (asumiendo Argentina +549)
+  if (!cleaned.startsWith('+')) {
+    // Si es un número local sin prefijo de área, o con prefijo de área pero sin +549
+    // Asumimos que si no tiene + es un número local o de CABA/GBA
+    if (cleaned.length === 10 && (cleaned.startsWith('11') || cleaned.startsWith('221') || cleaned.startsWith('341'))) { // Ej: 115xxxxxxx (CABA/GBA)
+      cleaned = `549${cleaned}`;
+    } else if (cleaned.length === 8) { // Ej: 4xxxxxxx (número fijo sin área)
+      // Esto es más complejo, necesitaríamos la localidad para inferir el prefijo de área.
+      // Por ahora, solo agregamos el prefijo de país si no hay un prefijo de área claro.
+      cleaned = `549${cleaned}`; // Fallback genérico
+    } else if (cleaned.length === 11 && cleaned.startsWith('3')) { // Ej: 351xxxxxxx (Córdoba)
+      cleaned = `549${cleaned}`;
+    } else {
+      cleaned = `549${cleaned}`; // Para otros casos, asumimos que el número ya incluye el prefijo de área sin el 0
+    }
+  } else if (cleaned.startsWith('+549')) {
+    // Ya está en el formato correcto
+  } else if (cleaned.startsWith('+54')) {
+    // Si tiene +54 pero no el 9, lo agregamos (para móviles en Argentina)
+    cleaned = `+549${cleaned.substring(3)}`;
+  }
+  
+  // Eliminar el '+' para la URL de WhatsApp, ya que wa.me lo añade automáticamente
+  return cleaned.startsWith('+') ? cleaned.substring(1) : cleaned;
+};
 
 function CVAnalysis({ 
   analysis: initialAnalysis, 
@@ -256,7 +292,29 @@ function CVAnalysis({
             </div>
             <div className="flex items-center">
               <Phone className="h-4 w-4 mr-2 text-[#0a66c2]" />
-            <Input name="telefono" value={editableAnalysis.telefono || ""} onChange={handleChange} placeholder="Teléfono" className="info-value text-slate-700 p-0 border-0 focus-visible:ring-0 h-auto" />
+              <Input name="telefono" value={editableAnalysis.telefono || ""} onChange={handleChange} placeholder="Teléfono" className="info-value text-slate-700 p-0 border-0 focus-visible:ring-0 h-auto" />
+              {editableAnalysis.telefono && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="ml-2 h-8 w-8 text-green-500 hover:bg-green-100 hover:text-green-700"
+                  onClick={() => {
+                    const formattedPhone = formatPhoneNumberForWhatsApp(editableAnalysis.telefono);
+                    if (formattedPhone) {
+                      window.open(`https://wa.me/${formattedPhone}`, '_blank');
+                    } else {
+                      toast({
+                        title: "Número de Teléfono Inválido",
+                        description: "No se pudo formatear el número de teléfono para WhatsApp. Por favor, revisa el formato.",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  title="Enviar WhatsApp al candidato"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             <p className="text-xs text-red-600 mt-1 ml-6">*Recomendamos cambiar el teléfono a +549... y eliminar el (15) para luego poder enviarles WhatsApp al candidato.</p>
             </div>

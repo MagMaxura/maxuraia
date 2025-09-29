@@ -9,14 +9,66 @@ import { FileUp, Upload, Loader2, CheckCircle2, XCircle, FileText, Search } from
 import { cvService } from "@/services/cvService.js";
 import { extractTextFromFile, analyzeCV } from "@/lib/fileProcessing";
 import { processJobMatches } from "@/services/matchingService.js";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/lib/supabase";
 import { useCvUploader } from "@/hooks/useCvUploader.js";
 import { useNavigate } from "react-router-dom";
+import EditableCV from '../EditableCV';
+import CandidateNotes from '../CandidateNotes';
+
+const parseAnalysisText = (analysisText) => {
+  if (!analysisText || typeof analysisText !== 'string') {
+    return { decision: 'N/A', reasoning: 'N/A', summary: analysisText || 'N/A', recommendation_boolean: false };
+  }
+
+  let decision = 'N/A';
+  let reasoning = 'N/A';
+  let summary = analysisText; // Fallback inicial
+  let recommendation_boolean = false;
+
+  const newFormatDecisionMatch = analysisText.match(/Decisión de Recomendación: (.*?)\.(?: Razonamiento:|$)/i);
+  if (newFormatDecisionMatch && newFormatDecisionMatch[1]) {
+    decision = newFormatDecisionMatch[1].trim();
+    recommendation_boolean = decision.toLowerCase() === 'sí';
+
+    const newFormatReasoningMatch = analysisText.match(/Razonamiento: (.*?)\.(?: Resumen General:|$)/i);
+    if (newFormatReasoningMatch && newFormatReasoningMatch[1]) {
+      reasoning = newFormatReasoningMatch[1].trim();
+    }
+
+    const newFormatSummaryMatch = analysisText.match(/Resumen General: (.*)/i);
+    if (newFormatSummaryMatch && newFormatSummaryMatch[1]) {
+      summary = newFormatSummaryMatch[1].trim();
+    } else if (newFormatReasoningMatch && newFormatReasoningMatch[0]) {
+        const reasoningEndIndex = analysisText.toLowerCase().indexOf(newFormatReasoningMatch[0].toLowerCase()) + newFormatReasoningMatch[0].length;
+        summary = analysisText.substring(reasoningEndIndex).trim();
+         if(summary.startsWith(".")) summary = summary.substring(1).trim();
+    } else {
+         const decisionEndIndex = analysisText.toLowerCase().indexOf(newFormatDecisionMatch[0].toLowerCase()) + newFormatDecisionMatch[0].length;
+         summary = analysisText.substring(decisionEndIndex).trim();
+         if(summary.startsWith(".")) summary = summary.substring(1).trim();
+    }
+    if (summary === "") summary = "No disponible (parseado)";
+
+  } else {
+    const oldFormatRecomMatch = analysisText.match(/Recomendación: (Sí|No|Si)\.(?: Resumen:|$)/i);
+    if (oldFormatRecomMatch && oldFormatRecomMatch[1]) {
+      decision = oldFormatRecomMatch[1].trim();
+      recommendation_boolean = decision.toLowerCase() === 'sí' || decision.toLowerCase() === 'si';
+      
+      const summarySplit = analysisText.split(/Resumen: /i);
+      summary = summarySplit.length > 1 ? summarySplit[1].trim() : analysisText;
+      reasoning = 'N/A (formato antiguo)';
+    } else {
+        recommendation_boolean = analysisText.toLowerCase().includes("recomendación: sí") || analysisText.toLowerCase().includes("recomendación: si");
+    }
+  }
+  return { decision, reasoning, summary, recommendation_boolean };
+};
 
 const QuickAnalysisTab = ({
-  jobs,
+  jobs = [],
   recruiterId,
   matchLimit,
   currentMatchCount,
@@ -44,6 +96,12 @@ const QuickAnalysisTab = ({
   const [analysisResults, setAnalysisResults] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [sortConfig, setSortConfig] = useState({ key: 'match_score', direction: 'descending' });
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [selectedCandidateProfileId, setSelectedCandidateProfileId] = useState(null);
+  const [candidateProfileData, setCandidateProfileData] = useState(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isSavingProfileNotes, setIsSavingProfileNotes] = useState(false);
 
   const {
     isProcessing,
