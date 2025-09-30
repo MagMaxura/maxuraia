@@ -369,8 +369,10 @@ const QuickAnalysisTab = ({
                 </div>
                 <div className="flex items-center space-x-4">
                   {result.status === "completed" && (
-                    <>
+                    <div className="flex flex-col items-start space-y-2">
                       <p className="text-sm text-slate-600">Match con "{result.jobTitle}": <span className="font-semibold">{result.matchScore}%</span></p>
+                      <p className="text-sm text-slate-600">Decisión: <span className="font-semibold">{result.analysisDecision}</span></p>
+                      <p className="text-sm text-slate-600">Resumen: <span className="font-semibold">{result.analysisSummary}</span></p>
                       <Button
                         variant="outline"
                         size="sm"
@@ -378,7 +380,7 @@ const QuickAnalysisTab = ({
                       >
                         Ver Detalles
                       </Button>
-                    </>
+                    </div>
                   )}
                   {result.status === "error" && (
                     <p className="text-sm text-red-600">Error: {result.message}</p>
