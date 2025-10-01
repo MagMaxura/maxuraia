@@ -16,7 +16,6 @@ import { useCvUploader } from "@/hooks/useCvUploader.js";
 import { useNavigate } from "react-router-dom";
 import EditableCV from '../EditableCV';
 import CandidateNotes from '../CandidateNotes';
-import { matchingService } from '@/services/matchingService.js'; // Importar matchingService
 
 const parseAnalysisText = (analysisText) => {
   if (!analysisText || typeof analysisText !== 'string') {
