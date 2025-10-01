@@ -317,7 +317,9 @@ export function useCvUploader({
     setCvFiles,
     setCvAnalysis,
     setActiveTab,
-    refreshDashboardData, // Añadir refreshDashboardData a las dependencias
+    refreshDashboardData,
+    processingFiles, // Añadir processingFiles a las dependencias
+    onUploadComplete, // Añadir onUploadComplete a las dependencias
   ]);
 
   const handleDragOver = useCallback((event) => {

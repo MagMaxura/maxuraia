@@ -123,9 +123,9 @@ const QuickAnalysisTab = ({
     setActiveTab: () => {},
     currentCvCount: currentAnalysisCount,
     refreshDashboardData,
-    onUploadComplete: (uploadedCvFiles) => {
+    onUploadComplete: (processedFiles) => { // Recibir todos los archivos procesados
       if (selectedJob) {
-        handleAnalyzeCVs(uploadedCvFiles, selectedJob);
+        handleAnalyzeCVs(processedFiles, selectedJob);
       } else {
         toast({
           title: t("error_title"),
@@ -146,7 +146,7 @@ const QuickAnalysisTab = ({
     setIsDialogOpen(false);
   };
 
-  const handleAnalyzeCVs = async (uploadedCvFiles, job) => {
+  const handleAnalyzeCVs = async (processedFiles, job) => { // Recibir processedFiles
     if (!job) {
       toast({
         title: t("error_title"),
@@ -157,7 +157,7 @@ const QuickAnalysisTab = ({
       return;
     }
 
-    if (!uploadedCvFiles || uploadedCvFiles.length === 0) {
+    if (!processedFiles || processedFiles.length === 0) {
       toast({
         title: t("error_title"),
         description: "No hay CVs para analizar.",
@@ -173,25 +173,42 @@ const QuickAnalysisTab = ({
     let successfulMatches = 0;
     const newAnalysisResults = [];
 
-    for (const cvFile of uploadedCvFiles) {
-      try {
-        const analysis = typeof cvFile.analysis.then === 'function'
-          ? await cvFile.analysis
-          : cvFile.analysis;
+    for (const processedFile of processedFiles) {
+      const cvFileName = processedFile.name;
+      const fileId = processedFile.id; // Usar el ID temporal para referencia
 
-        // Save the CV to the database
-        const saveResult = await cvService.saveCV({
-          fileName: cvFile.name,
-          fileContent: cvFile.text,
-          analysis: analysis,
-          userId: user?.id,
+      if (processedFile.status === 'duplicate') {
+        newAnalysisResults.push({
+          cvFileName: cvFileName,
+          jobTitle: job.title,
+          status: "duplicate",
+          message: `El CV "${cvFileName}" ya existe en tu base de datos.`,
+          analysisDecision: processedFile.analysisResult ? parseAnalysisText(processedFile.analysisResult.analysis_text).decision : 'N/A',
+          analysisSummary: processedFile.analysisResult ? parseAnalysisText(processedFile.analysisResult.analysis_text).summary : 'N/A',
         });
+        continue; // Saltar al siguiente archivo
+      }
 
-        if (!saveResult || !saveResult.data) {
-          throw new Error("No data returned from CV save operation.");
+      if (processedFile.status === 'error' || processedFile.status === 'skipped') {
+        newAnalysisResults.push({
+          cvFileName: cvFileName,
+          jobTitle: job.title,
+          status: "error",
+          message: processedFile.analysisResult?.message || "Error desconocido durante el procesamiento.",
+          analysisDecision: 'N/A',
+          analysisSummary: 'N/A',
+        });
+        continue; // Saltar al siguiente archivo
+      }
+
+      // Si el archivo fue procesado exitosamente por useCvUploader
+      try {
+        const analysis = processedFile.analysisResult; // Ya es el objeto de análisis resuelto
+        const candidateId = processedFile.databaseId; // El ID del candidato ya debería estar aquí si se guardó
+
+        if (!analysis || !candidateId) {
+          throw new Error("Análisis o ID de candidato no disponible para el archivo procesado.");
         }
-
-        const { cvId, candidateId } = saveResult.data;
 
         // Perform matching
         const matchResult = await matchingService.compareCvToJob({
@@ -203,29 +220,36 @@ const QuickAnalysisTab = ({
 
         if (matchResult && matchResult.length > 0) {
           const firstMatch = matchResult[0]; // Assuming processJobMatches returns an array of results
+          const parsedAnalysis = parseAnalysisText(analysis.analysis_text); // Parse the analysis text
           newAnalysisResults.push({
-            cvFileName: cvFile.name,
+            cvFileName: cvFileName,
             jobTitle: job.title,
             matchScore: firstMatch.match_score,
             candidateId: candidateId,
             jobId: job.id,
             status: "completed",
+            analysisDecision: parsedAnalysis.decision,
+            analysisReasoning: parsedAnalysis.reasoning,
+            analysisSummary: parsedAnalysis.summary,
+            recommendationBoolean: parsedAnalysis.recommendation_boolean,
           });
           successfulMatches++;
         } else {
           throw new Error("No data returned from CV comparison operation.");
         }
       } catch (error) {
-        console.error("QuickAnalysisTab: Error during quick analysis for CV:", cvFile.name, error);
+        console.error("QuickAnalysisTab: Error during quick analysis for CV:", cvFileName, error);
         newAnalysisResults.push({
-          cvFileName: cvFile.name,
+          cvFileName: cvFileName,
           jobTitle: job.title,
           status: "error",
           message: error.message,
+          analysisDecision: 'N/A',
+          analysisSummary: 'N/A',
         });
         toast({
           title: t("error_title"),
-          description: `Error al analizar ${cvFile.name}: ${error.message}`,
+          description: `Error al analizar ${cvFileName}: ${error.message}`,
           variant: "destructive",
         });
       }
@@ -241,7 +265,14 @@ const QuickAnalysisTab = ({
         title: "Análisis Rápido Completado",
         description: `Se analizaron ${successfulMatches} CVs contra el puesto "${job.title}".`,
       });
-      navigate("/dashboard/analisis-ia"); // Navigate to AI Analysis tab to show results
+      // No navegar automáticamente, ya estamos mostrando los resultados aquí
+      // navigate("/dashboard/analisis-ia");
+    } else if (newAnalysisResults.length > 0) {
+      toast({
+        title: "Análisis Rápido Completado con Advertencias",
+        description: "Algunos CVs no pudieron ser analizados o eran duplicados.",
+        variant: "warning",
+      });
     } else {
       toast({
         title: t("warning_text"),
