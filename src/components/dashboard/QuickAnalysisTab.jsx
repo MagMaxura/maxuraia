@@ -16,6 +16,7 @@ import { useCvUploader } from "@/hooks/useCvUploader.js";
 import { useNavigate } from "react-router-dom";
 import EditableCV from '../EditableCV';
 import CandidateNotes from '../CandidateNotes';
+import { matchingService } from '@/services/matchingService.js'; // Importar matchingService
 
 const parseAnalysisText = (analysisText) => {
   if (!analysisText || typeof analysisText !== 'string') {
@@ -102,6 +103,7 @@ const QuickAnalysisTab = ({
   const [candidateProfileData, setCandidateProfileData] = useState(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [isSavingProfileNotes, setIsSavingProfileNotes] = useState(false);
+  const [isLoadingExistingMatches, setIsLoadingExistingMatches] = useState(false); // Nuevo estado para cargar matches existentes
 
   const {
     isProcessing,
@@ -145,6 +147,63 @@ const QuickAnalysisTab = ({
     setSelectedJob(job);
     setIsDialogOpen(false);
   };
+
+  const fetchExistingMatchesForJob = useCallback(async (jobId, recruiterId) => {
+    if (!jobId || !recruiterId) {
+      setAnalysisResults([]);
+      return;
+    }
+    setIsLoadingExistingMatches(true);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          candidatos (id, name)
+        `)
+        .eq('job_id', jobId)
+        .order('match_score', { ascending: false });
+
+      if (fetchError) {
+        console.error("QuickAnalysisTab: Error fetching existing matches:", fetchError);
+        throw fetchError;
+      }
+
+      const formattedResults = data.map(match => {
+        const analysisText = match.analysis || '';
+        const parsed = parseAnalysisText(analysisText);
+        return {
+          cvFileName: match.candidatos?.name || 'N/A',
+          jobTitle: jobs.find(j => j.id === jobId)?.title || 'N/A',
+          matchScore: match.match_score,
+          candidateId: match.candidato_id,
+          jobId: match.job_id,
+          status: "completed",
+          analysisDecision: parsed.decision,
+          analysisReasoning: parsed.reasoning,
+          analysisSummary: parsed.summary,
+          recommendationBoolean: parsed.recommendation_boolean,
+        };
+      }) || [];
+      
+      setAnalysisResults(formattedResults);
+
+    } catch (err) {
+      console.error("QuickAnalysisTab: Error in fetchExistingMatchesForJob:", err);
+      toast({ title: "Error", description: "No se pudieron cargar los análisis existentes para este puesto.", variant: "destructive" });
+      setAnalysisResults([]);
+    } finally {
+      setIsLoadingExistingMatches(false);
+    }
+  }, [toast, jobs, recruiterId]); // Añadir jobs y recruiterId a las dependencias
+
+  useEffect(() => {
+    if (selectedJob && recruiterId) {
+      fetchExistingMatchesForJob(selectedJob.id, recruiterId);
+    } else {
+      setAnalysisResults([]);
+    }
+  }, [selectedJob, recruiterId, fetchExistingMatchesForJob]);
 
   const handleAnalyzeCVs = async (processedFiles, job) => { // Recibir processedFiles
     if (!job) {
@@ -255,7 +314,15 @@ const QuickAnalysisTab = ({
       }
     }
 
-    setAnalysisResults(newAnalysisResults);
+  setAnalysisResults(prevResults => {
+      // Filtrar los resultados existentes para no duplicar los que ya se procesaron en esta tanda
+      const existingResultsFiltered = prevResults.filter(
+        (prevResult) => !newAnalysisResults.some((newResult) =>
+          newResult.candidateId === prevResult.candidateId && newResult.jobId === prevResult.jobId
+        )
+      );
+      return [...existingResultsFiltered, ...newAnalysisResults];
+    });
     setIsAnalyzing(false);
     resetUploaderState();
     refreshDashboardData(); // Refresh dashboard data to update counts
@@ -387,39 +454,65 @@ const QuickAnalysisTab = ({
       </div>
 
       {/* Analysis Results */}
-      {analysisResults.length > 0 && (
+      {selectedJob && (isLoadingExistingMatches || analysisResults.length > 0) && (
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6">
-          <h3 className="text-xl font-semibold text-slate-700 mb-4">Resultados del Análisis Rápido</h3>
-          <div className="space-y-3">
-            {analysisResults.map((result, index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-md bg-gray-50">
-                <div className="flex items-center space-x-3">
-                  {result.status === "completed" && <CheckCircle2 className="h-5 w-5 text-green-500" />}
-                  {result.status === "error" && <XCircle className="h-5 w-5 text-red-500" />}
-                  <p className="font-medium text-slate-700">{result.cvFileName}</p>
-                </div>
-                <div className="flex items-center space-x-4">
-                  {result.status === "completed" && (
-                    <div className="flex flex-col items-start space-y-2">
-                      <p className="text-sm text-slate-600">Match con "{result.jobTitle}": <span className="font-semibold">{result.matchScore}%</span></p>
-                      <p className="text-sm text-slate-600">Decisión: <span className="font-semibold">{result.analysisDecision}</span></p>
-                      <p className="text-sm text-slate-600">Resumen: <span className="font-semibold">{result.analysisSummary}</span></p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/dashboard/analisis-ia?candidateId=${result.candidateId}&jobId=${result.jobId}`)}
-                      >
-                        Ver Detalles
-                      </Button>
-                    </div>
-                  )}
-                  {result.status === "error" && (
-                    <p className="text-sm text-red-600">Error: {result.message}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <h3 className="text-xl font-semibold text-slate-700 mb-4">Resultados del Análisis para: {selectedJob.title}</h3>
+          {isLoadingExistingMatches ? (
+            <div className="flex items-center space-x-2 text-blue-600">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <p>Cargando análisis existentes...</p>
+            </div>
+          ) : analysisResults.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidato</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Decisión</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resumen</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {analysisResults.map((result, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{result.cvFileName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {result.status === "completed" ? `${result.matchScore}%` : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {result.status === "completed" ? result.analysisDecision : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {result.status === "completed" ? result.analysisSummary : result.message}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {result.status === "completed" && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completado</span>}
+                        {result.status === "error" && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Error</span>}
+                        {result.status === "duplicate" && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Duplicado</span>}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {result.status === "completed" && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => navigate(`/dashboard/analisis-ia?candidateId=${result.candidateId}&jobId=${result.jobId}`)}
+                            className="text-blue-600 hover:text-blue-900 p-0 h-auto"
+                          >
+                            Ver Detalles
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            !isLoadingExistingMatches && <p>No hay resultados de análisis para mostrar para este puesto. Carga CVs para analizarlos.</p>
+          )}
         </div>
       )}
     </div>
