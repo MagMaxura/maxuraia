@@ -226,14 +226,15 @@ const QuickAnalysisTab = ({
     }
 
     setIsAnalyzing(true);
-    setAnalysisResults([]);
+    // No limpiar analysisResults aquí, ya que queremos mantener los existentes y añadir nuevos.
+    // setAnalysisResults([]); 
 
     let successfulMatches = 0;
     const newAnalysisResults = [];
+    const candidateIdsToProcessForMatching = [];
 
     for (const processedFile of processedFiles) {
       const cvFileName = processedFile.name;
-      const fileId = processedFile.id; // Usar el ID temporal para referencia
 
       if (processedFile.status === 'duplicate') {
         newAnalysisResults.push({
@@ -243,8 +244,10 @@ const QuickAnalysisTab = ({
           message: `El CV "${cvFileName}" ya existe en tu base de datos.`,
           analysisDecision: processedFile.analysisResult ? parseAnalysisText(processedFile.analysisResult.analysis_text).decision : 'N/A',
           analysisSummary: processedFile.analysisResult ? parseAnalysisText(processedFile.analysisResult.analysis_text).summary : 'N/A',
+          candidateId: processedFile.databaseId, // Incluir candidateId para "Ver Detalles"
+          jobId: job.id,
         });
-        continue; // Saltar al siguiente archivo
+        continue;
       }
 
       if (processedFile.status === 'error' || processedFile.status === 'skipped') {
@@ -255,73 +258,117 @@ const QuickAnalysisTab = ({
           message: processedFile.analysisResult?.message || "Error desconocido durante el procesamiento.",
           analysisDecision: 'N/A',
           analysisSummary: 'N/A',
+          candidateId: processedFile.databaseId, // Incluir candidateId para "Ver Detalles" si existe
+          jobId: job.id,
         });
-        continue; // Saltar al siguiente archivo
+        continue;
       }
 
       // Si el archivo fue procesado exitosamente por useCvUploader
-      try {
-        const analysis = processedFile.analysisResult; // Ya es el objeto de análisis resuelto
-        const candidateId = processedFile.databaseId; // El ID del candidato ya debería estar aquí si se guardó
-
-        if (!analysis || !candidateId) {
-          throw new Error("Análisis o ID de candidato no disponible para el archivo procesado.");
-        }
-
-        // Perform matching
-        const matchResult = await matchingService.compareCvToJob({
-          candidateId: candidateId,
-          jobId: job.id,
-          recruiterId: recruiterId,
-          candidateIds: [candidateId], // Pass the single candidate ID in an array
-        });
-
-        if (matchResult && matchResult.length > 0) {
-          const firstMatch = matchResult[0]; // Assuming processJobMatches returns an array of results
-          const parsedAnalysis = parseAnalysisText(analysis.analysis_text); // Parse the analysis text
-          newAnalysisResults.push({
-            cvFileName: cvFileName,
-            jobTitle: job.title,
-            matchScore: firstMatch.match_score,
-            candidateId: candidateId,
-            jobId: job.id,
-            status: "completed",
-            analysisDecision: parsedAnalysis.decision,
-            analysisReasoning: parsedAnalysis.reasoning,
-            analysisSummary: parsedAnalysis.summary,
-            recommendationBoolean: parsedAnalysis.recommendation_boolean,
-          });
-          successfulMatches++;
-        } else {
-          throw new Error("No data returned from CV comparison operation.");
-        }
-      } catch (error) {
-        console.error("QuickAnalysisTab: Error during quick analysis for CV:", cvFileName, error);
+      if (processedFile.status === 'completed' && processedFile.databaseId) {
+        candidateIdsToProcessForMatching.push(processedFile.databaseId);
+      } else {
+        // Si por alguna razón un archivo "completed" no tiene databaseId, registrarlo como error
         newAnalysisResults.push({
           cvFileName: cvFileName,
           jobTitle: job.title,
           status: "error",
-          message: error.message,
+          message: "CV procesado pero sin ID de candidato para macheo.",
           analysisDecision: 'N/A',
           analysisSummary: 'N/A',
-        });
-        toast({
-          title: t("error_title"),
-          description: `Error al analizar ${cvFileName}: ${error.message}`,
-          variant: "destructive",
+          jobId: job.id,
         });
       }
     }
 
-  setAnalysisResults(prevResults => {
-      // Filtrar los resultados existentes para no duplicar los que ya se procesaron en esta tanda
-      const existingResultsFiltered = prevResults.filter(
-        (prevResult) => !newAnalysisResults.some((newResult) =>
-          newResult.candidateId === prevResult.candidateId && newResult.jobId === prevResult.jobId
-        )
-      );
-      return [...existingResultsFiltered, ...newAnalysisResults];
+    // Realizar el macheo para todos los candidatos exitosamente procesados en un solo batch
+    if (candidateIdsToProcessForMatching.length > 0) {
+      try {
+        const matchResults = await processJobMatches(job.id, recruiterId, candidateIdsToProcessForMatching);
+
+        matchResults.forEach(match => {
+          const candidate = processedFiles.find(f => f.databaseId === match.candidato_id);
+          const cvFileName = candidate ? candidate.name : `Candidato ID: ${match.candidato_id}`;
+          const analysis = candidate?.analysisResult;
+
+          if (match.error) {
+            newAnalysisResults.push({
+              cvFileName: cvFileName,
+              jobTitle: job.title,
+              matchScore: match.match_score,
+              candidateId: match.candidato_id,
+              jobId: job.id,
+              status: "error",
+              message: match.analysis || match.saveError || "Error durante el macheo.",
+              analysisDecision: 'N/A',
+              analysisReasoning: 'N/A',
+              analysisSummary: 'N/A',
+            });
+          } else {
+            const parsedAnalysis = analysis ? parseAnalysisText(analysis.analysis_text) : { decision: 'N/A', reasoning: 'N/A', summary: 'N/A', recommendation_boolean: false };
+            newAnalysisResults.push({
+              cvFileName: cvFileName,
+              jobTitle: job.title,
+              matchScore: match.match_score,
+              candidateId: match.candidato_id,
+              jobId: job.id,
+              status: "completed",
+              analysisDecision: parsedAnalysis.decision,
+              analysisReasoning: parsedAnalysis.reasoning,
+              analysisSummary: parsedAnalysis.summary,
+              recommendationBoolean: parsedAnalysis.recommendation_boolean,
+            });
+            successfulMatches++;
+          }
+        });
+      } catch (error) {
+        console.error("QuickAnalysisTab: Error during batch matching:", error);
+        toast({
+          title: t("error_title"),
+          description: `Error durante el macheo de CVs: ${error.message}`,
+          variant: "destructive",
+        });
+        // Si hay un error en el batch, marcar todos los que iban a ser macheados como error
+        candidateIdsToProcessForMatching.forEach(candidateId => {
+          const existingEntryIndex = newAnalysisResults.findIndex(res => res.candidateId === candidateId && res.jobId === job.id);
+          if (existingEntryIndex === -1) {
+            const candidate = processedFiles.find(f => f.databaseId === candidateId);
+            newAnalysisResults.push({
+              cvFileName: candidate ? candidate.name : `Candidato ID: ${candidateId}`,
+              jobTitle: job.title,
+              status: "error",
+              message: error.message,
+              analysisDecision: 'N/A',
+              analysisSummary: 'N/A',
+              candidateId: candidateId,
+              jobId: job.id,
+            });
+          } else {
+            newAnalysisResults[existingEntryIndex] = {
+              ...newAnalysisResults[existingEntryIndex],
+              status: "error",
+              message: error.message,
+            };
+          }
+        });
+      }
+    }
+
+    setAnalysisResults(prevResults => {
+      const updatedResults = [...prevResults];
+      newAnalysisResults.forEach(newRes => {
+        const existingIndex = updatedResults.findIndex(
+          (res) => res.candidateId === newRes.candidateId && res.jobId === newRes.jobId
+        );
+        if (existingIndex > -1) {
+          updatedResults[existingIndex] = newRes; // Actualizar si ya existe
+        } else {
+          updatedResults.push(newRes); // Añadir si es nuevo
+        }
+      });
+      return updatedResults;
     });
+    
     setIsAnalyzing(false);
     resetUploaderState();
     refreshDashboardData(); // Refresh dashboard data to update counts
@@ -331,8 +378,6 @@ const QuickAnalysisTab = ({
         title: "Análisis Rápido Completado",
         description: `Se analizaron ${successfulMatches} CVs contra el puesto "${job.title}".`,
       });
-      // No navegar automáticamente, ya estamos mostrando los resultados aquí
-      // navigate("/dashboard/analisis-ia");
     } else if (newAnalysisResults.length > 0) {
       toast({
         title: "Análisis Rápido Completado con Advertencias",
