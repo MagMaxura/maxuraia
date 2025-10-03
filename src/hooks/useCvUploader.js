@@ -13,6 +13,7 @@ export function useCvUploader({
   setCvAnalysis, // Para mostrar el análisis del CV recién subido
   setActiveTab, // Para cambiar a la pestaña de CVs procesados
   refreshDashboardData, // Nueva prop: función para refrescar los datos del dashboard
+  onUploadComplete, // Nueva prop: callback para cuando la carga y procesamiento de CVs termina
   // cvFiles prop es necesario para calcular el índice del nuevo CV si se selecciona
   // y para evitar pasar el estado completo si solo se necesita la longitud.
   // Podríamos pasar cvFiles.length directamente si esa es la única necesidad.
@@ -277,6 +278,11 @@ export function useCvUploader({
     if (fileInputRef.current) {
       console.log("useCvUploader: Clearing file input.");
       fileInputRef.current.value = "";
+    }
+
+    // Llamar a onUploadComplete con todos los archivos procesados, incluyendo duplicados y errores
+    if (onUploadComplete) {
+      onUploadComplete(processingFiles);
     }
 
     if (CvsProcessedInThisBatch > 0) {
