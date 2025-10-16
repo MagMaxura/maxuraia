@@ -89,7 +89,7 @@ async function extractTextFromPDFWithOCR(file) {
     console.debug("extractTextFromPDFWithOCR: Enviando archivo al backend OCR:", file);
     const formData = new FormData();
     formData.append('file', file);
-    const response = await fetch('/api/ocr', {
+    const response = await fetch(window.location.origin + '/api/ocr', {
       method: 'POST',
       body: formData
     });
@@ -146,7 +146,7 @@ export async function analyzeCV(textOrExtractionResult) {
   try {
     console.debug("analyzeCV: Texto extraído del CV (primeros 300 caracteres):", text.substring(0, 300));
     // Si querés usar GPT en backend, llamá tu endpoint:
-    const response = await fetch('/api/openai/analyzeCv', {
+    const response = await fetch(window.location.origin + '/api/openai/analyzeCv', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
