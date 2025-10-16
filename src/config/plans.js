@@ -216,7 +216,10 @@ export const calculateEffectivePlan = (suscripcion, currentJobCount = 0) => {
     console.debug(`[DEBUG] Base Plan Check: plan_id=${suscripcion.plan_id}, status=${suscripcion.status}, current_period_end=${suscripcion.current_period_end}, subscriptionPeriodEndsAt=${subscriptionPeriodEndsAt}, now=${now}`);
     
     const isTrialActive = basePlan.type === 'trial' && suscripcion.status === 'trialing' && subscriptionPeriodEndsAt && subscriptionPeriodEndsAt > now;
-    const isPaidPlanActive = (basePlan.type === 'monthly' || basePlan.type === 'enterprise') && suscripcion.status === 'active' && subscriptionPeriodEndsAt && subscriptionPeriodEndsAt > now;
+    // Consider 'active' and 'trailing' statuses as active for paid plans until the period ends
+    const isPaidPlanActive = (basePlan.type === 'monthly' || basePlan.type === 'enterprise') &&
+                             (suscripcion.status === 'active' || suscripcion.status === 'trailing') &&
+                             subscriptionPeriodEndsAt && subscriptionPeriodEndsAt > now;
 
     console.debug(`[DEBUG] calculateEffectivePlan - isTrialActive: ${isTrialActive}, isPaidPlanActive: ${isPaidPlanActive}`); // Nuevo log
 
