@@ -293,8 +293,10 @@ export function useCvUploader({
           variant: "success",
           duration: 5000,
         });
-        console.log("useCvUploader: All successful, setting activeTab to 'cvsProcesados'");
-        setActiveTab("cvsProcesados");
+        if (!onUploadComplete) { // Only switch tab if no specific onUploadComplete handler is provided
+          console.log("useCvUploader: All successful, setting activeTab to 'cvsProcesados'");
+          setActiveTab("cvsProcesados");
+        }
       } else {
         toast({
           title: "Carga de CVs Completada con Advertencias",
@@ -302,8 +304,10 @@ export function useCvUploader({
           variant: "warning",
           duration: 7000,
         });
-        console.log("useCvUploader: Some processed with errors/limit, setting activeTab to 'cvsProcesados'");
-        setActiveTab("cvsProcesados");
+        if (!onUploadComplete) { // Only switch tab if no specific onUploadComplete handler is provided
+          console.log("useCvUploader: Some processed with errors/limit, setting activeTab to 'cvsProcesados'");
+          setActiveTab("cvsProcesados");
+        }
       }
     } else {
       console.log("useCvUploader: No CVs processed in this batch.");
