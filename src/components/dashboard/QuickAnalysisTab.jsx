@@ -154,6 +154,7 @@ const QuickAnalysisTab = ({
     }
     setIsLoadingExistingMatches(true);
     try {
+      console.log("QuickAnalysisTab: fetchExistingMatchesForJob - Querying Supabase with jobId:", jobId, "and recruiterId:", recruiterId);
       const { data, error: fetchError } = await supabase
         .from('matches')
         .select(`
@@ -162,6 +163,9 @@ const QuickAnalysisTab = ({
         `)
         .eq('job_id', jobId)
         .order('match_score', { ascending: false });
+
+      console.log("QuickAnalysisTab: Supabase raw data for matches:", data);
+      console.log("QuickAnalysisTab: Supabase fetchError for matches:", fetchError);
 
       if (fetchError) {
         console.error("QuickAnalysisTab: Error fetching existing matches:", fetchError);
