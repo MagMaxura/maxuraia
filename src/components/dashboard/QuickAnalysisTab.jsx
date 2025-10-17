@@ -125,6 +125,7 @@ const QuickAnalysisTab = ({
     currentCvCount: currentAnalysisCount,
     refreshDashboardData,
     onUploadComplete: (processedFiles) => { // Recibir todos los archivos procesados
+      console.log("QuickAnalysisTab: onUploadComplete - selectedJob value:", selectedJob);
       if (selectedJob) {
         handleAnalyzeCVs(processedFiles, selectedJob);
       } else {
