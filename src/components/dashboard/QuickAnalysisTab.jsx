@@ -240,6 +240,7 @@ const QuickAnalysisTab = ({
 
     for (const processedFile of processedFiles) {
       const cvFileName = processedFile.name;
+      console.log("QuickAnalysisTab: handleAnalyzeCVs - Processing file:", cvFileName, "Status:", processedFile.status, "Database ID:", processedFile.databaseId);
 
       if (processedFile.status === 'duplicate') {
         newAnalysisResults.push({
@@ -288,6 +289,7 @@ const QuickAnalysisTab = ({
 
     // Realizar el macheo para todos los candidatos exitosamente procesados en un solo batch
     if (candidateIdsToProcessForMatching.length > 0) {
+      console.log("QuickAnalysisTab: handleAnalyzeCVs - Candidate IDs to process for matching:", candidateIdsToProcessForMatching);
       try {
         const matchResults = await processJobMatches(job.id, recruiterId, candidateIdsToProcessForMatching);
 
