@@ -165,7 +165,7 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
 
     let comparisonResult;
     try {
-      const response = await fetch('/api/openai/compareCv', {
+      const response = await fetch(window.location.origin + '/api/openai/compareCv', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
