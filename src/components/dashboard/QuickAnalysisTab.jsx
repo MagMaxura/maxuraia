@@ -124,8 +124,7 @@ const QuickAnalysisTab = ({
     setActiveTab: () => {},
     currentCvCount: currentAnalysisCount,
     refreshDashboardData,
-    onUploadComplete: (processedFiles) => { // Recibir todos los archivos procesados
-      console.log("QuickAnalysisTab: onUploadComplete - selectedJob value:", selectedJob);
+    onUploadComplete: useCallback((processedFiles) => { // Recibir todos los archivos procesados
       if (selectedJob) {
         handleAnalyzeCVs(processedFiles, selectedJob);
       } else {
@@ -136,7 +135,7 @@ const QuickAnalysisTab = ({
         });
         setIsAnalyzing(false);
       }
-    },
+    }, [selectedJob, handleAnalyzeCVs, toast, t, setIsAnalyzing]), // Add selectedJob and handleAnalyzeCVs as dependencies
   });
 
   const filteredJobs = jobs.filter(job =>
