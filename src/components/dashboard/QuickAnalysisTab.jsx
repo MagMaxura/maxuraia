@@ -243,6 +243,7 @@ const QuickAnalysisTab = ({
       console.log("QuickAnalysisTab: handleAnalyzeCVs - Processing file:", cvFileName, "Status:", processedFile.status, "Database ID:", processedFile.databaseId);
 
       if (processedFile.status === 'duplicate') {
+        console.log("QuickAnalysisTab: handleAnalyzeCVs - Duplicate CV detected:", cvFileName);
         newAnalysisResults.push({
           cvFileName: cvFileName,
           jobTitle: job.title,
@@ -253,6 +254,7 @@ const QuickAnalysisTab = ({
           candidateId: processedFile.databaseId, // Incluir candidateId para "Ver Detalles"
           jobId: job.id,
         });
+        console.log("QuickAnalysisTab: handleAnalyzeCVs - newAnalysisResults after duplicate:", newAnalysisResults);
         continue;
       }
 
@@ -272,8 +274,10 @@ const QuickAnalysisTab = ({
 
       // Si el archivo fue procesado exitosamente por useCvUploader
       if (processedFile.status === 'completed' && processedFile.databaseId) {
+        console.log("QuickAnalysisTab: handleAnalyzeCVs - Completed CV, adding to matching queue:", cvFileName, "ID:", processedFile.databaseId);
         candidateIdsToProcessForMatching.push(processedFile.databaseId);
       } else {
+        console.log("QuickAnalysisTab: handleAnalyzeCVs - Error/Skipped CV or missing databaseId:", cvFileName, "Status:", processedFile.status, "Database ID:", processedFile.databaseId);
         // Si por alguna razón un archivo "completed" no tiene databaseId, registrarlo como error
         newAnalysisResults.push({
           cvFileName: cvFileName,
@@ -284,14 +288,17 @@ const QuickAnalysisTab = ({
           analysisSummary: 'N/A',
           jobId: job.id,
         });
+        console.log("QuickAnalysisTab: handleAnalyzeCVs - newAnalysisResults after error/skipped:", newAnalysisResults);
       }
     }
+    console.log("QuickAnalysisTab: handleAnalyzeCVs - Final candidateIdsToProcessForMatching before calling processJobMatches:", candidateIdsToProcessForMatching);
 
     // Realizar el macheo para todos los candidatos exitosamente procesados en un solo batch
     if (candidateIdsToProcessForMatching.length > 0) {
       console.log("QuickAnalysisTab: handleAnalyzeCVs - Candidate IDs to process for matching:", candidateIdsToProcessForMatching);
       try {
         const matchResults = await processJobMatches(job.id, recruiterId, candidateIdsToProcessForMatching);
+        console.log("QuickAnalysisTab: handleAnalyzeCVs - matchResults from processJobMatches:", matchResults);
 
         matchResults.forEach(match => {
           const candidate = processedFiles.find(f => f.databaseId === match.candidato_id);
@@ -373,6 +380,7 @@ const QuickAnalysisTab = ({
           updatedResults.push(newRes); // Añadir si es nuevo
         }
       });
+      console.log("QuickAnalysisTab: handleAnalyzeCVs - updatedResults before setting state:", updatedResults);
       return updatedResults;
     });
     
