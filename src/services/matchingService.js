@@ -101,6 +101,7 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
 
   const allResults = [];
   let matchesProcessedInThisRun = 0;
+  console.log("matchingService: processJobMatches - Starting processing for jobId:", jobId, "recruiterId:", recruiterId, "candidateIds:", candidateIds);
 
   for (const candidate of candidates) {
     // Verificar si ya existe un match para este candidato y puesto
@@ -184,6 +185,7 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
         throw new Error(errorData.error || errorData.details || `Error del servidor: ${response.status}`);
       }
       comparisonResult = await response.json();
+      console.log(`matchingService: API /api/openai/compareCv returned result for candidate ${candidate.id}:`, comparisonResult);
 
     } catch (fetchOrApiError) {
       console.error(`Error al llamar a la API /api/openai/compareCv o procesar su respuesta para candidato ${candidate.id}:`, fetchOrApiError);
@@ -226,6 +228,7 @@ export async function processJobMatches(jobId, recruiterId, candidateIds = []) {
       })
       .select()
       .single();
+    console.log(`matchingService: Supabase insert result for match (candidate ${candidate.id}, job ${jobId}):`, savedMatch);
 
     if (saveError) {
       console.error(`Error al guardar el match para candidato ${candidate.id} y job ${jobId}:`, saveError);
