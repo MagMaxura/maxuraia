@@ -85,10 +85,10 @@ const QuickAnalysisTab = ({
   currentAnalysisCount,
   analysisLimit,
 }) => {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const fileInputRef = useRef(null);
   const [selectedJob, setSelectedJob] = useState(null);
