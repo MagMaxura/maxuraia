@@ -256,6 +256,8 @@
   "quick_analysis_search_jobs_placeholder": "Buscar puestos...",
   "quick_analysis_no_jobs_found": "No se encontraron puestos.",
   "quick_analysis_selected_job": "Puesto Seleccionado",
+  "quick_analysis_upload_cvs_title": "2. Carga los CVs",
+  "quick_analysis_performing_analysis": "Realizando análisis rápido...",
   "quick_analysis_results_title": "Resultados del Análisis para",
   "quick_analysis_loading_existing_analysis": "Cargando análisis existentes...",
   "quick_analysis_candidate": "Candidato",

@@ -1,6 +1,6 @@
 import React from "react";
 import { Upload, Loader2 } from "lucide-react";
-import { useTranslation } from "react-i18next";
+import { Upload, Loader2 } from "lucide-react";
 
 const QuickAnalysisFileUpload = ({
   fileInputRef,
@@ -13,9 +13,8 @@ const QuickAnalysisFileUpload = ({
   currentFileProcessingName,
   filesUploadedCount,
   totalFilesToUpload,
+  t, // Add t as a prop
 }) => {
-  const { t } = useTranslation();
-
   const renderProcessingStatus = () => {
     if (isBulkProcessing || isProcessing || isAnalyzing) {
       return (
@@ -23,7 +22,7 @@ const QuickAnalysisFileUpload = ({
           <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
           <div>
             <p className="text-blue-800 font-medium">
-              {isAnalyzing ? "Realizando análisis rápido..." : t("processing_batch")}
+              {isAnalyzing ? t("quick_analysis_performing_analysis") : t("processing_batch")}
             </p>
             {!isAnalyzing && (
               <p className="text-sm text-blue-700">
@@ -39,7 +38,7 @@ const QuickAnalysisFileUpload = ({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h3 className="text-xl font-semibold text-slate-700 mb-4">2. Carga los CVs</h3>
+      <h3 className="text-xl font-semibold text-slate-700 mb-4">{t('quick_analysis_upload_cvs_title')}</h3>
       <div
         className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
         onDragOver={handleDragOver}

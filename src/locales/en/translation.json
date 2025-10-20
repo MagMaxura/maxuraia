@@ -255,6 +255,8 @@
   "quick_analysis_search_jobs_placeholder": "Search jobs...",
   "quick_analysis_no_jobs_found": "No jobs found.",
   "quick_analysis_selected_job": "Selected Job",
+  "quick_analysis_upload_cvs_title": "2. Upload CVs",
+  "quick_analysis_performing_analysis": "Performing quick analysis...",
   "quick_analysis_results_title": "Analysis Results for",
   "quick_analysis_loading_existing_analysis": "Loading existing analysis...",
   "quick_analysis_candidate": "Candidate",
