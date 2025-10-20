@@ -104,112 +104,7 @@ const QuickAnalysisTab = ({
   const [isSavingProfileNotes, setIsSavingProfileNotes] = useState(false);
   const [isLoadingExistingMatches, setIsLoadingExistingMatches] = useState(false); // Nuevo estado para cargar matches existentes
 
-  const {
-    isProcessing,
-    isBulkProcessing,
-    totalFilesToUpload,
-    filesUploadedCount,
-    currentFileProcessingName,
-    handleFileUpload,
-    handleDragOver,
-    handleDrop,
-    optimisticCvCount,
-    processingFiles,
-    resetUploaderState,
-  } = useCvUploader({
-    fileInputRef,
-    setCvFiles: () => {}, // No necesitamos actualizar cvFiles directamente aquí
-    setSelectedCV: () => {},
-    setCvAnalysis: () => {},
-    setActiveTab: () => {},
-    currentCvCount: currentAnalysisCount,
-    refreshDashboardData,
-    onUploadComplete: useCallback((processedFiles) => { // Recibir todos los archivos procesados
-      if (selectedJob) {
-        handleAnalyzeCVs(processedFiles, selectedJob);
-      } else {
-        toast({
-          title: t("error_title"),
-          description: "Por favor, selecciona un puesto de trabajo antes de analizar los CVs.",
-          variant: "destructive",
-        });
-        setIsAnalyzing(false);
-      }
-    }, [selectedJob, handleAnalyzeCVs, toast, t, setIsAnalyzing]), // Add selectedJob and handleAnalyzeCVs as dependencies
-  });
-
-  const filteredJobs = jobs.filter(job =>
-    job.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSelectJob = (job) => {
-    setSelectedJob(job);
-    setIsDialogOpen(false);
-  };
-
-  const fetchExistingMatchesForJob = useCallback(async (jobId, recruiterId) => {
-    if (!jobId || !recruiterId) {
-      setAnalysisResults([]);
-      return;
-    }
-    setIsLoadingExistingMatches(true);
-    try {
-      console.log("QuickAnalysisTab: fetchExistingMatchesForJob - Querying Supabase with jobId:", jobId, "and recruiterId:", recruiterId);
-      const { data, error: fetchError } = await supabase
-        .from('matches')
-        .select(`
-          *,
-          candidatos (id, name)
-        `)
-        .eq('job_id', jobId)
-        .order('match_score', { ascending: false });
-
-      console.log("QuickAnalysisTab: Supabase raw data for matches:", data);
-      console.log("QuickAnalysisTab: Supabase fetchError for matches:", fetchError);
-
-      if (fetchError) {
-        console.error("QuickAnalysisTab: Error fetching existing matches:", fetchError);
-        throw fetchError;
-      }
-
-      const formattedResults = data.map(match => {
-        const analysisText = match.analysis || '';
-        const parsed = parseAnalysisText(analysisText);
-        return {
-          cvFileName: match.candidatos?.name || 'N/A',
-          jobTitle: jobs.find(j => j.id === jobId)?.title || 'N/A',
-          matchScore: match.match_score,
-          candidateId: match.candidato_id,
-          jobId: match.job_id,
-          status: "completed",
-          analysisDecision: parsed.decision,
-          analysisReasoning: parsed.reasoning,
-          analysisSummary: parsed.summary,
-          recommendationBoolean: parsed.recommendation_boolean,
-        };
-      }) || [];
-      
-      console.log("QuickAnalysisTab: formattedResults from fetchExistingMatchesForJob:", formattedResults);
-      setAnalysisResults(formattedResults);
-
-    } catch (err) {
-      console.error("QuickAnalysisTab: Error in fetchExistingMatchesForJob:", err);
-      toast({ title: "Error", description: "No se pudieron cargar los análisis existentes para este puesto.", variant: "destructive" });
-      setAnalysisResults([]);
-    } finally {
-      setIsLoadingExistingMatches(false);
-    }
-  }, [toast, jobs, recruiterId]); // Añadir jobs y recruiterId a las dependencias
-
-  useEffect(() => {
-    if (selectedJob && recruiterId) {
-      fetchExistingMatchesForJob(selectedJob.id, recruiterId);
-    } else {
-      setAnalysisResults([]);
-    }
-  }, [selectedJob, recruiterId, fetchExistingMatchesForJob]);
-
-  const handleAnalyzeCVs = async (processedFiles, job) => { // Recibir processedFiles
+  const handleAnalyzeCVs = useCallback(async (processedFiles, job) => { // Recibir processedFiles
     if (!job) {
       toast({
         title: t("error_title"),
@@ -240,10 +135,8 @@ const QuickAnalysisTab = ({
 
     for (const processedFile of processedFiles) {
       const cvFileName = processedFile.name;
-      console.log("QuickAnalysisTab: handleAnalyzeCVs - Processing file:", cvFileName, "Status:", processedFile.status, "Database ID:", processedFile.databaseId);
 
       if (processedFile.status === 'duplicate') {
-        console.log("QuickAnalysisTab: handleAnalyzeCVs - Duplicate CV detected:", cvFileName);
         newAnalysisResults.push({
           cvFileName: cvFileName,
           jobTitle: job.title,
@@ -254,7 +147,6 @@ const QuickAnalysisTab = ({
           candidateId: processedFile.databaseId, // Incluir candidateId para "Ver Detalles"
           jobId: job.id,
         });
-        console.log("QuickAnalysisTab: handleAnalyzeCVs - newAnalysisResults after duplicate:", newAnalysisResults);
         continue;
       }
 
@@ -274,10 +166,8 @@ const QuickAnalysisTab = ({
 
       // Si el archivo fue procesado exitosamente por useCvUploader
       if (processedFile.status === 'completed' && processedFile.databaseId) {
-        console.log("QuickAnalysisTab: handleAnalyzeCVs - Completed CV, adding to matching queue:", cvFileName, "ID:", processedFile.databaseId);
         candidateIdsToProcessForMatching.push(processedFile.databaseId);
       } else {
-        console.log("QuickAnalysisTab: handleAnalyzeCVs - Error/Skipped CV or missing databaseId:", cvFileName, "Status:", processedFile.status, "Database ID:", processedFile.databaseId);
         // Si por alguna razón un archivo "completed" no tiene databaseId, registrarlo como error
         newAnalysisResults.push({
           cvFileName: cvFileName,
@@ -288,17 +178,13 @@ const QuickAnalysisTab = ({
           analysisSummary: 'N/A',
           jobId: job.id,
         });
-        console.log("QuickAnalysisTab: handleAnalyzeCVs - newAnalysisResults after error/skipped:", newAnalysisResults);
       }
     }
-    console.log("QuickAnalysisTab: handleAnalyzeCVs - Final candidateIdsToProcessForMatching before calling processJobMatches:", candidateIdsToProcessForMatching);
 
     // Realizar el macheo para todos los candidatos exitosamente procesados en un solo batch
     if (candidateIdsToProcessForMatching.length > 0) {
-      console.log("QuickAnalysisTab: handleAnalyzeCVs - Candidate IDs to process for matching:", candidateIdsToProcessForMatching);
       try {
         const matchResults = await processJobMatches(job.id, recruiterId, candidateIdsToProcessForMatching);
-        console.log("QuickAnalysisTab: handleAnalyzeCVs - matchResults from processJobMatches:", matchResults);
 
         matchResults.forEach(match => {
           const candidate = processedFiles.find(f => f.databaseId === match.candidato_id);
@@ -380,7 +266,6 @@ const QuickAnalysisTab = ({
           updatedResults.push(newRes); // Añadir si es nuevo
         }
       });
-      console.log("QuickAnalysisTab: handleAnalyzeCVs - updatedResults before setting state:", updatedResults);
       return updatedResults;
     });
     
@@ -406,7 +291,110 @@ const QuickAnalysisTab = ({
         variant: "destructive",
       });
     }
+  }, [toast, t, setIsAnalyzing, recruiterId, jobs, parseAnalysisText, processJobMatches, refreshDashboardData, resetUploaderState]);
+
+  const {
+    isProcessing,
+    isBulkProcessing,
+    totalFilesToUpload,
+    filesUploadedCount,
+    currentFileProcessingName,
+    handleFileUpload,
+    handleDragOver,
+    handleDrop,
+    optimisticCvCount,
+    processingFiles,
+    resetUploaderState: resetUploaderStateFromHook,
+  } = useCvUploader({
+    fileInputRef,
+    setCvFiles: () => {}, // No necesitamos actualizar cvFiles directamente aquí
+    setSelectedCV: () => {},
+    setCvAnalysis: () => {},
+    setActiveTab: () => {},
+    currentCvCount: currentAnalysisCount,
+    refreshDashboardData,
+    onUploadComplete: useCallback((processedFiles) => { // Recibir todos los archivos procesados
+      if (selectedJob) {
+        handleAnalyzeCVs(processedFiles, selectedJob);
+      } else {
+        toast({
+          title: t("error_title"),
+          description: "Por favor, selecciona un puesto de trabajo antes de analizar los CVs.",
+          variant: "destructive",
+        });
+        setIsAnalyzing(false);
+      }
+    }, [selectedJob, handleAnalyzeCVs, toast, t, setIsAnalyzing]), // Add selectedJob and handleAnalyzeCVs as dependencies
+  });
+
+  // Sobrescribir resetUploaderState para usar el del hook
+  const resetUploaderState = resetUploaderStateFromHook;
+
+  const filteredJobs = jobs.filter(job =>
+    job.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelectJob = (job) => {
+    setSelectedJob(job);
+    setIsDialogOpen(false);
   };
+
+  const fetchExistingMatchesForJob = useCallback(async (jobId, recruiterId) => {
+    if (!jobId || !recruiterId) {
+      setAnalysisResults([]);
+      return;
+    }
+    setIsLoadingExistingMatches(true);
+    try {
+      const { data, error: fetchError } = await supabase
+        .from('matches')
+        .select(`
+          *,
+          candidatos (id, name)
+        `)
+        .eq('job_id', jobId)
+        .order('match_score', { ascending: false });
+
+      if (fetchError) {
+        console.error("QuickAnalysisTab: Error fetching existing matches:", fetchError);
+        throw fetchError;
+      }
+
+      const formattedResults = data.map(match => {
+        const analysisText = match.analysis || '';
+        const parsed = parseAnalysisText(analysisText);
+        return {
+          cvFileName: match.candidatos?.name || 'N/A',
+          jobTitle: jobs.find(j => j.id === jobId)?.title || 'N/A',
+          matchScore: match.match_score,
+          candidateId: match.candidato_id,
+          jobId: match.job_id,
+          status: "completed",
+          analysisDecision: parsed.decision,
+          analysisReasoning: parsed.reasoning,
+          analysisSummary: parsed.summary,
+          recommendationBoolean: parsed.recommendation_boolean,
+        };
+      }) || [];
+      
+      setAnalysisResults(formattedResults);
+
+    } catch (err) {
+      console.error("QuickAnalysisTab: Error in fetchExistingMatchesForJob:", err);
+      toast({ title: "Error", description: "No se pudieron cargar los análisis existentes para este puesto.", variant: "destructive" });
+      setAnalysisResults([]);
+    } finally {
+      setIsLoadingExistingMatches(false);
+    }
+  }, [toast, jobs, recruiterId, parseAnalysisText]); // Añadir jobs y recruiterId a las dependencias
+
+  useEffect(() => {
+    if (selectedJob && recruiterId) {
+      fetchExistingMatchesForJob(selectedJob.id, recruiterId);
+    } else {
+      setAnalysisResults([]);
+    }
+  }, [selectedJob, recruiterId, fetchExistingMatchesForJob]);
 
   const renderProcessingStatus = () => {
     if (isBulkProcessing || isProcessing || isAnalyzing) {
@@ -522,56 +510,53 @@ const QuickAnalysisTab = ({
               <p>Cargando análisis existentes...</p>
             </div>
           ) : analysisResults.length > 0 ? (
-            <>
-              {console.log("QuickAnalysisTab: Rendering analysisResults:", analysisResults)}
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidato</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Decisión</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resumen</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Candidato</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Decisión</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resumen</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {analysisResults.map((result, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{result.cvFileName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {result.status === "completed" ? `${result.matchScore}%` : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {result.status === "completed" ? result.analysisDecision : 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {result.status === "completed" ? result.analysisSummary : result.message}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {result.status === "completed" && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completado</span>}
+                        {result.status === "error" && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Error</span>}
+                        {result.status === "duplicate" && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Duplicado</span>}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        {result.status === "completed" && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            onClick={() => navigate(`/dashboard/analisis-ia?candidateId=${result.candidateId}&jobId=${result.jobId}`)}
+                            className="text-blue-600 hover:text-blue-900 p-0 h-auto"
+                          >
+                            Ver Detalles
+                          </Button>
+                        )}
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {analysisResults.map((result, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{result.cvFileName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {result.status === "completed" ? `${result.matchScore}%` : 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {result.status === "completed" ? result.analysisDecision : 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {result.status === "completed" ? result.analysisSummary : result.message}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {result.status === "completed" && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Completado</span>}
-                          {result.status === "error" && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Error</span>}
-                          {result.status === "duplicate" && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Duplicado</span>}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {result.status === "completed" && (
-                            <Button
-                              variant="link"
-                              size="sm"
-                              onClick={() => navigate(`/dashboard/analisis-ia?candidateId=${result.candidateId}&jobId=${result.jobId}`)}
-                              className="text-blue-600 hover:text-blue-900 p-0 h-auto"
-                            >
-                              Ver Detalles
-                            </Button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             !isLoadingExistingMatches && <p>No hay resultados de análisis para mostrar para este puesto. Carga CVs para analizarlos.</p>
           )}
