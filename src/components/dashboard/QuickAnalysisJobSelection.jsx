@@ -13,24 +13,25 @@ const QuickAnalysisJobSelection = ({
   setIsDialogOpen,
   filteredJobs,
   handleSelectJob,
+  t, // Add t as a prop
 }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h3 className="text-xl font-semibold text-slate-700 mb-4">1. Selecciona un Puesto de Trabajo</h3>
+      <h3 className="text-xl font-semibold text-slate-700 mb-4">{t('quick_analysis_job_selection_title')}</h3>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" className="w-full justify-between">
-            {selectedJob ? selectedJob.title : "Seleccionar Puesto"}
+            {selectedJob ? selectedJob.title : t('quick_analysis_select_job_placeholder')}
             <Search className="ml-2 h-4 w-4" />
           </Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-[425px] p-0">
           <DialogHeader className="p-4 border-b">
-            <DialogTitle>Seleccionar Puesto de Trabajo</DialogTitle>
+            <DialogTitle>{t('quick_analysis_select_job_title')}</DialogTitle>
           </DialogHeader>
           <div className="p-4">
             <Input
-              placeholder="Buscar puestos..."
+              placeholder={t('quick_analysis_search_jobs_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="mb-4"
@@ -50,7 +51,7 @@ const QuickAnalysisJobSelection = ({
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-slate-500">No se encontraron puestos.</p>
+                <p className="text-center text-slate-500">{t('quick_analysis_no_jobs_found')}</p>
               )}
             </ScrollArea>
           </div>
@@ -58,7 +59,7 @@ const QuickAnalysisJobSelection = ({
       </Dialog>
       {selectedJob && (
         <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <p className="text-sm font-medium text-blue-800">Puesto Seleccionado:</p>
+          <p className="text-sm font-medium text-blue-800">{t('quick_analysis_selected_job')}:</p>
           <p className="text-md text-blue-900 font-semibold">{selectedJob.title}</p>
         </div>
       )}

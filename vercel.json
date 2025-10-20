@@ -7,13 +7,13 @@
     {
       "source": "/((?!api).*)",
       "destination": "/index.html"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/legacy",
-      "destination": "/legal",
-      "permanent": true
-    }
-  ] 
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/legacy",
+        "destination": "/legal",
+        "permanent": true
+      }
+    ]
 }

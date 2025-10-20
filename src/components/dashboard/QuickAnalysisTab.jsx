@@ -56,6 +56,7 @@ const QuickAnalysisTab = ({
           setIsDialogOpen={setIsDialogOpen}
           filteredJobs={filteredJobs}
           handleSelectJob={handleSelectJob}
+          t={t} // Pass t as a prop
         />
 
         <QuickAnalysisFileUpload
@@ -76,6 +77,7 @@ const QuickAnalysisTab = ({
         selectedJob={selectedJob}
         isLoadingExistingMatches={isLoadingExistingMatches}
         analysisResults={analysisResults}
+        t={t} // Pass t as a prop
       />
     </div>
   );
