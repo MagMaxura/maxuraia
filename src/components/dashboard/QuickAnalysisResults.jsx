@@ -19,18 +19,21 @@ const QuickAnalysisResults = ({
           <h3 className="text-xl font-semibold text-slate-700 mb-4">{translate('quick_analysis_results_title')}: {selectedJob.title}</h3>
 
           {/* Sección para CVs en proceso de carga/análisis */}
-          {processingFiles.length > 0 && (
+          {processingFiles.filter(file =>
+            !['completed', 'error', 'duplicate', 'skipped', 'matching_completed', 'matching_error'].includes(file.matchingStatus)
+          ).length > 0 && (
             <div className="mb-6">
               <h4 className="text-lg font-medium text-slate-600 mb-3">{translate('quick_analysis_processing_cvs')}</h4>
               <div className="space-y-2">
-                {processingFiles.map((file) => (
+                {processingFiles.filter(file =>
+                  !['completed', 'error', 'duplicate', 'skipped', 'matching_completed', 'matching_error'].includes(file.matchingStatus)
+                ).map((file) => (
                   <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200">
                     <span className="text-sm font-medium text-gray-800">{file.name}</span>
                     <div className="flex items-center space-x-2">
                       {file.matchingStatus === 'matching_pending' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{translate('quick_analysis_status_matching_pending')}</span>}
                       {file.matchingStatus === 'matching_in_progress' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{translate('quick_analysis_status_matching_in_progress')}</span>}
                       {file.matchingStatus === 'matching_error' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{translate('quick_analysis_status_matching_error')}</span>}
-                      {file.matchingStatus === 'matching_completed' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{translate('quick_analysis_status_completed')}</span>}
                       {/* Fallback a los estados del uploader si no hay estado de matching específico */}
                       {file.matchingStatus === 'pending' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{translate('quick_analysis_status_pending')}</span>}
                       {file.matchingStatus === 'extracting' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{translate('quick_analysis_status_extracting')}</span>}
