@@ -33,6 +33,7 @@ const QuickAnalysisTab = ({
     handleDrop,
     filteredJobs,
     handleSelectJob,
+    cvProcessingAndMatchingStatus, // Exponer el nuevo estado combinado
   } = useQuickAnalysis({
     jobs,
     recruiterId,
@@ -71,6 +72,7 @@ const QuickAnalysisTab = ({
           filesUploadedCount={filesUploadedCount}
           totalFilesToUpload={totalFilesToUpload}
           translate={t}
+          processingFiles={uploaderProcessingFiles} // Pasar el estado de procesamiento
         />
       </div>
 
@@ -78,6 +80,7 @@ const QuickAnalysisTab = ({
         selectedJob={selectedJob}
         isLoadingExistingMatches={isLoadingExistingMatches}
         analysisResults={analysisResults}
+        processingFiles={cvProcessingAndMatchingStatus} // Pasar el estado combinado de procesamiento y matching
         translate={t} // Pass t as a prop
       />
     </div>
