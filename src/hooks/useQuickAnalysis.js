@@ -255,7 +255,7 @@ export const useQuickAnalysis = ({
             // Añadir nuevos archivos del uploader con estado inicial de matching 'pending'
             updated.push({
               ...uploaderFile,
-              matchingStatus: 'pending', // Estado inicial de matching
+              matchingStatus: 'matching_pending', // Estado inicial de matching para nuevos archivos
               matchScore: 'N/A',
               analysisDecision: 'N/A',
               analysisSummary: 'N/A',
@@ -266,7 +266,13 @@ export const useQuickAnalysis = ({
       });
     } else if (uploaderProcessingFiles.length === 0 && cvProcessingAndMatchingStatus.length > 0 && !isAnalyzing) {
       // Limpiar si no hay archivos en el uploader y no estamos analizando
-      setCvProcessingAndMatchingStatus([]);
+      // Solo limpiar si todos los archivos en cvProcessingAndMatchingStatus están en un estado final
+      const allFilesAreFinal = cvProcessingAndMatchingStatus.every(file =>
+        ['completed', 'error', 'duplicate', 'skipped', 'matching_completed', 'matching_error'].includes(file.matchingStatus)
+      );
+      if (allFilesAreFinal) {
+        setCvProcessingAndMatchingStatus([]);
+      }
     }
   }, [uploaderProcessingFiles, isAnalyzing, cvProcessingAndMatchingStatus.length]);
 
