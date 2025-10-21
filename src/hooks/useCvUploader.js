@@ -136,52 +136,6 @@ export function useCvUploader({
         break;
       }
 
-      try {
-    // Cargar dinámicamente las funciones de procesamiento de archivos
-    const { extractTextFromFile, analyzeCV } = await import("@/lib/fileProcessing");
-
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const file = selectedFiles[i];
-      const fileId = processingFiles[i] ? processingFiles[i].id : null;
-
-      setCurrentFileProcessingName(file.name);
-      setFilesUploadedCount(i);
-
-      setProcessingFiles(prev => prev.map(f =>
-        f.id === fileId ? { ...f, status: 'extracting', progress: 25 } : f
-      ));
-
-      const planDetails = APP_PLANS[planId];
-      const isOneTimePlan = planDetails?.type === 'one-time';
-
-      let limitExceeded = false;
-      let limitDescription = "";
-
-      if (isOneTimePlan) {
-        if (currentCvCount + selectedFiles.length > analysisLimit) {
-           limitExceeded = true;
-           limitDescription = `Has alcanzado tu límite total de ${analysisLimit} análisis de CVs para el plan "${planDetails.name}".`;
-        }
-      } else {
-        if (currentAnalysisCount >= analysisLimit) {
-          limitExceeded = true;
-          limitDescription = `Has alcanzado tu límite mensual de ${analysisLimit} análisis de CVs para el plan "${planDetails.name}".`;
-        }
-      }
-
-      if (limitExceeded) {
-        anyErrorOccurred = true;
-        toast({
-          title: "Límite de Análisis Alcanzado",
-          description: `${limitDescription} Por favor, contacta a ventas si necesitas más capacidad.`,
-          variant: "destructive",
-          duration: 7000,
-        });
-        setTotalFilesToUpload(i);
-        break;
-      }
-
-      try {
         let text = await extractTextFromFile(file);
         setProcessingFiles(prev => prev.map(f =>
           f.id === fileId ? { ...f, status: 'analyzing', progress: 50 } : f
@@ -293,14 +247,6 @@ export function useCvUploader({
 
       if (newlyProcessedCvFiles.length === 1 && selectedFiles.length === 1) {
         console.log("useCvUploader: Single file processed. Attempting to set selectedCV and cvAnalysis.");
-        // El cálculo del índice para setSelectedCV aquí es propenso a errores de timing
-        // ya que setCvFiles es asíncrono. El Dashboard tiene un useEffect para esto.
-        // Sin embargo, para depurar, podemos loguear lo que se intentaría pasar.
-        // const newIndex = (cvFiles?.length || 0) + newlyProcessedCvFiles.length -1; // cvFiles aquí es el del closure, no el actualizado
-        // console.log("useCvUploader: Would call setSelectedCV with index (approx):", newIndex);
-        // setSelectedCV(newIndex); // Comentado, el Dashboard lo maneja
-        
-        console.log("useCvUploader: Calling setCvAnalysis with:", newlyProcessedCvFiles[0]?.analysis);
         if (setCvAnalysis && newlyProcessedCvFiles[0]?.analysis) { // Añadir verificación
           setCvAnalysis(newlyProcessedCvFiles[0]?.analysis);
         }
@@ -371,6 +317,14 @@ export function useCvUploader({
     refreshDashboardData,
     processingFiles, // Añadir processingFiles a las dependencias
     onUploadComplete, // Añadir onUploadComplete a las dependencias
+    currentCvCount, // Añadir currentCvCount a las dependencias
+    analysisLimit, // Añadir analysisLimit a las dependencias
+    planId, // Añadir planId a las dependencias
+    APP_PLANS, // Añadir APP_PLANS a las dependencias
+    currentAnalysisCount, // Añadir currentAnalysisCount a las dependencias
+    extractTextFromFile, // Añadir extractTextFromFile a las dependencias
+    analyzeCV, // Añadir analyzeCV a las dependencias
+    cvService, // Añadir cvService a las dependencias
   ]);
 
   const handleDragOver = useCallback((event) => {
