@@ -12,7 +12,7 @@ const QuickAnalysisFileUpload = ({
   currentFileProcessingName,
   filesUploadedCount,
   totalFilesToUpload,
-  t, // Add t as a prop
+  translate, // Add t as a prop
 }) => {
   const renderProcessingStatus = () => {
     if (isBulkProcessing || isProcessing || isAnalyzing) {
@@ -21,11 +21,11 @@ const QuickAnalysisFileUpload = ({
           <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
           <div>
             <p className="text-blue-800 font-medium">
-              {isAnalyzing ? t("quick_analysis_performing_analysis") : t("processing_batch")}
+              {isAnalyzing ? translate("quick_analysis_performing_analysis") : translate("processing_batch")}
             </p>
             {!isAnalyzing && (
               <p className="text-sm text-blue-700">
-                {t("analyzing_file", { fileName: currentFileProcessingName })} ({filesUploadedCount}/{totalFilesToUpload})
+                {translate("analyzing_file", { fileName: currentFileProcessingName })} ({filesUploadedCount}/{totalFilesToUpload})
               </p>
             )}
           </div>
@@ -37,7 +37,7 @@ const QuickAnalysisFileUpload = ({
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-      <h3 className="text-xl font-semibold text-slate-700 mb-4">{t('quick_analysis_upload_cvs_title')}</h3>
+      <h3 className="text-xl font-semibold text-slate-700 mb-4">{translate('quick_analysis_upload_cvs_title')}</h3>
       <div
         className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors"
         onDragOver={handleDragOver}
@@ -45,8 +45,8 @@ const QuickAnalysisFileUpload = ({
         onClick={() => fileInputRef.current.click()}
       >
         <Upload className="h-10 w-10 text-gray-400 mb-3" />
-        <p className="text-gray-600 text-center mb-1">{t('drag_drop_cvs_message')}</p>
-        <p className="text-sm text-gray-500 text-center">{t('accepted_formats_message')}</p>
+        <p className="text-gray-600 text-center mb-1">{translate('drag_drop_cvs_message')}</p>
+        <p className="text-sm text-gray-500 text-center">{translate('accepted_formats_message')}</p>
         <input
           type="file"
           ref={fileInputRef}

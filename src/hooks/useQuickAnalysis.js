@@ -15,7 +15,7 @@ export const useQuickAnalysis = ({
 }) => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t: translate } = useTranslation();
 
   const fileInputRef = useRef(null);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -28,7 +28,7 @@ export const useQuickAnalysis = ({
   const handleAnalyzeCVs = useCallback(async (processedFiles, job) => {
     if (!job) {
       toast({
-        title: t("error_title"),
+        title: translate("error_title"),
         description: "Por favor, selecciona un puesto de trabajo para realizar el análisis.",
         variant: "destructive",
       });
@@ -38,7 +38,7 @@ export const useQuickAnalysis = ({
 
     if (!processedFiles || processedFiles.length === 0) {
       toast({
-        title: t("error_title"),
+        title: translate("error_title"),
         description: "No hay CVs para analizar.",
         variant: "destructive",
       });
@@ -139,7 +139,7 @@ export const useQuickAnalysis = ({
       } catch (error) {
         console.error("useQuickAnalysis: Error during batch matching:", error);
         toast({
-          title: t("error_title"),
+          title: translate("error_title"),
           description: `Error durante el macheo de CVs: ${error.message}`,
           variant: "destructive",
         });
@@ -189,23 +189,23 @@ export const useQuickAnalysis = ({
 
     if (successfulMatches > 0) {
       toast({
-        title: "Análisis Rápido Completado",
-        description: `Se analizaron ${successfulMatches} CVs contra el puesto "${job.title}".`,
+        title: translate("quick_analysis_completed_title"),
+        description: translate("quick_analysis_completed_description", { count: successfulMatches, jobTitle: job.title }),
       });
     } else if (newAnalysisResults.length > 0) {
       toast({
-        title: "Análisis Rápido Completado con Advertencias",
-        description: "Algunos CVs no pudieron ser analizados o eran duplicados.",
+        title: translate("quick_analysis_warnings_title"),
+        description: translate("quick_analysis_warnings_description"),
         variant: "warning",
       });
     } else {
       toast({
-        title: t("warning_text"),
-        description: "No se pudo completar el análisis para ningún CV.",
+        title: translate("warning_text"),
+        description: translate("quick_analysis_no_completion_description"),
         variant: "destructive",
       });
     }
-  }, [toast, t, setIsAnalyzing, recruiterId, parseAnalysisText, processJobMatches, refreshDashboardData]);
+  }, [toast, translate, setIsAnalyzing, recruiterId, parseAnalysisText, processJobMatches, refreshDashboardData]);
 
   const {
     isProcessing,
@@ -230,13 +230,13 @@ export const useQuickAnalysis = ({
         handleAnalyzeCVs(processedFiles, selectedJob);
       } else {
         toast({
-          title: t("error_title"),
-          description: "Por favor, selecciona un puesto de trabajo antes de analizar los CVs.",
+          title: translate("error_title"),
+          description: translate("select_job_before_analysis"),
           variant: "destructive",
         });
         setIsAnalyzing(false);
       }
-    }, [selectedJob, handleAnalyzeCVs, toast, t, setIsAnalyzing]),
+    }, [selectedJob, handleAnalyzeCVs, toast, translate, setIsAnalyzing]),
   });
 
   const resetUploaderState = resetUploaderStateFromHook;
@@ -292,7 +292,7 @@ export const useQuickAnalysis = ({
 
     } catch (err) {
       console.error("useQuickAnalysis: Error in fetchExistingMatchesForJob:", err);
-      toast({ title: "Error", description: "No se pudieron cargar los análisis existentes para este puesto.", variant: "destructive" });
+      toast({ title: translate("error_title"), description: translate("error_loading_existing_analysis"), variant: "destructive" });
       setAnalysisResults([]);
     } finally {
       setIsLoadingExistingMatches(false);
@@ -330,6 +330,6 @@ export const useQuickAnalysis = ({
     filteredJobs,
     handleSelectJob,
     fetchExistingMatchesForJob,
-    t, // Expose t for translation in components
+    translate, // Expose t for translation in components
   };
 };
