@@ -72,7 +72,6 @@ const QuickAnalysisTab = ({
           filesUploadedCount={filesUploadedCount}
           totalFilesToUpload={totalFilesToUpload}
           translate={t}
-          processingFiles={uploaderProcessingFiles} // Pasar el estado de procesamiento
         />
       </div>
 

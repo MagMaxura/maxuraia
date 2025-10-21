@@ -27,15 +27,18 @@ const QuickAnalysisResults = ({
                   <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-md border border-gray-200">
                     <span className="text-sm font-medium text-gray-800">{file.name}</span>
                     <div className="flex items-center space-x-2">
-                      {file.status === 'pending' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{translate('quick_analysis_status_pending')}</span>}
-                      {file.status === 'extracting' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{translate('quick_analysis_status_extracting')}</span>}
-                      {file.status === 'analyzing' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">{translate('quick_analysis_status_analyzing')}</span>}
-                      {file.status === 'saving' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">{translate('quick_analysis_status_saving')}</span>}
-                      {file.status === 'completed' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{translate('quick_analysis_status_completed')}</span>}
-                      {file.status === 'error' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{translate('quick_analysis_status_error')}</span>}
-                      {file.status === 'duplicate' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">{translate('quick_analysis_status_duplicate')}</span>}
-                      {file.status === 'skipped' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">{translate('quick_analysis_status_skipped')}</span>}
-                      {(file.status === 'extracting' || file.status === 'analyzing' || file.status === 'saving') && (
+                      {file.matchingStatus === 'matching_pending' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{translate('quick_analysis_status_matching_pending')}</span>}
+                      {file.matchingStatus === 'matching_in_progress' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{translate('quick_analysis_status_matching_in_progress')}</span>}
+                      {file.matchingStatus === 'matching_error' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">{translate('quick_analysis_status_matching_error')}</span>}
+                      {file.matchingStatus === 'matching_completed' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">{translate('quick_analysis_status_completed')}</span>}
+                      {/* Fallback a los estados del uploader si no hay estado de matching específico */}
+                      {file.matchingStatus === 'pending' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">{translate('quick_analysis_status_pending')}</span>}
+                      {file.matchingStatus === 'extracting' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">{translate('quick_analysis_status_extracting')}</span>}
+                      {file.matchingStatus === 'analyzing' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">{translate('quick_analysis_status_analyzing')}</span>}
+                      {file.matchingStatus === 'saving' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">{translate('quick_analysis_status_saving')}</span>}
+                      {file.matchingStatus === 'duplicate' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">{translate('quick_analysis_status_duplicate')}</span>}
+                      {file.matchingStatus === 'skipped' && <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">{translate('quick_analysis_status_skipped')}</span>}
+                      {(file.matchingStatus === 'extracting' || file.matchingStatus === 'analyzing' || file.matchingStatus === 'saving' || file.matchingStatus === 'matching_in_progress') && (
                         <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
                       )}
                     </div>
