@@ -136,6 +136,7 @@ export function useCvUploader({
         break;
       }
 
+      try {
         let text = await extractTextFromFile(file);
         setProcessingFiles(prev => prev.map(f =>
           f.id === fileId ? { ...f, status: 'analyzing', progress: 50 } : f
@@ -226,7 +227,7 @@ export function useCvUploader({
           f.id === fileId ? { ...f, status: 'error', progress: 100, analysisResult: { error: true, message: error.message } } : f
         ));
       }
-    }
+    } // Cierre del bucle for
     // Asegurarse de que todos los archivos que no se procesaron (por límite, etc.) se marquen como error o cancelados
     setProcessingFiles(prev => prev.map(f => {
       // Si el archivo aún está en 'pending' y no tiene un resultado de análisis,
@@ -315,16 +316,9 @@ export function useCvUploader({
     setCvAnalysis,
     setActiveTab,
     refreshDashboardData,
-    processingFiles, // Añadir processingFiles a las dependencias
-    onUploadComplete, // Añadir onUploadComplete a las dependencias
-    currentCvCount, // Añadir currentCvCount a las dependencias
-    analysisLimit, // Añadir analysisLimit a las dependencias
-    planId, // Añadir planId a las dependencias
-    APP_PLANS, // Añadir APP_PLANS a las dependencias
-    currentAnalysisCount, // Añadir currentAnalysisCount a las dependencias
-    extractTextFromFile, // Añadir extractTextFromFile a las dependencias
-    analyzeCV, // Añadir analyzeCV a las dependencias
-    cvService, // Añadir cvService a las dependencias
+    processingFiles,
+    onUploadComplete,
+    currentCvCount,
   ]);
 
   const handleDragOver = useCallback((event) => {
