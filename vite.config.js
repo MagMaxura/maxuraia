@@ -158,12 +158,12 @@ console.warn = () => {};
 
 export default defineConfig({
 	plugins: [react(), addTransformIndexHtml],
+	optimizeDeps: {
+		exclude: ['i18next'],
+	},
 	define: {
 		'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
 		'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY),
-		// Inyectar jQuery globalmente
-		'$': 'window.jQuery',
-		'jQuery': 'window.jQuery',
 	},
 	server: {
 		cors: true,
@@ -176,6 +176,8 @@ export default defineConfig({
 		extensions: ['.jsx', '.js', '.tsx', '.ts', '.json', ],
 		alias: {
 			'@': path.resolve(__dirname, './src'),
+			// Alias para jQuery
+			'jquery': path.resolve(__dirname, './src/lib/jquery-shim.js'),
 		},
 	},
 	build: {
