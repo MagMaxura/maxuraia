@@ -1,7 +1,7 @@
 import React from "react";
 import { Upload, Loader2 } from "lucide-react";
 
-const QuickAnalysisFileUpload = ({
+const QuickAnalysisUploader = ({
   fileInputRef,
   handleFileUpload,
   handleDragOver,
@@ -61,4 +61,4 @@ const QuickAnalysisFileUpload = ({
   );
 };
 
-export default QuickAnalysisFileUpload;
+export default QuickAnalysisUploader;

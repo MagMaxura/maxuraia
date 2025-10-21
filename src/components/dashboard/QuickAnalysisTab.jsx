@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useQuickAnalysis } from "@/hooks/useQuickAnalysis.js";
 import QuickAnalysisJobSelection from "./QuickAnalysisJobSelection";
-import QuickAnalysisFileUpload from "./QuickAnalysisFileUpload";
+import QuickAnalysisUploader from "./QuickAnalysisUploader";
 import QuickAnalysisResults from "./QuickAnalysisResults";
 
 const QuickAnalysisTab = ({
@@ -59,7 +59,7 @@ const QuickAnalysisTab = ({
           t={t} // Pass t as a prop
         />
 
-        <QuickAnalysisFileUpload
+        <QuickAnalysisUploader
           fileInputRef={fileInputRef}
           handleFileUpload={handleFileUpload}
           handleDragOver={handleDragOver}
