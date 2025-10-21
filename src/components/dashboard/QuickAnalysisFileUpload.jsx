@@ -1,6 +1,5 @@
 import React from "react";
 import { Upload, Loader2 } from "lucide-react";
-import { Upload, Loader2 } from "lucide-react";
 
 const QuickAnalysisFileUpload = ({
   fileInputRef,
