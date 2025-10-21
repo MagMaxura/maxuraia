@@ -177,7 +177,6 @@ export default defineConfig({
 		alias: {
 			'@': path.resolve(__dirname, './src'),
 			// Alias para jQuery
-			'jquery': path.resolve(__dirname, './src/lib/jquery-shim.js'),
 		},
 	},
 	build: {

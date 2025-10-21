@@ -137,26 +137,67 @@ export function useCvUploader({
       }
 
       try {
-        // Paso 1: Extracción de texto
+    // Cargar dinámicamente las funciones de procesamiento de archivos
+    const { extractTextFromFile, analyzeCV } = await import("@/lib/fileProcessing");
+
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      const fileId = processingFiles[i] ? processingFiles[i].id : null;
+
+      setCurrentFileProcessingName(file.name);
+      setFilesUploadedCount(i);
+
+      setProcessingFiles(prev => prev.map(f =>
+        f.id === fileId ? { ...f, status: 'extracting', progress: 25 } : f
+      ));
+
+      const planDetails = APP_PLANS[planId];
+      const isOneTimePlan = planDetails?.type === 'one-time';
+
+      let limitExceeded = false;
+      let limitDescription = "";
+
+      if (isOneTimePlan) {
+        if (currentCvCount + selectedFiles.length > analysisLimit) {
+           limitExceeded = true;
+           limitDescription = `Has alcanzado tu límite total de ${analysisLimit} análisis de CVs para el plan "${planDetails.name}".`;
+        }
+      } else {
+        if (currentAnalysisCount >= analysisLimit) {
+          limitExceeded = true;
+          limitDescription = `Has alcanzado tu límite mensual de ${analysisLimit} análisis de CVs para el plan "${planDetails.name}".`;
+        }
+      }
+
+      if (limitExceeded) {
+        anyErrorOccurred = true;
+        toast({
+          title: "Límite de Análisis Alcanzado",
+          description: `${limitDescription} Por favor, contacta a ventas si necesitas más capacidad.`,
+          variant: "destructive",
+          duration: 7000,
+        });
+        setTotalFilesToUpload(i);
+        break;
+      }
+
+      try {
         let text = await extractTextFromFile(file);
         setProcessingFiles(prev => prev.map(f =>
           f.id === fileId ? { ...f, status: 'analyzing', progress: 50 } : f
         ));
 
-        // Paso 2: Análisis del CV
         let resolvedAnalysis = await analyzeCV(text);
         setProcessingFiles(prev => prev.map(f =>
           f.id === fileId ? { ...f, status: 'saving', progress: 75 } : f
         ));
 
-        // Si el análisis inicial es pobre y es un PDF, reintentar con OCR forzado
         if (resolvedAnalysis.isPoorAnalysis && file.type === 'application/pdf') {
           console.warn(`Análisis inicial de CV ${file.name} es pobre. Reintentando extracción con OCR forzado.`);
-          const ocrText = await extractTextFromFile(file, true); // Forzar OCR
+          const ocrText = await extractTextFromFile(file, true);
           if (ocrText && typeof ocrText === 'string' && ocrText.trim().length > 10) {
-            resolvedAnalysis = await analyzeCV(ocrText); // Re-analizar con texto de OCR
+            resolvedAnalysis = await analyzeCV(ocrText);
             if (resolvedAnalysis.isPoorAnalysis) {
-              // Si incluso después del OCR el análisis sigue siendo pobre, registrar un error más específico
               console.error(`Análisis de CV ${file.name} sigue siendo pobre incluso después de OCR.`);
               throw new Error("El análisis del CV es deficiente incluso con OCR. El documento podría ser ilegible.");
             }

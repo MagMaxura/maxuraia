@@ -70,6 +70,7 @@ const QuickAnalysisTab = ({
           currentFileProcessingName={currentFileProcessingName}
           filesUploadedCount={filesUploadedCount}
           totalFilesToUpload={totalFilesToUpload}
+          translate={t}
         />
       </div>
 
