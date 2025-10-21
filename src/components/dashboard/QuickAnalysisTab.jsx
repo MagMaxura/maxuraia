@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { useQuickAnalysis } from "@/hooks/useQuickAnalysis.js";
 import QuickAnalysisJobSelection from "./QuickAnalysisJobSelection";
-import QuickAnalysisUploader from "./QuickAnalysisUploader";
+import FileUploadComponent from "./FileUploadComponent";
 import QuickAnalysisResults from "./QuickAnalysisResults";
 
 const QuickAnalysisTab = ({
