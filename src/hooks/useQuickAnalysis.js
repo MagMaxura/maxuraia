@@ -247,15 +247,21 @@ export const useQuickAnalysis = ({
         uploaderProcessingFiles.forEach(uploaderFile => {
           const existingIndex = updated.findIndex(f => f.id === uploaderFile.id);
           if (existingIndex > -1) {
-            // Actualizar solo el estado de carga/procesamiento si ha cambiado
-            if (updated[existingIndex].status !== uploaderFile.status || updated[existingIndex].progress !== uploaderFile.progress) {
-              updated[existingIndex] = { ...updated[existingIndex], ...uploaderFile };
+            // Actualizar el estado del uploader si ha cambiado
+            const existingFile = updated[existingIndex];
+            if (existingFile.status !== uploaderFile.status || existingFile.progress !== uploaderFile.progress) {
+              updated[existingIndex] = { ...existingFile, ...uploaderFile };
+            }
+            // Si el uploader completó el procesamiento y el matching aún no ha comenzado,
+            // establecer el estado de matching a 'matching_pending'.
+            if (uploaderFile.status === 'completed' && !['matching_in_progress', 'matching_completed', 'matching_error'].includes(existingFile.matchingStatus)) {
+              updated[existingIndex].matchingStatus = 'matching_pending';
             }
           } else {
             // Añadir nuevos archivos del uploader con estado inicial de matching 'pending'
             updated.push({
               ...uploaderFile,
-              matchingStatus: 'matching_pending', // Estado inicial de matching para nuevos archivos
+              matchingStatus: uploaderFile.status === 'completed' ? 'matching_pending' : uploaderFile.status, // Estado inicial de matching para nuevos archivos
               matchScore: 'N/A',
               analysisDecision: 'N/A',
               analysisSummary: 'N/A',
