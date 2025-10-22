@@ -269,7 +269,10 @@ export function useCvUploader({
     }
 
     // Llamar a onUploadComplete con todos los archivos procesados, incluyendo duplicados y errores
+    // Es crucial pasar `processingFiles` aquí, ya que contiene el estado final de cada archivo
+    // (incluyendo databaseId y analysisResult) que `useQuickAnalysis` necesita.
     if (onUploadComplete) {
+      console.log("useCvUploader: Llamando a onUploadComplete con el estado final de processingFiles:", processingFiles);
       onUploadComplete(processingFiles);
     }
 
@@ -316,7 +319,7 @@ export function useCvUploader({
     setCvAnalysis,
     setActiveTab,
     refreshDashboardData,
-    processingFiles,
+    processingFiles, // Asegurarse de que processingFiles esté en las dependencias
     onUploadComplete,
     currentCvCount,
   ]);
