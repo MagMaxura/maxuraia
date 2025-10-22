@@ -54,22 +54,30 @@ export const useQuickAnalysis = ({
     const newAnalysisResults = [];
     const candidateIdsToProcessForMatching = [];
 
+    console.log("handleAnalyzeCVs: Iniciando análisis para el puesto:", job.title, "con archivos:", filesToAnalyze);
+
     // Actualizar el estado de matching para los archivos que están listos para el análisis
     setCvProcessingAndMatchingStatus(prev => prev.map(file => {
       const fileInBatch = filesToAnalyze.find(f => f.id === file.id);
       if (fileInBatch && fileInBatch.status === 'completed' && fileInBatch.databaseId) {
         candidateIdsToProcessForMatching.push(fileInBatch.databaseId);
+        console.log(`handleAnalyzeCVs: Candidato ${fileInBatch.name} (ID: ${fileInBatch.databaseId}) añadido para matching.`);
         return { ...file, matchingStatus: 'matching_in_progress' };
       } else if (fileInBatch && (fileInBatch.status === 'duplicate' || fileInBatch.status === 'error' || fileInBatch.status === 'skipped')) {
         // Si el archivo ya tiene un estado final del uploader, no necesita matching
+        console.log(`handleAnalyzeCVs: Candidato ${fileInBatch.name} con estado final del uploader: ${fileInBatch.status}. No se realizará matching.`);
         return { ...file, matchingStatus: fileInBatch.status };
       }
       return file;
     }));
 
+    console.log("handleAnalyzeCVs: candidateIdsToProcessForMatching:", candidateIdsToProcessForMatching);
+
     if (candidateIdsToProcessForMatching.length > 0) {
+      console.log("handleAnalyzeCVs: Llamando a processJobMatches con jobId:", job.id, "recruiterId:", recruiterId, "candidateIds:", candidateIdsToProcessForMatching);
       try {
         const matchResults = await processJobMatches(job.id, recruiterId, candidateIdsToProcessForMatching);
+        console.log("handleAnalyzeCVs: Resultados de processJobMatches:", matchResults);
 
         matchResults.forEach(match => {
           const candidate = filesToAnalyze.find(f => f.databaseId === match.candidato_id);
@@ -145,6 +153,8 @@ export const useQuickAnalysis = ({
           ));
         });
       }
+    } else {
+      console.log("handleAnalyzeCVs: No hay candidatos para procesar en el matching.");
     }
 
     setAnalysisResults(prevResults => {
@@ -206,6 +216,7 @@ export const useQuickAnalysis = ({
     currentCvCount: currentAnalysisCount,
     refreshDashboardData,
     onUploadComplete: useCallback((processedFiles) => {
+      console.log("useQuickAnalysis: onUploadComplete - Archivos procesados por uploader:", processedFiles);
       if (selectedJob) {
         // Cuando la carga del uploader termina, inicializar el estado de matching
         // para los archivos que fueron 'completed' por el uploader.
@@ -217,6 +228,7 @@ export const useQuickAnalysis = ({
           analysisSummary: 'N/A',
         }));
         setCvProcessingAndMatchingStatus(initialMatchingStatus);
+        console.log("useQuickAnalysis: onUploadComplete - Llamando a handleAnalyzeCVs con:", initialMatchingStatus, "y job:", selectedJob);
         handleAnalyzeCVs(initialMatchingStatus, selectedJob);
       } else {
         toast({
